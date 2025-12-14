@@ -1,0 +1,188 @@
+import React from 'react';
+import Section from '../components/Section';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import { PROGRAMS, TESTIMONIALS, FEATURED_PRODUCTS, UPCOMING_CLASSES } from '../constants';
+import ShopifyProduct from '../components/ShopifyProduct';
+
+interface HomeProps {
+  onNavigate: (path: string) => void;
+}
+
+const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  return (
+    <>
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 overflow-hidden">
+          <img 
+            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80" 
+            alt="Gym interior" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+          <div className="max-w-2xl">
+            <div className="inline-block border-l-4 border-brand-gold pl-4 mb-6">
+              <p className="text-brand-gold font-bold tracking-widest uppercase text-sm">Founded in Faith. Forged in Iron.</p>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              Train with Purpose. <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">Live with Faith.</span>
+            </h1>
+            <p className="text-xl text-neutral-300 mb-8 max-w-lg">
+              Welcome to Lord's Gym Auburn. A community dedicated to building strength inside and out. Join us in our mission of restoration and discipline.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" onClick={() => onNavigate('/membership')}>
+                Start Your Free Visit
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => onNavigate('/shop')}>
+                Shop Merch
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <div className="bg-brand-charcoal py-8 border-b border-neutral-800">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-neutral-400 text-sm uppercase tracking-widest mb-4">Trusted by the Auburn Community</p>
+          <div className="flex justify-center gap-8 md:gap-16 opacity-50 grayscale">
+             {/* Mock Logos */}
+             <div className="font-display font-bold text-2xl text-white">CITY<span className="text-brand-gold">DATA</span></div>
+             <div className="font-display font-bold text-2xl text-white">IRON<span className="text-brand-gold">CHURCH</span></div>
+             <div className="font-display font-bold text-2xl text-white">RECOVER<span className="text-brand-gold">AUBURN</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Programs Preview */}
+      <Section id="programs">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold mb-4">Our Programs</h2>
+          <p className="text-lg text-neutral-500 max-w-2xl mx-auto">
+            Whether you're training for competition, recovering from injury, or seeking a supportive community, we have a place for you.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {PROGRAMS.map((program) => (
+            <Card key={program.id} hoverEffect className="group overflow-hidden p-0">
+               <div className="h-48 overflow-hidden">
+                 <img src={program.image} alt={program.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+               </div>
+               <div className="p-6">
+                 <h3 className="text-xl font-bold mb-2">{program.title}</h3>
+                 <p className="text-neutral-500 mb-4">{program.description}</p>
+                 <Button variant="outline" size="sm" onClick={() => onNavigate('/programs')}>Learn More</Button>
+               </div>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      {/* Mindbody Schedule Preview */}
+      <Section bg="alternate">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Upcoming Classes</h2>
+            <p className="mb-6 text-neutral-500">
+              Join our group sessions designed to push your limits in a supportive environment. Drop-ins welcome.
+            </p>
+            <div className="space-y-4">
+              {UPCOMING_CLASSES.map((cls) => (
+                <div key={cls.id} className="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm">
+                   <div>
+                     <div className="font-bold text-lg">{cls.time}</div>
+                     <div className="text-sm font-semibold text-brand-gold">{cls.title}</div>
+                   </div>
+                   <div className="text-right">
+                     <div className="text-sm text-neutral-500">{cls.instructor}</div>
+                     <div className="text-xs text-neutral-400">{cls.duration}</div>
+                   </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8">
+              <Button onClick={() => onNavigate('/programs')}>View Full Schedule</Button>
+            </div>
+          </div>
+          
+          <div className="relative">
+             <div className="absolute -inset-4 bg-brand-gold opacity-20 rounded-xl blur-lg"></div>
+             <img 
+               src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80" 
+               alt="Group Class" 
+               className="relative rounded-xl shadow-2xl"
+             />
+             <div className="absolute bottom-8 left-8 right-8 bg-white/90 dark:bg-neutral-900/90 backdrop-blur p-6 rounded-lg border-l-4 border-brand-gold">
+               <p className="italic font-medium text-lg">"Iron sharpens iron, and one man sharpens another."</p>
+               <p className="text-xs font-bold mt-2 uppercase text-brand-gold">Proverbs 27:17</p>
+             </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Outreach Spotlight */}
+      <Section bg="dark" className="text-center">
+        <h2 className="text-4xl font-bold mb-6">Stronger Community</h2>
+        <p className="max-w-3xl mx-auto text-xl text-neutral-300 mb-12">
+          Lord's Gym isn't just a gym. We are a ministry. A portion of every membership goes directly to feeding the hungry and supporting youth mentorship in Auburn.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+           <div className="p-6 bg-neutral-800 rounded-lg">
+             <div className="text-brand-gold text-4xl mb-4">🍞</div>
+             <h3 className="font-bold text-xl mb-2">Food Distribution</h3>
+             <p className="text-neutral-400">Serving 500+ families weekly with fresh groceries and hot meals.</p>
+           </div>
+           <div className="p-6 bg-neutral-800 rounded-lg">
+             <div className="text-brand-gold text-4xl mb-4">🥊</div>
+             <h3 className="font-bold text-xl mb-2">Youth Boxing</h3>
+             <p className="text-neutral-400">Providing discipline, safety, and mentorship for at-risk teens.</p>
+           </div>
+           <div className="p-6 bg-neutral-800 rounded-lg">
+             <div className="text-brand-gold text-4xl mb-4">🙏</div>
+             <h3 className="font-bold text-xl mb-2">Recovery Support</h3>
+             <p className="text-neutral-400">Fitness as a tool for sobriety and mental health restoration.</p>
+           </div>
+        </div>
+        <div className="mt-12">
+           <Button variant="outline" onClick={() => onNavigate('/community')}>See Our Impact</Button>
+        </div>
+      </Section>
+
+      {/* Merch Spotlight (Shopify) */}
+      <Section id="shop-preview">
+        <div className="flex justify-between items-end mb-12">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Gear Up</h2>
+            <p className="text-neutral-500">Rep the mission. High-quality apparel for training and life.</p>
+          </div>
+          <Button variant="ghost" onClick={() => onNavigate('/shop')}>View All Products &rarr;</Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {FEATURED_PRODUCTS.map((product) => (
+            <ShopifyProduct key={product.id} product={product} />
+          ))}
+        </div>
+      </Section>
+
+      {/* Call to Action */}
+      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-32">
+        <h2 className="text-5xl font-bold mb-6">Ready to Train With Purpose?</h2>
+        <p className="text-xl text-neutral-200 mb-8">Join a community that fights for you, not against you.</p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+           <Button size="lg" onClick={() => onNavigate('/membership')}>Join Now</Button>
+           <Button size="lg" variant="outline" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
+        </div>
+      </Section>
+    </>
+  );
+};
+
+export default Home;
