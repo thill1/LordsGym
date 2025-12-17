@@ -93,5 +93,5 @@ export const UPCOMING_CLASSES: ClassSession[] = [
   { id: 'c1', title: 'Morning Glory Strength', time: '05:30 AM', instructor: 'Coach Mark', duration: '60 min' },
   { id: 'c2', title: 'Functional Fitness', time: '08:00 AM', instructor: 'Coach Sarah', duration: '60 min' },
   { id: 'c3', title: 'Lunch Crunch HIIT', time: '12:00 PM', instructor: 'Coach Dave', duration: '45 min' },
-  { id: 'c4', title: 'Youth Boxing', time: '04:00 PM', instructor: 'Coach J', duration: '60 min' },
+  { id: 'c4', title: 'Youth Outreach', time: '04:00 PM', instructor: 'Coach J', duration: '60 min' },
 ];

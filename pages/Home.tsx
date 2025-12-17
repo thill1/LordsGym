@@ -39,7 +39,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" variant="primary" className="bg-white text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>
+              <Button size="lg" variant="primary" className="bg-white !text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>
                 Start Your Free Visit
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/shop')}>
@@ -49,19 +49,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
-
-      {/* Social Proof */}
-      <div className="bg-brand-charcoal py-8 border-b border-neutral-900">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-neutral-500 text-sm uppercase tracking-widest mb-4">Trusted by the Auburn Community</p>
-          <div className="flex justify-center gap-8 md:gap-16 opacity-60">
-             {/* Mock Logos */}
-             <div className="font-display font-bold text-2xl text-white">CITY<span className="text-neutral-500">DATA</span></div>
-             <div className="font-display font-bold text-2xl text-white">IRON<span className="text-neutral-500">CHURCH</span></div>
-             <div className="font-display font-bold text-2xl text-white">RECOVER<span className="text-neutral-500">AUBURN</span></div>
-          </div>
-        </div>
-      </div>
 
       {/* Programs Preview */}
       <Section id="programs">
@@ -143,8 +130,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
              <p className="text-neutral-400">Serving 500+ families weekly with fresh groceries and hot meals.</p>
            </div>
            <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-lg">
-             <div className="text-white text-4xl mb-4">🥊</div>
-             <h3 className="font-bold text-xl mb-2 text-white">Youth Boxing</h3>
+             <div className="text-white text-4xl mb-4">🤝</div>
+             <h3 className="font-bold text-xl mb-2 text-white">Youth Outreach</h3>
              <p className="text-neutral-400">Providing discipline, safety, and mentorship for at-risk teens.</p>
            </div>
            <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-lg">
@@ -179,7 +166,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <h2 className="text-5xl font-bold mb-6 text-white">Ready to Train With Purpose?</h2>
         <p className="text-xl text-neutral-200 mb-8">Join a community that fights for you, not against you.</p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-           <Button size="lg" className="bg-white text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>Join Now</Button>
+           <Button size="lg" className="bg-white !text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>Join Now</Button>
            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
         </div>
       </Section>
