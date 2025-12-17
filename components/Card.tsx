@@ -12,7 +12,7 @@ const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = fal
     : "";
 
   return (
-    <div className={`bg-white dark:bg-neutral-800 border-l-4 border-brand-gold shadow-md p-6 ${hoverClasses} ${className}`}>
+    <div className={`bg-white dark:bg-neutral-800 border-l-4 border-brand-charcoal dark:border-white shadow-md p-6 ${hoverClasses} ${className}`}>
       {children}
     </div>
   );

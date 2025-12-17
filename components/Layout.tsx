@@ -49,8 +49,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
               <button
                 key={item.path}
                 onClick={() => handleNavClick(item.path)}
-                className={`text-sm uppercase tracking-wide font-bold hover:text-brand-gold transition-colors ${
-                  currentPath === item.path ? 'text-brand-gold' : 'text-current'
+                className={`text-sm uppercase tracking-wide font-bold hover:text-black dark:hover:text-white transition-colors ${
+                  currentPath === item.path 
+                    ? 'text-black dark:text-white underline decoration-2 underline-offset-4' 
+                    : 'text-neutral-600 dark:text-neutral-400'
                 }`}
               >
                 {item.label}
@@ -61,8 +63,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             <Button size="sm" onClick={() => handleNavClick('/membership')}>Join Now</Button>
-            {/* Shopify Cart Icon Placeholder */}
-            <button className="relative p-2" aria-label="Cart" onClick={() => handleNavClick('/shop')}>
+            {/* Cart Icon */}
+            <button className="relative p-2 text-current hover:text-black dark:hover:text-white transition-colors" aria-label="Cart" onClick={() => handleNavClick('/shop')}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
@@ -74,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
              <ThemeToggle />
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2"
+              className="p-2 text-current"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isMobileMenuOpen ? (
@@ -96,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
                   key={item.path}
                   onClick={() => handleNavClick(item.path)}
                   className={`text-lg uppercase font-bold text-left py-2 ${
-                    currentPath === item.path ? 'text-brand-gold' : 'text-current'
+                    currentPath === item.path ? 'text-black dark:text-white pl-2 border-l-4 border-black dark:border-white' : 'text-neutral-600 dark:text-neutral-400'
                   }`}
                 >
                   {item.label}
@@ -116,7 +118,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
       </main>
 
       {/* Footer */}
-      <footer className="bg-brand-charcoal text-white pt-16 pb-8 border-t-4 border-brand-gold">
+      <footer className="bg-brand-charcoal text-white pt-16 pb-8 border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
           
           <div className="space-y-4">
@@ -127,37 +129,37 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           </div>
 
           <div>
-            <h4 className="text-lg font-bold mb-4 text-brand-gold">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-neutral-300">
-              <li><button onClick={() => handleNavClick('/programs')} className="hover:text-white">Classes</button></li>
-              <li><button onClick={() => handleNavClick('/membership')} className="hover:text-white">Membership</button></li>
-              <li><button onClick={() => handleNavClick('/community')} className="hover:text-white">Outreach</button></li>
-              <li><button onClick={() => handleNavClick('/shop')} className="hover:text-white">Merch Store</button></li>
-              <li><a href="#" className="hover:text-white">Member Login (Mindbody)</a></li>
+            <h4 className="text-lg font-bold mb-4 text-white">Quick Links</h4>
+            <ul className="space-y-2 text-sm text-neutral-400">
+              <li><button onClick={() => handleNavClick('/programs')} className="hover:text-white transition-colors">Classes</button></li>
+              <li><button onClick={() => handleNavClick('/membership')} className="hover:text-white transition-colors">Membership</button></li>
+              <li><button onClick={() => handleNavClick('/community')} className="hover:text-white transition-colors">Outreach</button></li>
+              <li><button onClick={() => handleNavClick('/shop')} className="hover:text-white transition-colors">Merch Store</button></li>
+              <li><a href="#" className="hover:text-white transition-colors">Member Login (Mindbody)</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-lg font-bold mb-4 text-brand-gold">Contact</h4>
-            <ul className="space-y-2 text-sm text-neutral-300">
+            <h4 className="text-lg font-bold mb-4 text-white">Contact</h4>
+            <ul className="space-y-2 text-sm text-neutral-400">
               <li className="flex items-start">
-                <span className="mr-2 text-brand-gold">📍</span>
+                <span className="mr-2 text-white">📍</span>
                 123 Faith Way, Auburn, CA 95603
               </li>
               <li className="flex items-center">
-                 <span className="mr-2 text-brand-gold">📞</span>
+                 <span className="mr-2 text-white">📞</span>
                  (530) 555-0123
               </li>
               <li className="flex items-center">
-                 <span className="mr-2 text-brand-gold">✉️</span>
+                 <span className="mr-2 text-white">✉️</span>
                  info@lordsgymauburn.com
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-lg font-bold mb-4 text-brand-gold">Hours</h4>
-            <ul className="space-y-1 text-sm text-neutral-300">
+            <h4 className="text-lg font-bold mb-4 text-white">Hours</h4>
+            <ul className="space-y-1 text-sm text-neutral-400">
               <li className="flex justify-between"><span>Mon - Fri</span> <span>5am - 10pm</span></li>
               <li className="flex justify-between"><span>Saturday</span> <span>7am - 8pm</span></li>
               <li className="flex justify-between"><span>Sunday</span> <span>1pm - 6pm</span></li>
@@ -165,14 +167,14 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
             <div className="mt-6">
               <span className="text-xs uppercase tracking-widest text-neutral-500">Follow Us</span>
               <div className="flex space-x-4 mt-2">
-                 <div className="w-8 h-8 bg-neutral-700 rounded-full flex items-center justify-center">FB</div>
-                 <div className="w-8 h-8 bg-neutral-700 rounded-full flex items-center justify-center">IG</div>
+                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors">FB</div>
+                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors">IG</div>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-neutral-800 text-center text-xs text-neutral-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-neutral-900 text-center text-xs text-neutral-500">
           <p>&copy; {new Date().getFullYear()} Lord's Gym Auburn. All rights reserved.</p>
         </div>
       </footer>

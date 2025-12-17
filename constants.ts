@@ -61,31 +61,31 @@ export const PROGRAMS: Program[] = [
 export const FEATURED_PRODUCTS: Product[] = [
   {
     id: 'p1',
-    title: 'Core Values Hoodie',
-    price: 55.00,
+    title: 'Crimson Deadlift Tank',
+    price: 28.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p2',
-    title: 'Performance Tee - Black',
+    title: 'Sin of the World Tee',
     price: 32.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p3',
-    title: 'LG Camelback Water Bottle',
-    price: 24.00,
-    category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1602143407151-011141959309?auto=format&fit=crop&w=400&q=80'
+    title: 'Iron Sharpens Iron Tee',
+    price: 32.00,
+    category: 'Apparel',
+    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p4',
-    title: 'Snapback Cap',
-    price: 28.00,
-    category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=400&q=80'
+    title: 'Apply Pressure Tee',
+    price: 32.00,
+    category: 'Apparel',
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
   }
 ];
 

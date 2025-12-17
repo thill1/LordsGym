@@ -11,7 +11,7 @@ const Logo: React.FC<LogoProps> = ({ className = '', variant = 'full' }) => {
       {/* Icon Mark: Cross + L Motif */}
       <svg
         viewBox="0 0 100 100"
-        className="w-10 h-10 text-brand-gold fill-current"
+        className="w-10 h-10 text-current fill-current"
         xmlns="http://www.w3.org/2000/svg"
       >
         <path d="M20,10 L35,10 L35,60 L70,60 L70,75 L20,75 Z" /> {/* L Shape */}
@@ -22,7 +22,7 @@ const Logo: React.FC<LogoProps> = ({ className = '', variant = 'full' }) => {
       {variant === 'full' && (
         <div className="flex flex-col leading-none uppercase font-display tracking-widest">
           <span className="text-xl font-bold dark:text-white text-brand-charcoal">Lord's</span>
-          <span className="text-sm font-bold text-brand-gold">Gym</span>
+          <span className="text-sm font-bold text-neutral-500 dark:text-neutral-400">Gym</span>
         </div>
       )}
     </div>

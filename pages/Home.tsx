@@ -13,35 +13,36 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center">
+      <section className="relative h-screen flex items-center bg-black">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80" 
-            alt="Gym interior" 
-            className="w-full h-full object-cover"
+            src="https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80" 
+            alt="Weightlifting" 
+            className="w-full h-full object-cover grayscale opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+          {/* Gradient Overlay - reduced opacity to ensure image is visible */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
           <div className="max-w-2xl">
-            <div className="inline-block border-l-4 border-brand-gold pl-4 mb-6">
-              <p className="text-brand-gold font-bold tracking-widest uppercase text-sm">Founded in Faith. Forged in Iron.</p>
+            <div className="inline-block border-l-4 border-white pl-4 mb-6">
+              <p className="text-white font-bold tracking-widest uppercase text-sm">Founded in Faith. Forged in Iron.</p>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
               Train with Purpose. <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">Live with Faith.</span>
+              <span className="text-neutral-400">Live with Faith.</span>
             </h1>
             <p className="text-xl text-neutral-300 mb-8 max-w-lg">
               Welcome to Lord's Gym Auburn. A community dedicated to building strength inside and out. Join us in our mission of restoration and discipline.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" onClick={() => onNavigate('/membership')}>
+              <Button size="lg" variant="primary" className="bg-white text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>
                 Start Your Free Visit
               </Button>
-              <Button size="lg" variant="outline" onClick={() => onNavigate('/shop')}>
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/shop')}>
                 Shop Merch
               </Button>
             </div>
@@ -50,14 +51,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       </section>
 
       {/* Social Proof */}
-      <div className="bg-brand-charcoal py-8 border-b border-neutral-800">
+      <div className="bg-brand-charcoal py-8 border-b border-neutral-900">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-neutral-400 text-sm uppercase tracking-widest mb-4">Trusted by the Auburn Community</p>
-          <div className="flex justify-center gap-8 md:gap-16 opacity-50 grayscale">
+          <p className="text-neutral-500 text-sm uppercase tracking-widest mb-4">Trusted by the Auburn Community</p>
+          <div className="flex justify-center gap-8 md:gap-16 opacity-60">
              {/* Mock Logos */}
-             <div className="font-display font-bold text-2xl text-white">CITY<span className="text-brand-gold">DATA</span></div>
-             <div className="font-display font-bold text-2xl text-white">IRON<span className="text-brand-gold">CHURCH</span></div>
-             <div className="font-display font-bold text-2xl text-white">RECOVER<span className="text-brand-gold">AUBURN</span></div>
+             <div className="font-display font-bold text-2xl text-white">CITY<span className="text-neutral-500">DATA</span></div>
+             <div className="font-display font-bold text-2xl text-white">IRON<span className="text-neutral-500">CHURCH</span></div>
+             <div className="font-display font-bold text-2xl text-white">RECOVER<span className="text-neutral-500">AUBURN</span></div>
           </div>
         </div>
       </div>
@@ -72,9 +73,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {PROGRAMS.map((program) => (
-            <Card key={program.id} hoverEffect className="group overflow-hidden p-0">
-               <div className="h-48 overflow-hidden">
-                 <img src={program.image} alt={program.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+            <Card key={program.id} hoverEffect className="group overflow-hidden p-0 border-l-0">
+               <div className="h-48 overflow-hidden relative">
+                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                 <img src={program.image} alt={program.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 grayscale" />
                </div>
                <div className="p-6">
                  <h3 className="text-xl font-bold mb-2">{program.title}</h3>
@@ -99,7 +101,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 <div key={cls.id} className="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-sm">
                    <div>
                      <div className="font-bold text-lg">{cls.time}</div>
-                     <div className="text-sm font-semibold text-brand-gold">{cls.title}</div>
+                     <div className="text-sm font-semibold text-black dark:text-white">{cls.title}</div>
                    </div>
                    <div className="text-right">
                      <div className="text-sm text-neutral-500">{cls.instructor}</div>
@@ -114,15 +116,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
           
           <div className="relative">
-             <div className="absolute -inset-4 bg-brand-gold opacity-20 rounded-xl blur-lg"></div>
+             <div className="absolute -inset-4 bg-black/10 dark:bg-white/10 rounded-xl blur-lg"></div>
              <img 
                src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=800&q=80" 
                alt="Group Class" 
-               className="relative rounded-xl shadow-2xl"
+               className="relative rounded-xl shadow-2xl grayscale"
              />
-             <div className="absolute bottom-8 left-8 right-8 bg-white/90 dark:bg-neutral-900/90 backdrop-blur p-6 rounded-lg border-l-4 border-brand-gold">
+             <div className="absolute bottom-8 left-8 right-8 bg-white/95 dark:bg-neutral-900/95 backdrop-blur p-6 rounded-lg border-l-4 border-black dark:border-white">
                <p className="italic font-medium text-lg">"Iron sharpens iron, and one man sharpens another."</p>
-               <p className="text-xs font-bold mt-2 uppercase text-brand-gold">Proverbs 27:17</p>
+               <p className="text-xs font-bold mt-2 uppercase text-neutral-500">Proverbs 27:17</p>
              </div>
           </div>
         </div>
@@ -135,24 +137,24 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           Lord's Gym isn't just a gym. We are a ministry. A portion of every membership goes directly to feeding the hungry and supporting youth mentorship in Auburn.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
-           <div className="p-6 bg-neutral-800 rounded-lg">
-             <div className="text-brand-gold text-4xl mb-4">🍞</div>
-             <h3 className="font-bold text-xl mb-2">Food Distribution</h3>
+           <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-lg">
+             <div className="text-white text-4xl mb-4">🍞</div>
+             <h3 className="font-bold text-xl mb-2 text-white">Food Distribution</h3>
              <p className="text-neutral-400">Serving 500+ families weekly with fresh groceries and hot meals.</p>
            </div>
-           <div className="p-6 bg-neutral-800 rounded-lg">
-             <div className="text-brand-gold text-4xl mb-4">🥊</div>
-             <h3 className="font-bold text-xl mb-2">Youth Boxing</h3>
+           <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-lg">
+             <div className="text-white text-4xl mb-4">🥊</div>
+             <h3 className="font-bold text-xl mb-2 text-white">Youth Boxing</h3>
              <p className="text-neutral-400">Providing discipline, safety, and mentorship for at-risk teens.</p>
            </div>
-           <div className="p-6 bg-neutral-800 rounded-lg">
-             <div className="text-brand-gold text-4xl mb-4">🙏</div>
-             <h3 className="font-bold text-xl mb-2">Recovery Support</h3>
+           <div className="p-6 bg-neutral-900 border border-neutral-800 rounded-lg">
+             <div className="text-white text-4xl mb-4">🙏</div>
+             <h3 className="font-bold text-xl mb-2 text-white">Recovery Support</h3>
              <p className="text-neutral-400">Fitness as a tool for sobriety and mental health restoration.</p>
            </div>
         </div>
         <div className="mt-12">
-           <Button variant="outline" onClick={() => onNavigate('/community')}>See Our Impact</Button>
+           <Button variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/community')}>See Our Impact</Button>
         </div>
       </Section>
 
@@ -174,11 +176,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       {/* Call to Action */}
       <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-32">
-        <h2 className="text-5xl font-bold mb-6">Ready to Train With Purpose?</h2>
+        <h2 className="text-5xl font-bold mb-6 text-white">Ready to Train With Purpose?</h2>
         <p className="text-xl text-neutral-200 mb-8">Join a community that fights for you, not against you.</p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-           <Button size="lg" onClick={() => onNavigate('/membership')}>Join Now</Button>
-           <Button size="lg" variant="outline" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
+           <Button size="lg" className="bg-white text-black hover:bg-neutral-200" onClick={() => onNavigate('/membership')}>Join Now</Button>
+           <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
         </div>
       </Section>
     </>

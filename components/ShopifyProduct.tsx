@@ -12,7 +12,7 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
           alt={product.title} 
           className="h-full w-full object-cover object-center lg:h-full lg:w-full group-hover:opacity-75 transition-opacity"
         />
-        <div className="absolute top-2 right-2 bg-brand-charcoal text-white text-xs font-bold px-2 py-1 rounded">
+        <div className="absolute top-2 right-2 bg-black text-white text-xs font-bold px-2 py-1 rounded-sm">
           NEW
         </div>
       </div>
@@ -26,16 +26,11 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
           </h3>
           <p className="mt-1 text-sm text-neutral-500">{product.category}</p>
         </div>
-        <p className="text-sm font-bold text-brand-gold">${product.price.toFixed(2)}</p>
+        <p className="text-sm font-bold text-black dark:text-white">${product.price.toFixed(2)}</p>
       </div>
       
-      {/* 
-        INTEGRATION NOTE:
-        This button simulates adding to cart via Shopify Storefront API.
-        Ensure to hook this up to `shopify-buy` SDK client.
-      */}
       <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-20 left-4 right-4 z-20">
-         <Button size="sm" fullWidth className="shadow-lg">Add to Cart</Button>
+         <Button size="sm" fullWidth className="shadow-lg bg-white text-black hover:bg-neutral-200">Add to Cart</Button>
       </div>
     </div>
   );

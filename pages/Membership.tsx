@@ -21,25 +21,25 @@ const Membership: React.FC = () => {
             <h3 className="text-xl font-bold uppercase tracking-widest text-neutral-500 mb-2">Day Pass</h3>
             <div className="text-4xl font-bold mb-6 text-brand-charcoal dark:text-white">$15<span className="text-lg text-neutral-400 font-normal">/day</span></div>
             <ul className="space-y-3 mb-8 text-sm text-left w-full px-4">
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Full Gym Access</li>
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Locker Room Access</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Full Gym Access</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Locker Room Access</li>
               <li className="flex items-center"><span className="text-neutral-300 mr-2">×</span> Group Classes</li>
             </ul>
             <Button variant="outline" fullWidth>Buy Pass</Button>
           </Card>
 
           {/* Plan 2 (Featured) */}
-          <div className="bg-brand-charcoal text-white border-4 border-brand-gold shadow-2xl p-8 rounded-lg transform md:-translate-y-4 relative flex flex-col items-center text-center">
-            <div className="absolute top-0 bg-brand-gold text-white text-xs font-bold px-3 py-1 uppercase tracking-wider transform -translate-y-1/2 rounded">Most Popular</div>
-            <h3 className="text-2xl font-bold uppercase tracking-widest text-brand-gold mb-2">Standard</h3>
+          <div className="bg-brand-charcoal text-white border-4 border-white dark:border-neutral-500 shadow-2xl p-8 rounded-lg transform md:-translate-y-4 relative flex flex-col items-center text-center">
+            <div className="absolute top-0 bg-white text-black text-xs font-bold px-3 py-1 uppercase tracking-wider transform -translate-y-1/2 rounded-sm border border-brand-charcoal">Most Popular</div>
+            <h3 className="text-2xl font-bold uppercase tracking-widest text-white mb-2">Standard</h3>
             <div className="text-5xl font-bold mb-6">$45<span className="text-lg text-neutral-400 font-normal">/mo</span></div>
             <ul className="space-y-4 mb-10 text-sm text-left w-full px-4">
-              <li className="flex items-center"><span className="text-brand-gold mr-2">✓</span> Unlimited Gym Access</li>
-              <li className="flex items-center"><span className="text-brand-gold mr-2">✓</span> 5am - 10pm Access</li>
-              <li className="flex items-center"><span className="text-brand-gold mr-2">✓</span> 1 Guest Pass / Month</li>
+              <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> Unlimited Gym Access</li>
+              <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> 5am - 10pm Access</li>
+              <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> 1 Guest Pass / Month</li>
               <li className="flex items-center"><span className="text-neutral-500 mr-2">×</span> Unlimited Classes</li>
             </ul>
-            <Button variant="primary" fullWidth size="lg">Join Now</Button>
+            <Button variant="primary" fullWidth size="lg" className="bg-white text-black hover:bg-neutral-200 border-none">Join Now</Button>
             <p className="mt-4 text-xs text-neutral-400">billed monthly. cancel anytime.</p>
           </div>
 
@@ -48,10 +48,10 @@ const Membership: React.FC = () => {
             <h3 className="text-xl font-bold uppercase tracking-widest text-neutral-500 mb-2">All Access</h3>
             <div className="text-4xl font-bold mb-6 text-brand-charcoal dark:text-white">$75<span className="text-lg text-neutral-400 font-normal">/mo</span></div>
             <ul className="space-y-3 mb-8 text-sm text-left w-full px-4">
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Unlimited Gym Access</li>
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Unlimited Group Classes</li>
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Sauna & Recovery Zone</li>
-              <li className="flex items-center"><span className="text-green-500 mr-2">✓</span> Merch Discount (10%)</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Unlimited Gym Access</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Unlimited Group Classes</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Sauna & Recovery Zone</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Merch Discount (10%)</li>
             </ul>
             <Button variant="outline" fullWidth>Join Now</Button>
           </Card>

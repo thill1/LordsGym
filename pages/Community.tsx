@@ -19,7 +19,7 @@ const Community: React.FC = () => {
           {/* Initiative 1 */}
           <div className="flex flex-col md:flex-row items-center gap-12">
              <div className="w-full md:w-1/2">
-               <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80" alt="Food Distribution" className="rounded-lg shadow-xl" />
+               <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80" alt="Food Distribution" className="rounded-lg shadow-xl grayscale" />
              </div>
              <div className="w-full md:w-1/2">
                <h2 className="text-3xl font-bold mb-4">The Lord's Table</h2>
@@ -33,7 +33,7 @@ const Community: React.FC = () => {
           {/* Initiative 2 */}
           <div className="flex flex-col md:flex-row-reverse items-center gap-12">
              <div className="w-full md:w-1/2">
-               <img src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80" alt="Youth Boxing" className="rounded-lg shadow-xl" />
+               <img src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=800&q=80" alt="Youth Boxing" className="rounded-lg shadow-xl grayscale" />
              </div>
              <div className="w-full md:w-1/2">
                <h2 className="text-3xl font-bold mb-4">Gloves Up, Guns Down</h2>
