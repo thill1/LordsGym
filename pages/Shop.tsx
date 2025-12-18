@@ -9,31 +9,31 @@ const ALL_PRODUCTS: Product[] = [
   ...FEATURED_PRODUCTS,
   {
     id: 'p5',
-    title: 'Endurance Capital Runner',
+    title: 'Run The Race (Heb 12:1) Tee',
     price: 30.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p6',
-    title: 'Cross Bearer Squat Tee',
+    title: 'Carry Your Cross Tee',
     price: 32.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p7',
-    title: 'Overhead Press Cross Tee',
+    title: 'Lifted High Performance Tee',
     price: 32.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1503341455253-b2e72333dbdb?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p8',
     title: 'Scripture Wristbands (3-Pack)',
     price: 10.00,
     category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1534438097545-a28bc31c8938?auto=format&fit=crop&w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80'
   }
 ];
 

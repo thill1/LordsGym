@@ -160,15 +160,18 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           <div>
             <h4 className="text-lg font-bold mb-4 text-white">Hours</h4>
             <ul className="space-y-1 text-sm text-neutral-400">
-              <li className="flex justify-between"><span>Mon - Fri</span> <span>5am - 10pm</span></li>
-              <li className="flex justify-between"><span>Saturday</span> <span>7am - 8pm</span></li>
-              <li className="flex justify-between"><span>Sunday</span> <span>1pm - 6pm</span></li>
+              <li className="flex justify-between items-center text-white font-bold">
+                <span>OPEN 24/7</span>
+              </li>
+              <li className="text-xs text-neutral-500 mt-2">
+                Member Keycard Access 24 Hours / 365 Days
+              </li>
             </ul>
             <div className="mt-6">
               <span className="text-xs uppercase tracking-widest text-neutral-500">Follow Us</span>
               <div className="flex space-x-4 mt-2">
-                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors">FB</div>
-                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors">IG</div>
+                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors cursor-pointer">FB</div>
+                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors cursor-pointer">IG</div>
               </div>
             </div>
           </div>

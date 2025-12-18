@@ -30,12 +30,13 @@ const Contact: React.FC = () => {
               </div>
               
               <div className="pt-8">
-                <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-4">Staffed Hours</h3>
+                <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-4">Operating Hours</h3>
                 <ul className="space-y-2">
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1"><span>Mon - Fri</span> <span>5:00 AM - 10:00 PM</span></li>
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1"><span>Saturday</span> <span>7:00 AM - 8:00 PM</span></li>
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1"><span>Sunday</span> <span>1:00 PM - 6:00 PM</span></li>
+                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1 font-bold"><span>Member Access</span> <span>24 HOURS / 7 DAYS</span></li>
+                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1 mt-4"><span>Staffed: Mon - Fri</span> <span>8:00 AM - 8:00 PM</span></li>
+                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1"><span>Staffed: Sat - Sun</span> <span>9:00 AM - 2:00 PM</span></li>
                 </ul>
+                <p className="text-xs text-neutral-500 mt-2 italic">Staffed hours are for tours, sign-ups, and merchandise sales.</p>
               </div>
             </div>
           </div>

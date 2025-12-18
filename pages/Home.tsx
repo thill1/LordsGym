@@ -149,8 +149,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       <Section id="shop-preview">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Gear Up</h2>
-            <p className="text-neutral-500">Rep the mission. High-quality apparel for training and life.</p>
+            <h2 className="text-3xl font-bold mb-2">Faith & Fitness Apparel</h2>
+            <p className="text-neutral-500">Wear your testimony. Christian-based t-shirts designed for the gym and the streets.</p>
           </div>
           <Button variant="ghost" onClick={() => onNavigate('/shop')}>View All Products &rarr;</Button>
         </div>

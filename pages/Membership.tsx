@@ -22,7 +22,7 @@ const Membership: React.FC = () => {
             <div className="text-4xl font-bold mb-6 text-brand-charcoal dark:text-white">$15<span className="text-lg text-neutral-400 font-normal">/day</span></div>
             <ul className="space-y-3 mb-8 text-sm text-left w-full px-4">
               <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Full Gym Access</li>
-              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Locker Room Access</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Staffed Hours Only</li>
               <li className="flex items-center"><span className="text-neutral-300 mr-2">×</span> Group Classes</li>
             </ul>
             <Button variant="outline" fullWidth>Buy Pass</Button>
@@ -35,7 +35,7 @@ const Membership: React.FC = () => {
             <div className="text-5xl font-bold mb-6">$45<span className="text-lg text-neutral-400 font-normal">/mo</span></div>
             <ul className="space-y-4 mb-10 text-sm text-left w-full px-4">
               <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> Unlimited Gym Access</li>
-              <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> 5am - 10pm Access</li>
+              <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> 24/7 Keycard Entry</li>
               <li className="flex items-center"><span className="text-white mr-2 font-bold">✓</span> 1 Guest Pass / Month</li>
               <li className="flex items-center"><span className="text-neutral-500 mr-2">×</span> Unlimited Classes</li>
             </ul>
@@ -49,8 +49,8 @@ const Membership: React.FC = () => {
             <div className="text-4xl font-bold mb-6 text-brand-charcoal dark:text-white">$75<span className="text-lg text-neutral-400 font-normal">/mo</span></div>
             <ul className="space-y-3 mb-8 text-sm text-left w-full px-4">
               <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Unlimited Gym Access</li>
+              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> 24/7 Keycard Entry</li>
               <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Unlimited Group Classes</li>
-              <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Sauna & Recovery Zone</li>
               <li className="flex items-center"><span className="text-neutral-800 dark:text-neutral-200 mr-2 font-bold">✓</span> Merch Discount (10%)</li>
             </ul>
             <Button variant="outline" fullWidth>Join Now</Button>
@@ -66,6 +66,10 @@ const Membership: React.FC = () => {
               <div>
                 <h4 className="font-bold text-lg mb-2">Is there an initiation fee?</h4>
                 <p className="text-neutral-500">We have a small $25 setup fee to cover your keycard and administrative setup. Occasionally we waive this during promotions!</p>
+              </div>
+              <div>
+                <h4 className="font-bold text-lg mb-2">How does 24/7 access work?</h4>
+                <p className="text-neutral-500">Members receive a personal keycard (or mobile app access) that unlocks our front doors at any time, day or night, ensuring you can train on your schedule.</p>
               </div>
               <div>
                 <h4 className="font-bold text-lg mb-2">Do I have to be Christian to join?</h4>

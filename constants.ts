@@ -61,14 +61,14 @@ export const PROGRAMS: Program[] = [
 export const FEATURED_PRODUCTS: Product[] = [
   {
     id: 'p1',
-    title: 'Crimson Deadlift Tank',
+    title: 'Redeemed Strength Tank',
     price: 28.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p2',
-    title: 'Sin of the World Tee',
+    title: 'Not Of This World Tee',
     price: 32.00,
     category: 'Apparel',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
@@ -78,14 +78,14 @@ export const FEATURED_PRODUCTS: Product[] = [
     title: 'Iron Sharpens Iron Tee',
     price: 32.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
     id: 'p4',
-    title: 'Apply Pressure Tee',
+    title: 'Faith Over Fear Tee',
     price: 32.00,
     category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
