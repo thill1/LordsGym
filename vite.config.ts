@@ -1,4 +1,3 @@
-cat > vite.config.ts <<'TS'
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { defineConfig } from "vite";
@@ -21,4 +20,3 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
-TS
