@@ -144,7 +144,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
             <ul className="space-y-2 text-sm text-neutral-400">
               <li className="flex items-start">
                 <span className="mr-2 text-white">📍</span>
-                123 Faith Way, Auburn, CA 95603
+                258 Elm Ave, Auburn, CA 95603
               </li>
               <li className="flex items-center">
                  <span className="mr-2 text-white">📞</span>

@@ -18,7 +18,7 @@ const Contact: React.FC = () => {
             <div className="space-y-6 text-lg">
               <div>
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-1">Address</h3>
-                <p>123 Faith Way<br/>Auburn, CA 95603</p>
+                <p>258 Elm Ave<br/>Auburn, CA 95603</p>
               </div>
               <div>
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-1">Phone</h3>
