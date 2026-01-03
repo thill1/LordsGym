@@ -1,0 +1,51 @@
+name: Sync from AI Studio repo and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  sync_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout production repo
+        uses: actions/checkout@v4
+
+      - name: Pull source repo (AI Studio)
+        run: |
+          rm -rf ./source
+          git clone --depth=1 https://github.com/thill1/LordsGym.git ./source
+          rsync -av --delete --exclude ".github" ./source/ ./
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: sync_build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
