@@ -31,9 +31,25 @@ jobs:
           ref: LordsGym-prod
           path: prod
 
-      - name: Apply production overrides
+      - name: Apply production overrides (copy required files)
         run: |
-          rsync -av prod/prod_overrides/ app/
+          set -e
+
+          # Validate override files exist on LordsGym-prod
+          test -f "prod/prod_overrides/vite.config.ts" || (echo "Missing: prod_overrides/vite.config.ts on LordsGym-prod" && exit 1)
+          test -f "prod/prod_overrides/components/Logo.tsx" || (echo "Missing: prod_overrides/components/Logo.tsx on LordsGym-prod" && exit 1)
+          test -f "prod/prod_overrides/assets/logo/lords-gym-logo.jpg" || (echo "Missing: prod_overrides/assets/logo/lords-gym-logo.jpg on LordsGym-prod" && exit 1)
+
+          # Copy overrides into the AI Studio app tree
+          cp -f "prod/prod_overrides/vite.config.ts" "app/vite.config.ts"
+
+          mkdir -p "app/components"
+          cp -f "prod/prod_overrides/components/Logo.tsx" "app/components/Logo.tsx"
+
+          mkdir -p "app/assets/logo"
+          cp -f "prod/prod_overrides/assets/logo/lords-gym-logo.jpg" "app/assets/logo/lords-gym-logo.jpg"
+
+          echo "Production overrides applied."
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -51,14 +67,17 @@ jobs:
       - name: Sanity check dist/index.html
         run: |
           set -e
-          test -f "app/dist/index.html"
+          test -f "app/dist/index.html" || (echo "Missing: app/dist/index.html" && exit 1)
+
+          # If dist references index.tsx, you deployed source HTML (bad)
           if grep -q "index.tsx" app/dist/index.html; then
             echo "ERROR: dist/index.html references index.tsx (not a production build)."
             exit 1
           fi
+
           echo "OK: dist/index.html looks like a production build."
 
-      - name: Upload Pages artifact
+      - name: Upload Pages artifact (dist only)
         uses: actions/upload-pages-artifact@v3
         with:
           path: app/dist
