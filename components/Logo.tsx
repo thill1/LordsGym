@@ -12,8 +12,6 @@ export default function Logo({
   variant = "nav",
   alt = "Lord's Gym Auburn",
 }: LogoProps) {
-  // NAV: small + clean
-  // FOOTER: slightly larger
   const sizeClass =
     variant === "icon"
       ? "h-9 w-9"
