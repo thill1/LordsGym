@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Section from '../components/Section';
-import ContactForm from '../components/GHLForm';
+import ContactForm from '../components/ContactForm';
 
 const Contact: React.FC = () => {
   return (

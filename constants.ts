@@ -6,8 +6,6 @@ export const APP_NAME = "Lord's Gym";
 // INTEGRATION KEYS
 export const SHOPIFY_STORE_URL = "https://lords-gym-auburn.myshopify.com";
 export const MINDBODY_SITE_ID = "123456"; // Replace with your real MindBody Site ID
-export const GHL_FORM_ID = "YOUR_GHL_FORM_ID"; // Replace with your GHL Form ID
-export const GHL_WIDGET_KEY = "YOUR_GHL_WIDGET_KEY";
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },
