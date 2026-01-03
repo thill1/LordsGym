@@ -107,7 +107,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       </Section>
 
       {/* Call to Action */}
-      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-40">
+      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-40 !bg-top">
         <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/30 p-8 rounded-2xl border border-white/10">
           <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 text-white uppercase leading-none drop-shadow-xl">
             Ready to Train With <span className="text-brand-red">Purpose?</span>
