@@ -1,18 +1,19 @@
-import { NavItem, Testimonial, Program, Product, ClassSession } from './types';
+
+import { NavItem, Testimonial, Product, Program } from './types';
 
 export const APP_NAME = "Lord's Gym";
 
-// Placeholder keys for integrations
+// INTEGRATION KEYS
 export const SHOPIFY_STORE_URL = "https://lords-gym-auburn.myshopify.com";
-export const MINDBODY_SITE_ID = "123456";
+export const MINDBODY_SITE_ID = "123456"; // Replace with your real MindBody Site ID
+export const GHL_FORM_ID = "YOUR_GHL_FORM_ID"; // Replace with your GHL Form ID
+export const GHL_WIDGET_KEY = "YOUR_GHL_WIDGET_KEY";
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },
   { label: 'Membership', path: '/membership' },
-  { label: 'Programs', path: '/programs' },
-  { label: 'Community', path: '/community' },
+  { label: '1-on-1 Training', path: '/training' },
   { label: 'Shop', path: '/shop' },
-  { label: 'About', path: '/about' },
   { label: 'Contact', path: '/contact' },
 ];
 
@@ -33,65 +34,59 @@ export const TESTIMONIALS: Testimonial[] = [
     id: 3,
     name: "Pastor David",
     role: "Community Partner",
-    quote: "Seeing the youth mentorship programs in action is inspiring. This gym is a pillar of light in our city."
-  }
-];
-
-export const PROGRAMS: Program[] = [
-  {
-    id: 'strength',
-    title: 'Strength & Conditioning',
-    description: 'Functional fitness built for real life. Heavy compound movements, mobility, and metabolic conditioning.',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'youth',
-    title: 'Youth Mentorship',
-    description: 'Building the next generation through discipline, sports, and guidance. Ages 12-18.',
-    image: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'recovery',
-    title: 'Recovery Strong',
-    description: 'A supportive fitness environment for those in addiction recovery. Heal the body, renew the mind.',
-    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=800&q=80'
+    quote: "The facility provides a safe environment for youth and adults alike to build discipline."
   }
 ];
 
 export const FEATURED_PRODUCTS: Product[] = [
   {
     id: 'p1',
-    title: 'Redeemed Strength Tank',
-    price: 28.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'p2',
-    title: 'Not Of This World Tee',
+    title: 'Redeemed Strength Tee',
     price: 32.00,
     category: 'Apparel',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 'p3',
+    id: 'p2',
     title: 'Iron Sharpens Iron Tee',
     price: 32.00,
     category: 'Apparel',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 'p4',
+    id: 'p3',
     title: 'Faith Over Fear Tee',
+    price: 32.00,
+    category: 'Apparel',
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'p4',
+    title: 'Carry Your Cross Tee',
     price: 32.00,
     category: 'Apparel',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
-export const UPCOMING_CLASSES: ClassSession[] = [
-  { id: 'c1', title: 'Morning Glory Strength', time: '05:30 AM', instructor: 'Coach Mark', duration: '60 min' },
-  { id: 'c2', title: 'Functional Fitness', time: '08:00 AM', instructor: 'Coach Sarah', duration: '60 min' },
-  { id: 'c3', title: 'Lunch Crunch HIIT', time: '12:00 PM', instructor: 'Coach Dave', duration: '45 min' },
-  { id: 'c4', title: 'Youth Outreach', time: '04:00 PM', instructor: 'Coach J', duration: '60 min' },
+// Added PROGRAMS to fix the missing export error in Programs.tsx
+export const PROGRAMS: Program[] = [
+  {
+    id: 'powerlifting',
+    title: 'Powerlifting Foundations',
+    description: 'Master the squat, bench, and deadlift with technical precision and progressive overload.',
+    image: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'bodybuilding',
+    title: 'Hypertrophy & Aesthetics',
+    description: 'Sculpt your physique with high-volume training focused on muscle growth and symmetry.',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'functional',
+    title: 'Functional Fitness',
+    description: 'Training for the real world. Improve mobility, core stability, and cardiovascular health.',
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80'
+  }
 ];

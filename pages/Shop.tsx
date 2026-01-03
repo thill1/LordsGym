@@ -41,7 +41,7 @@ const Shop: React.FC = () => {
   return (
     <>
       <Section bg="dark" className="pt-32 pb-16 text-center">
-        <h1 className="text-5xl font-bold mb-4">Lord's Gym Store</h1>
+        <h1 className="text-5xl font-bold mb-4 uppercase"><span className="text-brand-red">Lord's</span> Gym Store</h1>
         <p className="text-xl text-neutral-400">Wear the mission. All proceeds support our outreach programs.</p>
       </Section>
 
@@ -49,13 +49,13 @@ const Shop: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar Filters */}
           <div className="w-full md:w-64 flex-shrink-0">
-            <h3 className="font-bold text-lg mb-4 border-b border-neutral-200 dark:border-neutral-700 pb-2">Collections</h3>
+            <h3 className="font-bold text-lg mb-4 border-b-2 border-brand-red dark:border-brand-red pb-2 uppercase tracking-tighter">Collections</h3>
             <ul className="space-y-2">
-              <li><button className="text-black dark:text-white font-bold">All Products</button></li>
-              <li><button className="text-neutral-500 hover:text-black dark:hover:text-white">Men's Apparel</button></li>
-              <li><button className="text-neutral-500 hover:text-black dark:hover:text-white">Women's Apparel</button></li>
-              <li><button className="text-neutral-500 hover:text-black dark:hover:text-white">Accessories</button></li>
-              <li><button className="text-neutral-500 hover:text-black dark:hover:text-white">Supplements</button></li>
+              <li><button className="text-brand-red font-bold">All Products</button></li>
+              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Men's Apparel</button></li>
+              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Women's Apparel</button></li>
+              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Accessories</button></li>
+              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Supplements</button></li>
             </ul>
           </div>
 

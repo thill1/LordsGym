@@ -1,0 +1,72 @@
+<!-- STICKY HEADER BLOCK -->
+<header id="main-header" class="ghl-header">
+    <div class="ghl-nav-container">
+        <!-- LOGO -->
+        <a href="/" class="ghl-logo">
+            <svg viewBox="0 0 100 100" style="width: 35px; height: 35px; fill: currentColor;">
+                <path d="M20,10 L35,10 L35,60 L70,60 L70,75 L20,75 Z" />
+                <rect x="40" y="20" width="15" height="50" />
+                <rect x="25" y="35" width="45" height="15" />
+            </svg>
+            <div class="ghl-logo-text">
+                <span class="ghl-logo-main">Lord's</span>
+                <span class="ghl-logo-sub">Gym</span>
+            </div>
+        </a>
+
+        <!-- NAVIGATION LINKS -->
+        <nav class="ghl-nav-links">
+            <a href="/" class="ghl-nav-link">Home</a>
+            <a href="/membership" class="ghl-nav-link">Membership</a>
+            <a href="/programs" class="ghl-nav-link">Programs</a>
+            <a href="/shop" class="ghl-nav-link">Shop</a>
+            <a href="/contact" class="ghl-nav-link">Contact</a>
+        </nav>
+
+        <!-- CTA BUTTONS -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="/membership" class="ghl-btn ghl-btn-primary" style="padding: 8px 20px; font-size: 12px;">Join Now</a>
+            <!-- MOBILE MENU BUTTON (SVG Only) -->
+            <div class="mobile-toggle" style="display: block; cursor: pointer;" onclick="toggleMobileMenu()">
+                <svg style="width: 24px; height: 24px; display: block;" id="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- MOBILE MENU OVERLAY (HIDDEN BY DEFAULT) -->
+<div id="mobile-menu" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; padding: 40px; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center;">
+    <div onclick="toggleMobileMenu()" style="position: absolute; top: 20px; right: 20px; font-size: 30px; cursor: pointer;">&times;</div>
+    <a href="/" class="ghl-nav-link" style="font-size: 24px;">Home</a>
+    <a href="/membership" class="ghl-nav-link" style="font-size: 24px;">Membership</a>
+    <a href="/programs" class="ghl-nav-link" style="font-size: 24px;">Programs</a>
+    <a href="/shop" class="ghl-nav-link" style="font-size: 24px;">Shop</a>
+    <a href="/contact" class="ghl-nav-link" style="font-size: 24px;">Contact</a>
+    <a href="/membership" class="ghl-btn ghl-btn-primary" style="width: 100%; margin-top: 20px;">Join Now</a>
+</div>
+
+<script>
+    // Scroll Effect
+    window.onscroll = function() {
+        var header = document.getElementById("main-header");
+        if (window.pageYOffset > 50) {
+            header.classList.add("scrolled");
+        } else {
+            header.classList.remove("scrolled");
+        }
+    };
+
+    // Mobile Menu Toggle
+    function toggleMobileMenu() {
+        var menu = document.getElementById("mobile-menu");
+        if (menu.style.display === "none" || menu.style.display === "") {
+            menu.style.display = "flex";
+            document.body.style.overflow = "hidden";
+        } else {
+            menu.style.display = "none";
+            document.body.style.overflow = "auto";
+        }
+    }
+</script>

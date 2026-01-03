@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'brand';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({ 
   children, 
-  variant = 'primary', 
+  variant = 'brand', 
   size = 'md', 
   fullWidth = false,
   className = '',
@@ -16,8 +16,10 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const baseStyles = "inline-flex items-center justify-center font-bold tracking-wider uppercase transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2";
   
-  // Monochrome variations
   const variants = {
+    // Brand: High Contrast Red
+    brand: "bg-brand-red text-white hover:bg-brand-redHover focus:ring-brand-red",
+    
     // Primary: Black on White (Light Mode) / White on Black (Dark Mode)
     primary: "bg-brand-charcoal text-white hover:bg-black dark:bg-white dark:text-brand-charcoal dark:hover:bg-neutral-200 focus:ring-neutral-500",
     

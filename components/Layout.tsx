@@ -49,22 +49,23 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
               <button
                 key={item.path}
                 onClick={() => handleNavClick(item.path)}
-                className={`text-sm uppercase tracking-wide font-bold hover:text-black dark:hover:text-white transition-colors ${
+                className={`text-sm uppercase tracking-wide font-bold hover:text-brand-red transition-colors relative group ${
                   currentPath === item.path 
-                    ? 'text-black dark:text-white underline decoration-2 underline-offset-4' 
+                    ? 'text-brand-red' 
                     : 'text-neutral-600 dark:text-neutral-400'
                 }`}
               >
                 {item.label}
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-brand-red transition-all duration-300 ${currentPath === item.path ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
               </button>
             ))}
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
-            <Button size="sm" onClick={() => handleNavClick('/membership')}>Join Now</Button>
+            <Button size="sm" variant="brand" onClick={() => handleNavClick('/membership')}>Join Now</Button>
             {/* Cart Icon */}
-            <button className="relative p-2 text-current hover:text-black dark:hover:text-white transition-colors" aria-label="Cart" onClick={() => handleNavClick('/shop')}>
+            <button className="relative p-2 text-current hover:text-brand-red transition-colors" aria-label="Cart" onClick={() => handleNavClick('/shop')}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
@@ -98,14 +99,14 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
                   key={item.path}
                   onClick={() => handleNavClick(item.path)}
                   className={`text-lg uppercase font-bold text-left py-2 ${
-                    currentPath === item.path ? 'text-black dark:text-white pl-2 border-l-4 border-black dark:border-white' : 'text-neutral-600 dark:text-neutral-400'
+                    currentPath === item.path ? 'text-brand-red pl-2 border-l-4 border-brand-red' : 'text-neutral-600 dark:text-neutral-400'
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
               <hr className="border-neutral-200 dark:border-neutral-700" />
-              <Button fullWidth onClick={() => handleNavClick('/membership')}>Join Now</Button>
+              <Button fullWidth variant="brand" onClick={() => handleNavClick('/membership')}>Join Now</Button>
               <Button variant="outline" fullWidth onClick={() => handleNavClick('/shop')}>Shop Merch</Button>
             </div>
           </div>
@@ -124,18 +125,18 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           <div className="space-y-4">
             <Logo className="text-white" />
             <p className="text-neutral-400 text-sm leading-relaxed">
-              Building Strength, Inside and Out. A mission-driven gym focused on faith, fitness, and community in Auburn, CA.
+              Building Strength, Inside and Out. A mission-driven gym focused on character, fitness, and community in Auburn, CA.
             </p>
           </div>
 
           <div>
             <h4 className="text-lg font-bold mb-4 text-white">Quick Links</h4>
             <ul className="space-y-2 text-sm text-neutral-400">
-              <li><button onClick={() => handleNavClick('/programs')} className="hover:text-white transition-colors">Classes</button></li>
-              <li><button onClick={() => handleNavClick('/membership')} className="hover:text-white transition-colors">Membership</button></li>
-              <li><button onClick={() => handleNavClick('/community')} className="hover:text-white transition-colors">Outreach</button></li>
-              <li><button onClick={() => handleNavClick('/shop')} className="hover:text-white transition-colors">Merch Store</button></li>
-              <li><a href="#" className="hover:text-white transition-colors">Member Login (Mindbody)</a></li>
+              <li><button onClick={() => handleNavClick('/membership')} className="hover:text-brand-red transition-colors">Membership</button></li>
+              <li><button onClick={() => handleNavClick('/training')} className="hover:text-brand-red transition-colors">1-on-1 Training</button></li>
+              <li><button onClick={() => handleNavClick('/shop')} className="hover:text-brand-red transition-colors">Merch Store</button></li>
+              <li><button onClick={() => handleNavClick('/about')} className="hover:text-brand-red transition-colors">About Us</button></li>
+              <li><a href="#" className="hover:text-brand-red transition-colors">Member Login</a></li>
             </ul>
           </div>
 
@@ -143,15 +144,15 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
             <h4 className="text-lg font-bold mb-4 text-white">Contact</h4>
             <ul className="space-y-2 text-sm text-neutral-400">
               <li className="flex items-start">
-                <span className="mr-2 text-white">📍</span>
+                <span className="mr-2 text-brand-red">📍</span>
                 258 Elm Ave, Auburn, CA 95603
               </li>
               <li className="flex items-center">
-                 <span className="mr-2 text-white">📞</span>
-                 (530) 555-0123
+                 <span className="mr-2 text-brand-red">📞</span>
+                 530-537-2105
               </li>
               <li className="flex items-center">
-                 <span className="mr-2 text-white">✉️</span>
+                 <span className="mr-2 text-brand-red">✉️</span>
                  info@lordsgymauburn.com
               </li>
             </ul>
@@ -160,20 +161,13 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           <div>
             <h4 className="text-lg font-bold mb-4 text-white">Hours</h4>
             <ul className="space-y-1 text-sm text-neutral-400">
-              <li className="flex justify-between items-center text-white font-bold">
+              <li className="flex justify-between items-center text-brand-red font-bold">
                 <span>OPEN 24/7</span>
               </li>
               <li className="text-xs text-neutral-500 mt-2">
                 Member Keycard Access 24 Hours / 365 Days
               </li>
             </ul>
-            <div className="mt-6">
-              <span className="text-xs uppercase tracking-widest text-neutral-500">Follow Us</span>
-              <div className="flex space-x-4 mt-2">
-                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors cursor-pointer">FB</div>
-                 <div className="w-8 h-8 bg-neutral-800 hover:bg-neutral-700 rounded-full flex items-center justify-center transition-colors cursor-pointer">IG</div>
-              </div>
-            </div>
           </div>
         </div>
         

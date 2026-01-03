@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Membership from './pages/Membership';
-import Programs from './pages/Programs';
-import Community from './pages/Community';
 import Shop from './pages/Shop';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import Training from './pages/Training';
 
 const App: React.FC = () => {
   // Simple Hash Router Implementation
@@ -32,10 +31,8 @@ const App: React.FC = () => {
         return <Home onNavigate={navigate} />;
       case '/membership':
         return <Membership />;
-      case '/programs':
-        return <Programs />;
-      case '/community':
-        return <Community />;
+      case '/training':
+        return <Training />;
       case '/shop':
         return <Shop />;
       case '/about':
