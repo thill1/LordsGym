@@ -14,9 +14,7 @@ export default function Logo({
 }: LogoProps) {
   const isIcon = variant === "icon";
 
-  // Slightly larger than before:
-  // full: h-16 (was h-14)
-  // icon: keep h-10
+  // Slightly bigger (tasteful bump)
   const sizeClass = isIcon ? "h-10 w-10" : "h-16 w-auto";
 
   return (
@@ -26,4 +24,8 @@ export default function Logo({
         alt={alt}
         className={`${sizeClass} object-contain`}
         loading="eager"
-        decoding="asy
+        decoding="async"
+      />
+    </div>
+  );
+}
