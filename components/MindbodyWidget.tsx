@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MINDBODY_SITE_ID } from '../constants';
 
@@ -10,7 +11,7 @@ interface MindbodyWidgetProps {
 const MindbodyWidget: React.FC<MindbodyWidgetProps> = ({ title, type = 'schedule', className = '' }) => {
   return (
     <div className={`w-full bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 ${className}`}>
-      <h3 className="text-xl font-bold mb-4 uppercase tracking-wider">{title}</h3>
+      <h3 className="text-xl font-bold mb-4 uppercase tracking-wider text-brand-red">{title}</h3>
       
       {/* 
         INTEGRATION NOTE: 

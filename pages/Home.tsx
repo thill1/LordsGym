@@ -3,60 +3,101 @@ import Section from '../components/Section';
 import Button from '../components/Button';
 import { FEATURED_PRODUCTS } from '../constants';
 import ShopifyProduct from '../components/ShopifyProduct';
+import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
   onNavigate: (path: string) => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  const { homeContent } = useStore();
+  const { hero, values } = homeContent;
+
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center bg-black">
-        {/* Background Image */}
+      <section className="relative h-screen min-h-[600px] flex items-center bg-black overflow-hidden">
+        {/* Background Image with Ken Burns Effect */}
         <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
           <img 
-            src="https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80" 
-            alt="Weightlifting" 
-            className="w-full h-full object-cover grayscale opacity-60"
+            src={hero.backgroundImage} 
+            alt="Gym Background" 
+            className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite] transform transition-transform duration-[20s]"
+            style={{ animation: 'none' }}
           />
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
-          <div className="max-w-2xl">
-            <div className="inline-block border-l-4 border-brand-red pl-4 mb-6">
-              <p className="text-white font-bold tracking-widest uppercase text-sm">Founded in Faith. Forged in Iron.</p>
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex flex-col justify-center h-full">
+          <div className="max-w-3xl fade-in fade-in-delay-1">
+            <div className="inline-flex items-center gap-3 border-l-4 border-brand-red pl-4 mb-8">
+              <span className="h-px w-8 bg-brand-red hidden sm:block"></span>
+              <p className="text-white font-bold tracking-[0.2em] uppercase text-sm">Founded in Faith. Forged in Iron.</p>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Train with Purpose. <br/>
-              <span className="text-neutral-400">Live with <span className="text-brand-red">Faith.</span></span>
+            
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-8 leading-none tracking-tight whitespace-pre-line">
+              {hero.headline}
             </h1>
-            <p className="text-xl text-neutral-300 mb-8 max-w-lg">
-              Welcome to Lord's Gym Auburn. A premium 24/7 community dedicated to building strength inside and out.
+            
+            <p className="text-lg md:text-xl text-neutral-300 mb-10 max-w-xl leading-relaxed font-light">
+              {hero.subheadline}
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')}>
-                Start Your Free Visit
+            <div className="flex flex-col sm:flex-row gap-5">
+              <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="shadow-brand-red/20 shadow-2xl">
+                {hero.ctaText}
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/shop')}>
-                Shop Merch
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-brand-charcoal" onClick={() => onNavigate('/shop')}>
+                Shop
               </Button>
             </div>
           </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 text-white animate-bounce hidden md:block">
+           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+           </svg>
         </div>
       </section>
 
+      {/* Intro Stats / Values Section */}
+      <section className="bg-brand-charcoal text-white py-12 border-b border-neutral-800">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-3 gap-8 text-center divide-x divide-neutral-800">
+               <div className="p-4">
+                  <div className="text-3xl md:text-4xl font-display font-bold text-brand-red mb-1">{values.stat1}</div>
+                  <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label1}</div>
+               </div>
+               <div className="p-4">
+                  <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat2}</div>
+                  <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label2}</div>
+               </div>
+               <div className="p-4">
+                  <div className="text-3xl md:text-4xl font-display font-bold text-brand-red mb-1">{values.stat3}</div>
+                  <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label3}</div>
+               </div>
+            </div>
+         </div>
+      </section>
+
       {/* Merch Spotlight (Shopify) */}
-      <Section id="shop-preview">
-        <div className="flex justify-between items-end mb-12">
+      <Section id="shop-preview" className="bg-brand-offWhite dark:bg-neutral-900">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Faith & Fitness <span className="text-brand-red">Apparel</span></h2>
-            <p className="text-neutral-500">Wear your testimony. High-quality gear for the gym and the streets.</p>
+            <div className="flex items-center gap-2 mb-2">
+                <span className="h-1 w-10 bg-brand-red"></span>
+                <span className="text-brand-red font-bold uppercase tracking-widest text-sm">New Arrivals</span>
+            </div>
+            <h2 className="text-4xl font-bold text-brand-charcoal dark:text-white">Faith & Fitness <span className="text-neutral-400 dark:text-neutral-600">Apparel</span></h2>
+            <p className="text-neutral-500 mt-2 max-w-md">High-quality gear designed for the gym and the streets. Wear your testimony.</p>
           </div>
-          <Button variant="ghost" className="hover:text-brand-red" onClick={() => onNavigate('/shop')}>View All Products &rarr;</Button>
+          <Button variant="ghost" className="group hover:text-brand-red" onClick={() => onNavigate('/shop')}>
+            View All Products 
+            <span className="inline-block transition-transform group-hover:translate-x-1 ml-2">&rarr;</span>
+          </Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {FEATURED_PRODUCTS.map((product) => (
@@ -65,25 +106,19 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </Section>
 
-      {/* Testimonial Feature */}
-      <Section bg="alternate">
-        <div className="max-w-4xl mx-auto text-center">
-           <div className="text-5xl mb-8 text-brand-red">"</div>
-           <p className="text-2xl font-light italic text-neutral-600 dark:text-neutral-300 mb-8">
-             "Iron sharpens iron, and one man sharpens another. I found more than a workout at Lord's Gym; I found a brotherhood and a place to grow my character as much as my strength."
-           </p>
-           <h4 className="font-bold uppercase tracking-widest text-sm">Member Spotlight</h4>
-           <p className="text-xs text-neutral-500 mt-1">Auburn, CA</p>
-        </div>
-      </Section>
-
       {/* Call to Action */}
-      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-32">
-        <h2 className="text-5xl font-bold mb-6 text-white uppercase">Ready to Train With <span className="text-brand-red">Purpose?</span></h2>
-        <p className="text-xl text-neutral-200 mb-8">Join a community that fights for you, not against you.</p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-           <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')}>Join Now</Button>
-           <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
+      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-40">
+        <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/30 p-8 rounded-2xl border border-white/10">
+          <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 text-white uppercase leading-none drop-shadow-xl">
+            Ready to Train With <span className="text-brand-red">Purpose?</span>
+          </h2>
+          <p className="text-xl md:text-2xl text-neutral-100 mb-10 font-light">
+            Join a community that fights for you, not against you.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+             <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="min-w-[200px]">Join Now</Button>
+             <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black min-w-[200px]" onClick={() => onNavigate('/contact')}>Book a Tour</Button>
+          </div>
         </div>
       </Section>
     </>

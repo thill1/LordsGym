@@ -1,43 +1,19 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import Section from '../components/Section';
 import ShopifyProduct from '../components/ShopifyProduct';
-import { FEATURED_PRODUCTS } from '../constants';
-import { Product } from '../types';
-
-// Extended mock products for the full shop page
-const ALL_PRODUCTS: Product[] = [
-  ...FEATURED_PRODUCTS,
-  {
-    id: 'p5',
-    title: 'Run The Race (Heb 12:1) Tee',
-    price: 30.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'p6',
-    title: 'Carry Your Cross Tee',
-    price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'p7',
-    title: 'Lifted High Performance Tee',
-    price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'p8',
-    title: 'Scripture Wristbands (3-Pack)',
-    price: 10.00,
-    category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80'
-  }
-];
+import { useStore } from '../context/StoreContext';
 
 const Shop: React.FC = () => {
+  const { products } = useStore();
+  const [activeCategory, setActiveCategory] = useState<string>('All Products');
+
+  const categories = ['All Products', "Men's Apparel", "Women's Apparel", 'Accessories'];
+
+  const filteredProducts = activeCategory === 'All Products' 
+    ? products 
+    : products.filter(product => product.category === activeCategory);
+
   return (
     <>
       <Section bg="dark" className="pt-32 pb-16 text-center">
@@ -51,21 +27,35 @@ const Shop: React.FC = () => {
           <div className="w-full md:w-64 flex-shrink-0">
             <h3 className="font-bold text-lg mb-4 border-b-2 border-brand-red dark:border-brand-red pb-2 uppercase tracking-tighter">Collections</h3>
             <ul className="space-y-2">
-              <li><button className="text-brand-red font-bold">All Products</button></li>
-              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Men's Apparel</button></li>
-              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Women's Apparel</button></li>
-              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Accessories</button></li>
-              <li><button className="text-neutral-500 hover:text-brand-red transition-colors uppercase font-bold text-sm">Supplements</button></li>
+              {categories.map(category => (
+                <li key={category}>
+                  <button 
+                    onClick={() => setActiveCategory(category)}
+                    className={`uppercase font-bold text-sm transition-colors ${
+                      activeCategory === category 
+                        ? 'text-brand-red' 
+                        : 'text-neutral-500 hover:text-brand-red'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Product Grid */}
           <div className="flex-grow">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {ALL_PRODUCTS.map(product => (
+              {filteredProducts.map(product => (
                 <ShopifyProduct key={product.id} product={product} />
               ))}
             </div>
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12 text-neutral-500">
+                No products found in this category.
+              </div>
+            )}
           </div>
         </div>
       </Section>

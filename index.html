@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -30,7 +30,7 @@
         }
       }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
       body {
@@ -42,15 +42,22 @@
         letter-spacing: 0.05em;
       }
       .fade-in {
-        animation: fadeIn 0.5s ease-in-out;
+        animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
       }
+      .fade-in-delay-1 { animation-delay: 0.1s; }
+      .fade-in-delay-2 { animation-delay: 0.2s; }
+      .fade-in-delay-3 { animation-delay: 0.3s; }
+      
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #f1f1f1; }
-      ::-webkit-scrollbar-thumb { background: #cc0000; border-radius: 4px; }
+      
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: #1a1a1a; }
+      ::-webkit-scrollbar-thumb { background: #cc0000; border-radius: 5px; border: 2px solid #1a1a1a; }
       ::-webkit-scrollbar-thumb:hover { background: #a30000; }
     </style>
   <script type="importmap">
@@ -63,7 +70,7 @@
 }
 </script>
 </head>
-  <body class="bg-brand-offWhite text-brand-charcoal dark:bg-brand-charcoal dark:text-brand-offWhite transition-colors duration-300">
+  <body class="bg-brand-offWhite text-brand-charcoal dark:bg-brand-charcoal dark:text-brand-offWhite transition-colors duration-300 selection:bg-brand-red selection:text-white">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

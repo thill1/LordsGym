@@ -1,36 +1,78 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Product } from '../types';
 import Button from './Button';
+import { useStore } from '../context/StoreContext';
+
+const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
 
 // Mock component to simulate Shopify Buy Button / Storefront integration
 const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
+  const { addToCart } = useStore();
+  const [selectedSize, setSelectedSize] = useState<string>('L');
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleAddToCart = () => {
+    addToCart(product, selectedSize);
+  };
+
   return (
-    <div className="group relative">
-      <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none lg:h-80 relative border-b-2 border-transparent group-hover:border-brand-red transition-colors">
+    <div 
+      className="group relative bg-white dark:bg-neutral-800 rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-gray-200 lg:aspect-none lg:h-80 relative">
         <img 
           src={product.image} 
           alt={product.title} 
-          className="h-full w-full object-cover object-center lg:h-full lg:w-full group-hover:opacity-75 transition-opacity"
+          className="h-full w-full object-cover object-center lg:h-full lg:w-full group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute top-2 right-2 bg-brand-red text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest">
           NEW
         </div>
       </div>
-      <div className="mt-4 flex justify-between items-start">
-        <div>
-          <h3 className="text-sm font-bold text-brand-charcoal dark:text-white uppercase tracking-tight">
-            <a href="#">
-              <span aria-hidden="true" className="absolute inset-0"></span>
-              {product.title}
-            </a>
-          </h3>
-          <p className="mt-1 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">{product.category}</p>
-        </div>
-        <p className="text-sm font-bold text-brand-red">${product.price.toFixed(2)}</p>
-      </div>
       
-      <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-20 left-4 right-4 z-20">
-         <Button size="sm" variant="brand" fullWidth className="shadow-lg">Add to Cart</Button>
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="text-sm font-bold text-brand-charcoal dark:text-white uppercase tracking-tight leading-tight">
+              {product.title}
+            </h3>
+            <p className="mt-1 text-[10px] text-neutral-500 uppercase tracking-widest font-bold">{product.category}</p>
+          </div>
+          <p className="text-sm font-bold text-brand-red ml-2">${product.price.toFixed(2)}</p>
+        </div>
+
+        {/* Size Selector & Add Button - Always visible on mobile, slide up on desktop */}
+        <div className="mt-auto space-y-3 pt-4">
+           {product.category.includes('Apparel') && (
+             <div className="flex gap-2 justify-center">
+                {SIZES.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`text-[10px] w-8 h-8 flex items-center justify-center rounded border transition-colors font-bold ${
+                      selectedSize === size 
+                        ? 'bg-brand-charcoal text-white border-brand-charcoal dark:bg-white dark:text-brand-charcoal' 
+                        : 'bg-transparent text-neutral-500 border-neutral-200 hover:border-brand-red'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+             </div>
+           )}
+           <Button 
+             size="sm" 
+             variant="brand" 
+             fullWidth 
+             className="shadow-md"
+             onClick={handleAddToCart}
+           >
+             Add to Cart
+           </Button>
+        </div>
       </div>
     </div>
   );

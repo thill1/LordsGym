@@ -1,12 +1,15 @@
+
 import React from 'react';
 import Section from '../components/Section';
-import GHLForm from '../components/GHLForm';
+import ContactForm from '../components/GHLForm';
 
 const Contact: React.FC = () => {
   return (
     <>
       <Section bg="dark" className="pt-32 pb-16 text-center">
-        <h1 className="text-5xl font-bold mb-4">Visit Us</h1>
+        <h1 className="text-5xl font-bold mb-4">
+          <span className="text-brand-red">Visit</span> <span className="text-white">Us</span>
+        </h1>
         <p className="text-xl text-neutral-300">Come experience the difference.</p>
       </Section>
 
@@ -32,29 +35,34 @@ const Contact: React.FC = () => {
               <div className="pt-8">
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-4">Operating Hours</h3>
                 <ul className="space-y-2">
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1 font-bold"><span>Member Access</span> <span>24 HOURS / 7 DAYS</span></li>
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1 mt-4"><span>Staffed: Mon - Fri</span> <span>8:00 AM - 8:00 PM</span></li>
-                   <li className="flex justify-between max-w-xs border-b border-neutral-200 dark:border-neutral-700 pb-1"><span>Staffed: Sat - Sun</span> <span>9:00 AM - 2:00 PM</span></li>
+                   <li className="flex justify-between w-full max-w-md border-b border-neutral-200 dark:border-neutral-700 pb-1 font-bold"><span>Member Access</span> <span>24 HOURS / 7 DAYS</span></li>
+                   <li className="flex justify-between w-full max-w-md border-b border-neutral-200 dark:border-neutral-700 pb-1 mt-4 font-bold"><span>Staff seven days a week</span> <span className="whitespace-nowrap">7am-7pm</span></li>
                 </ul>
                 <p className="text-xs text-neutral-500 mt-2 italic text-balance">Staffed hours are for tours, sign-ups, and merchandise sales.</p>
               </div>
             </div>
           </div>
 
-          {/* Form Side - GHL INTEGRATION */}
+          {/* Form Side */}
           <div className="fade-in">
-            <GHLForm />
+            <ContactForm />
           </div>
         </div>
       </Section>
       
       {/* Map Section */}
-      <div className="h-96 w-full bg-neutral-200 dark:bg-neutral-800 relative flex items-center justify-center grayscale">
-         {/* In production, replace with Google Maps iframe */}
-         <div className="text-center px-4">
-            <p className="text-neutral-500 font-bold mb-2">258 Elm Ave, Auburn, CA 95603</p>
-            <p className="text-xs text-neutral-400">Interactive Map Loading...</p>
-         </div>
+      <div className="h-96 w-full bg-neutral-200 dark:bg-neutral-800 relative grayscale-[100%] hover:grayscale-0 transition-all duration-700">
+         <iframe 
+            width="100%" 
+            height="100%" 
+            src="https://maps.google.com/maps?q=258%20Elm%20Ave%2C%20Auburn%2C%20CA%2095603&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+            title="Lord's Gym Location"
+            className="w-full h-full"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+         ></iframe>
+         <div className="absolute inset-0 pointer-events-none border-t border-brand-red/20"></div>
       </div>
     </>
   );

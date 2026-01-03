@@ -1,15 +1,58 @@
+
 import React from 'react';
 import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import MindbodyWidget from '../components/MindbodyWidget';
+import { useStore } from '../context/StoreContext';
+import { Product } from '../types';
+
+const MEMBERSHIP_PLANS: Record<string, Product> = {
+  regular: {
+    id: 'mem-regular',
+    title: 'Regular Monthly Membership',
+    price: 39.00,
+    category: 'Membership',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80'
+  },
+  student: {
+    id: 'mem-student',
+    title: 'Student Monthly Membership',
+    price: 29.00,
+    category: 'Membership',
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80'
+  },
+  annual: {
+    id: 'mem-annual',
+    title: '1 Year Paid In Full',
+    price: 360.00,
+    category: 'Membership',
+    image: 'https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=800&q=80'
+  }
+};
+
+const SETUP_FEE: Product = {
+  id: 'fee-setup',
+  title: 'Initiation / Setup Fee',
+  price: 78.00,
+  category: 'Fee',
+  image: 'https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=800&q=80'
+};
 
 const Membership: React.FC = () => {
+  const { addToCart, clearCart } = useStore();
+
+  const handleJoin = (planId: string) => {
+    clearCart(); // Clear cart for direct checkout flow to ensure only membership is being purchased
+    addToCart(MEMBERSHIP_PLANS[planId], 'N/A');
+    addToCart(SETUP_FEE, 'N/A');
+    window.location.hash = '/checkout';
+  };
+
   return (
     <>
       <Section bg="dark" className="text-center pt-32 pb-24">
         <div className="relative inline-block mb-4">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tighter italic">MONTH-TO-MONTH</h1>
+          <h1 className="text-5xl font-bold">MONTH-TO-MONTH</h1>
           <span className="absolute -right-4 -top-4 bg-brand-red text-white text-xs px-2 py-1 rotate-12 font-bold uppercase tracking-widest">Memberships</span>
         </div>
         <p className="text-xl text-neutral-400 max-w-2xl mx-auto mt-4">
@@ -33,8 +76,9 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-brand-red text-white p-4 text-center rounded shadow-lg transform hover:scale-105 transition-transform">
                 <div className="text-4xl font-bold">$39</div>
                 <div className="text-xs font-bold uppercase tracking-widest">Monthly</div>
+                <div className="text-[10px] opacity-90 mt-1 border-t border-white/20 pt-1">+ $78 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('regular')}>Join Now</Button>
             </div>
           </Card>
 
@@ -51,8 +95,9 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-brand-red text-white p-4 text-center rounded shadow-lg transform hover:scale-105 transition-transform">
                 <div className="text-4xl font-bold">$29</div>
                 <div className="text-xs font-bold uppercase tracking-widest">Monthly</div>
+                <div className="text-[10px] opacity-90 mt-1 border-t border-white/20 pt-1">+ $78 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('student')}>Join Now</Button>
             </div>
           </Card>
 
@@ -69,8 +114,9 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-brand-red text-white p-4 text-center rounded shadow-lg transform hover:scale-105 transition-transform">
                 <div className="text-4xl font-bold">$360</div>
                 <div className="text-xs font-bold uppercase tracking-widest">1 Year</div>
+                <div className="text-[10px] opacity-90 mt-1 border-t border-white/20 pt-1">+ $78 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('annual')}>Join Now</Button>
             </div>
           </Card>
         </div>
@@ -83,31 +129,26 @@ const Membership: React.FC = () => {
       </Section>
 
       <Section bg="alternate">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <h2 className="text-3xl font-bold mb-6">Membership FAQ</h2>
-            <div className="space-y-6">
+        <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold mb-10 text-center">Membership FAQ</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+              <div>
+                <h4 className="font-bold text-lg mb-2 text-brand-red">Why is there a setup fee?</h4>
+                <p className="text-neutral-500">The $78 setup fee covers your initial onboarding, mobile app activation, and administrative setup to get you 24/7 access immediately.</p>
+              </div>
               <div>
                 <h4 className="font-bold text-lg mb-2 text-brand-red">How do I verify my Student status?</h4>
                 <p className="text-neutral-500">Bring a valid student ID from any local high school or college (like Sierra College) during staffed hours to activate your discounted rate.</p>
               </div>
               <div>
                 <h4 className="font-bold text-lg mb-2 text-brand-red">How does 24/7 access work?</h4>
-                <p className="text-neutral-500">Members receive a personal keycard (or mobile app access) that unlocks our front doors at any time, day or night, ensuring you can train on your schedule.</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-lg mb-2 text-brand-red">Can I pay in cash?</h4>
-                <p className="text-neutral-500">We prefer automated billing for monthly memberships, but our 1-year Paid In Full option can be handled via cash or check during staffed hours.</p>
+                <p className="text-neutral-500">Members receive secure mobile app access that unlocks our front doors at any time, day or night, ensuring you can train on your schedule.</p>
               </div>
               <div>
                 <h4 className="font-bold text-lg mb-2 text-brand-red">What does "No Annual Fees" mean?</h4>
                 <p className="text-neutral-500">Unlike big-box gyms, we don't surprise you with an "equipment fee" or "maintenance fee" six months into your membership. Your monthly price is your price.</p>
               </div>
             </div>
-          </div>
-          <div className="h-full">
-            <MindbodyWidget title="Start Your Membership" type="enrollment" />
-          </div>
         </div>
       </Section>
     </>

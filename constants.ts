@@ -13,6 +13,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },
   { label: 'Membership', path: '/membership' },
   { label: '1-on-1 Training', path: '/training' },
+  { label: 'Calendar', path: '/calendar' },
   { label: 'Shop', path: '/shop' },
   { label: 'Contact', path: '/contact' },
 ];
@@ -38,38 +39,69 @@ export const TESTIMONIALS: Testimonial[] = [
   }
 ];
 
-export const FEATURED_PRODUCTS: Product[] = [
+export const ALL_PRODUCTS: Product[] = [
+  // Men's Collection
   {
-    id: 'p1',
-    title: 'Redeemed Strength Tee',
+    id: 'm1',
+    title: "Lord's Cross Lifter Tee",
     price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 'p2',
-    title: 'Iron Sharpens Iron Tee',
-    price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
+    id: 'm2',
+    title: "Squatting Cross Hoodie",
+    price: 55.00,
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 'p3',
+    id: 'm3',
+    title: "Squatting Cross Tee",
+    price: 32.00,
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'm4',
+    title: "Sin of the World Long Sleeve",
+    price: 38.00,
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'm5',
+    title: "Sin of the World Hoodie",
+    price: 55.00,
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+  },
+  {
+    id: 'm6',
+    title: "Cross Lifter Long Sleeve",
+    price: 38.00,
+    category: "Men's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+  },
+  // Women's & Accessories
+  {
+    id: 'w1',
     title: 'Faith Over Fear Tee',
     price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
+    category: "Women's Apparel",
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
   },
   {
-    id: 'p4',
-    title: 'Carry Your Cross Tee',
-    price: 32.00,
-    category: 'Apparel',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80'
+    id: 'a1',
+    title: 'Scripture Wristbands (3-Pack)',
+    price: 10.00,
+    category: 'Accessories',
+    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
   }
 ];
 
-// Added PROGRAMS to fix the missing export error in Programs.tsx
+export const FEATURED_PRODUCTS = ALL_PRODUCTS.slice(0, 4);
+
 export const PROGRAMS: Program[] = [
   {
     id: 'powerlifting',
