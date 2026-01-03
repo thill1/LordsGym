@@ -1,12 +1,12 @@
-name: Sync from AI Studio repo and Deploy
+name: Deploy GitHub Pages (build from AI Studio main)
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["LordsGym-prod"]
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -15,36 +15,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sync_build:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout production repo
+      - name: Checkout AI Studio code (main)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: app
 
-      - name: Pull source repo (AI Studio)
+      - name: Checkout prod branch (overrides + workflow)
+        uses: actions/checkout@v4
+        with:
+          ref: LordsGym-prod
+          path: prod
+
+      - name: Apply production overrides onto app
         run: |
-          rm -rf ./source
-          git clone --depth=1 https://github.com/thill1/LordsGym.git ./source
-          rsync -av --delete --exclude ".github" ./source/ ./
+          rsync -av prod/prod_overrides/ app/
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install
+      - name: Install dependencies
+        working-directory: app
         run: npm install
 
       - name: Build
+        working-directory: app
         run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Sanity check: ensure dist is a real Vite build
+        run: |
+          set -e
+          test -f "app/dist/index.html" || (echo "Missing app/dist/index.html" && exit 1)
+
+          echo "---- dist/index.html (first 140 lines) ----"
+          sed -n '1,140p' app/dist/index.html
+
+          # If dist references index.tsx, you deployed source HTML, not built HTML
+          if grep -q "index.tsx" app/dist/index.html; then
+            echo "ERROR: dist/index.html still references index.tsx (not a production build)."
+            exit 1
+          fi
+
+          # Optional: assert assets are referenced
+          if ! grep -q "/assets/" app/dist/index.html; then
+            echo "ERROR: dist/index.html does not reference /assets/ (unexpected build output)."
+            exit 1
+          fi
+
+          echo "Sanity check passed."
+
+      - name: Upload Pages artifact (dist only)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: app/dist
 
   deploy:
-    needs: sync_build
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
