@@ -192,7 +192,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
             <div className="space-y-6">
               <Logo className="text-white scale-90 origin-left" />
               <p className="text-neutral-400 text-sm leading-relaxed max-w-xs">
-                Building Strength, Inside and Out. A mission-driven gym focused on character, fitness, and community in Auburn, CA.
+                Building Strength, Inside and Out. A mission-driven gym dedicated to character, fitness, and community in Auburn, CA.
               </p>
             </div>
 
