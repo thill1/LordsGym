@@ -31,11 +31,11 @@ jobs:
           ref: LordsGym-prod
           path: prod
 
-      - name: Apply production overrides (copy required files)
+      - name: Apply production overrides
         run: |
           set -e
 
-          # Validate override files exist on LordsGym-prod
+          # Required override files must exist on LordsGym-prod
           test -f "prod/prod_overrides/vite.config.ts" || (echo "Missing: prod_overrides/vite.config.ts on LordsGym-prod" && exit 1)
           test -f "prod/prod_overrides/components/Logo.tsx" || (echo "Missing: prod_overrides/components/Logo.tsx on LordsGym-prod" && exit 1)
           test -f "prod/prod_overrides/assets/logo/lords-gym-logo.jpg" || (echo "Missing: prod_overrides/assets/logo/lords-gym-logo.jpg on LordsGym-prod" && exit 1)
@@ -49,14 +49,24 @@ jobs:
           mkdir -p "app/assets/logo"
           cp -f "prod/prod_overrides/assets/logo/lords-gym-logo.jpg" "app/assets/logo/lords-gym-logo.jpg"
 
-          echo "Production overrides applied."
+          echo "---- app/vite.config.ts (after override) ----"
+          sed -n '1,120p' app/vite.config.ts
+
+          # Hard fail if process still exists in the config
+          if grep -q "process" app/vite.config.ts; then
+            echo "ERROR: app/vite.config.ts still contains 'process'. Fix the prod_overrides/vite.config.ts override."
+            exit 1
+          fi
+
+          echo "---- Searching for any remaining process usage in app ----"
+          grep -R "process\." -n app || true
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install
+      - name: Install dependencies
         working-directory: app
         run: npm install
 
@@ -69,7 +79,6 @@ jobs:
           set -e
           test -f "app/dist/index.html" || (echo "Missing: app/dist/index.html" && exit 1)
 
-          # If dist references index.tsx, you deployed source HTML (bad)
           if grep -q "index.tsx" app/dist/index.html; then
             echo "ERROR: dist/index.html references index.tsx (not a production build)."
             exit 1
