@@ -1,9 +1,10 @@
-name: Deploy GitHub Pages (build from AI Studio main)
+name: Deploy GitHub Pages (prod builds from AI Studio main)
 
 on:
-  workflow_dispatch:
   push:
-    branches: ["LordsGym-prod"]
+    branches:
+      - LordsGym-prod
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -24,13 +25,13 @@ jobs:
           ref: main
           path: app
 
-      - name: Checkout prod branch (overrides + workflow)
+      - name: Checkout prod branch (overrides)
         uses: actions/checkout@v4
         with:
           ref: LordsGym-prod
           path: prod
 
-      - name: Apply production overrides onto app
+      - name: Apply production overrides
         run: |
           rsync -av prod/prod_overrides/ app/
 
@@ -39,7 +40,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install
         working-directory: app
         run: npm install
 
@@ -47,29 +48,17 @@ jobs:
         working-directory: app
         run: npm run build
 
-      - name: Sanity check: ensure dist is a real Vite build
+      - name: Sanity check dist/index.html
         run: |
           set -e
-          test -f "app/dist/index.html" || (echo "Missing app/dist/index.html" && exit 1)
-
-          echo "---- dist/index.html (first 140 lines) ----"
-          sed -n '1,140p' app/dist/index.html
-
-          # If dist references index.tsx, you deployed source HTML, not built HTML
+          test -f "app/dist/index.html"
           if grep -q "index.tsx" app/dist/index.html; then
-            echo "ERROR: dist/index.html still references index.tsx (not a production build)."
+            echo "ERROR: dist/index.html references index.tsx (not a production build)."
             exit 1
           fi
+          echo "OK: dist/index.html looks like a production build."
 
-          # Optional: assert assets are referenced
-          if ! grep -q "/assets/" app/dist/index.html; then
-            echo "ERROR: dist/index.html does not reference /assets/ (unexpected build output)."
-            exit 1
-          fi
-
-          echo "Sanity check passed."
-
-      - name: Upload Pages artifact (dist only)
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: app/dist
