@@ -4,8 +4,9 @@ import { NavItem, Testimonial, Product, Program } from './types';
 export const APP_NAME = "Lord's Gym";
 
 // INTEGRATION KEYS
-export const SHOPIFY_STORE_URL = "https://lords-gym-auburn.myshopify.com";
-export const MINDBODY_SITE_ID = "123456"; // Replace with your real MindBody Site ID
+// In production, these should be set via environment variables (e.g., .env file or Vercel config)
+export const SHOPIFY_STORE_URL = (import.meta as any).env?.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
+export const MINDBODY_SITE_ID = (import.meta as any).env?.VITE_MINDBODY_SITE_ID || "123456"; 
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },

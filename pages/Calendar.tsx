@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Section from '../components/Section';
-import MockCalendar from '../components/MockCalendar';
+import CalendarSchedule from '../components/CalendarSchedule';
 
 const Calendar: React.FC = () => {
   return (
@@ -15,7 +15,7 @@ const Calendar: React.FC = () => {
 
       <Section>
         <div className="max-w-6xl mx-auto">
-             <MockCalendar />
+             <CalendarSchedule />
         </div>
       </Section>
     </>
