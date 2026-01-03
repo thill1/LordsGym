@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  // GitHub Pages serves this repo at /LordsGym/
-  base: process.env.GITHUB_ACTIONS ? "/LordsGym/" : "/",
+  base: process.env.GITHUB_ACTIONS
+    ? `/${process.env.GITHUB_REPOSITORY?.split("/")[1] ?? ""}/`
+    : "/",
 });
