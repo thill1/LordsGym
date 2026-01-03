@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { NAV_ITEMS } from '../constants';
 import Logo from './Logo';
@@ -72,7 +71,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="cursor-pointer relative z-50" onClick={() => handleNavClick('/')}>
-            <Logo variant="full" />
+            <Logo variant="nav" />
           </div>
 
           {/* Desktop Nav */}
@@ -190,7 +189,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
             
             <div className="space-y-6">
-              <Logo className="text-white scale-90 origin-left" />
+              <Logo variant="footer" className="text-white scale-90 origin-left" />
               <p className="text-neutral-400 text-sm leading-relaxed max-w-xs">
                 Building Strength, Inside and Out. A mission-driven gym dedicated to character, fitness, and community in Auburn, CA.
               </p>
