@@ -45,7 +45,7 @@ const Outreach: React.FC = () => {
                onClick={() => window.open(SQUARE_DONATION_URL, '_blank')}
                className="shadow-xl transform hover:scale-105 transition-all text-lg px-10"
              >
-               Support the Mission
+               Donate Today
              </Button>
           </div>
         </div>
@@ -186,7 +186,7 @@ const Outreach: React.FC = () => {
                onClick={() => window.open(SQUARE_DONATION_URL, '_blank')}
                className="px-12 py-4 text-xl"
              >
-               Give via Square
+               Donate
              </Button>
          </div>
       </Section>

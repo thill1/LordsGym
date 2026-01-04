@@ -193,7 +193,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
             <div className="space-y-6">
               <Logo className="text-white scale-90 origin-left" />
               <p className="text-neutral-400 text-sm leading-relaxed max-w-xs">
-                Building Strength, Inside and Out. A mission-driven gym dedicated to character, fitness, and community in Auburn, CA.
+                Our mission is to build strength and healing to our community through fitness, Christ, and service.
               </p>
             </div>
 
@@ -240,7 +240,11 @@ const Layout: React.FC<LayoutProps> = ({ children, currentPath, onNavigate }) =>
                 </li>
                 <li>
                   <span className="block text-white font-bold mb-1">Staffed Hours</span>
-                  <span>Seven days a week, 7am - 7pm</span>
+                  <div className="flex flex-col gap-1">
+                    <span>Monday - Friday: 7am - 7pm</span>
+                    <span>Saturday: 8am - 12pm</span>
+                    <span>Sunday: Day of Rest</span>
+                  </div>
                 </li>
               </ul>
             </div>

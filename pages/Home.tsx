@@ -14,6 +14,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent } = useStore();
   const { hero, values } = homeContent;
 
+  // REPLACE THIS URL WITH A PHOTO OF YOUR MAIN GYM FLOOR
+  // Ideally a wide angle shot showing the scale of the facility
+  const GYM_FLOOR_IMAGE = "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80";
+
   return (
     <>
       {/* Hero Section */}
@@ -107,13 +111,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </Section>
 
-      {/* Call to Action */}
-      <Section bg="image" bgImage="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1920&q=80" className="text-center py-40 !bg-top">
-        <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/30 p-8 rounded-2xl border border-white/10">
+      {/* Call to Action - REAL GYM PHOTO LOCATION */}
+      <Section bg="image" bgImage={GYM_FLOOR_IMAGE} className="text-center py-40 !bg-top">
+        <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/40 p-10 rounded-2xl border border-white/10 shadow-2xl">
           <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 text-white uppercase leading-none drop-shadow-xl">
             Ready to Train With <span className="text-brand-red">Purpose?</span>
           </h2>
-          <p className="text-xl md:text-2xl text-neutral-100 mb-10 font-light">
+          <p className="text-xl md:text-2xl text-neutral-100 mb-10 font-light drop-shadow-md">
             Join a community that fights for you, not against you.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">

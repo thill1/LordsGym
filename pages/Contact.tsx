@@ -36,7 +36,14 @@ const Contact: React.FC = () => {
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-4">Operating Hours</h3>
                 <ul className="space-y-2">
                    <li className="flex justify-between w-full max-w-md border-b border-neutral-200 dark:border-neutral-700 pb-1 font-bold"><span>Member Access</span> <span>24 HOURS / 7 DAYS</span></li>
-                   <li className="flex justify-between w-full max-w-md border-b border-neutral-200 dark:border-neutral-700 pb-1 mt-4 font-bold"><span>Staff seven days a week</span> <span className="whitespace-nowrap">7am-7pm</span></li>
+                   <li className="w-full max-w-md border-b border-neutral-200 dark:border-neutral-700 pb-2 mt-4">
+                      <span className="block font-bold mb-1">Staffed Hours</span>
+                      <div className="text-sm space-y-1 text-neutral-600 dark:text-neutral-400">
+                        <div className="flex justify-between"><span>Monday - Friday</span> <span>7am - 7pm</span></div>
+                        <div className="flex justify-between"><span>Saturday</span> <span>8am - 12pm</span></div>
+                        <div className="flex justify-between"><span>Sunday</span> <span>Day of Rest</span></div>
+                      </div>
+                   </li>
                 </ul>
                 <p className="text-xs text-neutral-500 mt-2 italic text-balance">Staffed hours are for tours, sign-ups, and merchandise sales.</p>
               </div>

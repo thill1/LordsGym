@@ -1,13 +1,17 @@
+
 import React from 'react';
 import Section from '../components/Section';
 import Card from '../components/Card';
 
 const About: React.FC = () => {
+  // REPLACE WITH YOUR IMAGE: This should be the Exterior of the building OR the Front Desk area
+  const HERO_IMAGE = "https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=1920&q=80";
+
   return (
     <>
-      <Section bg="image" bgImage="https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=1920&q=80" className="pt-32 pb-32 text-center">
-        <h1 className="text-6xl font-bold mb-6 text-white uppercase"><span className="text-brand-red">Our</span> Story</h1>
-        <p className="text-2xl max-w-2xl mx-auto text-white">More than a gym. A movement.</p>
+      <Section bg="image" bgImage={HERO_IMAGE} className="pt-32 pb-32 text-center">
+        <h1 className="text-6xl font-bold mb-6 text-white uppercase shadow-black drop-shadow-md"><span className="text-brand-red">Our</span> Story</h1>
+        <p className="text-2xl max-w-2xl mx-auto text-white drop-shadow-md">More than a gym. A movement.</p>
       </Section>
 
       <Section>

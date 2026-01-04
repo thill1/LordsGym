@@ -6,27 +6,37 @@ import Button from '../components/Button';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../types';
 
+// REPLACE THESE WITH REAL FACILITY PHOTOS
+const IMAGES = {
+  // Idea: Photo of your Treadmills, Ellipticals or Bikes
+  cardioArea: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+  // Idea: Photo of the Dumbbell Rack or Bench Press
+  freeWeights: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80',
+  // Idea: Wide shot of the whole gym or Locker Rooms
+  fullFacility: 'https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=800&q=80'
+};
+
 const MEMBERSHIP_PLANS: Record<string, Product> = {
   regular: {
     id: 'mem-regular',
     title: 'Regular Monthly Membership',
     price: 39.00,
     category: 'Membership',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80'
+    image: IMAGES.cardioArea
   },
   student: {
     id: 'mem-student',
     title: 'Student Monthly Membership',
     price: 29.00,
     category: 'Membership',
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80'
+    image: IMAGES.freeWeights
   },
   annual: {
     id: 'mem-annual',
     title: '1 Year Paid In Full',
     price: 360.00,
     category: 'Membership',
-    image: 'https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=800&q=80'
+    image: IMAGES.fullFacility
   }
 };
 
@@ -53,7 +63,7 @@ const Membership: React.FC = () => {
       <Section bg="dark" className="text-center pt-32 pb-24">
         <div className="relative inline-block mb-4">
           <h1 className="text-5xl font-bold">MONTH-TO-MONTH</h1>
-          <span className="absolute -right-6 -top-4 border border-white/20 text-neutral-400 bg-black/50 backdrop-blur-md px-2 py-1 rotate-12 font-bold uppercase tracking-widest text-xs">Memberships</span>
+          <span className="absolute -right-6 -top-4 border border-white/20 text-white bg-brand-red px-2 py-1 rotate-12 font-bold uppercase tracking-widest text-xs shadow-lg">Memberships</span>
         </div>
         <p className="text-xl text-neutral-400 max-w-2xl mx-auto mt-4">
           Join the community built on faith and forged in iron.
@@ -65,10 +75,15 @@ const Membership: React.FC = () => {
           
           {/* REGULAR MONTHLY */}
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100">
-            <div className="bg-brand-charcoal text-white p-6 text-center relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full"></div>
-              <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter relative z-10">REGULAR<br/>MONTHLY</h3>
+            {/* Header Image */}
+            <div className="h-48 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.regular.image} alt="Gym Facility" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+               <div className="absolute bottom-4 left-4 text-white">
+                 <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">REGULAR<br/>MONTHLY</h3>
+               </div>
             </div>
+            
             <div className="p-8 flex-grow flex flex-col bg-white dark:bg-neutral-800">
               <ul className="space-y-6 text-center flex-grow">
                 <li className="font-bold text-sm uppercase tracking-widest border-b pb-4 border-neutral-200 dark:border-neutral-700 text-brand-charcoal dark:text-white">Access to gym equipment</li>
@@ -85,11 +100,16 @@ const Membership: React.FC = () => {
 
           {/* STUDENT (Featured/Middle) */}
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl relative z-10 transition-transform hover:scale-105">
-            <div className="bg-black text-white p-6 text-center relative overflow-hidden">
-               <div className="absolute inset-0 bg-neutral-900"></div>
-              <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter relative z-10">STUDENT</h3>
-              <span className="absolute top-2 right-2 bg-neutral-800 text-neutral-300 border border-neutral-700 text-[10px] px-2 py-0.5 font-bold uppercase tracking-widest">Best Value</span>
+            {/* Header Image */}
+            <div className="h-48 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.student.image} alt="Gym Weights" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+               <div className="absolute top-0 right-0 bg-brand-red text-white text-xs font-bold px-3 py-1 uppercase tracking-widest">Most Popular</div>
+               <div className="absolute bottom-4 left-4 text-white">
+                 <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">STUDENT</h3>
+               </div>
             </div>
+
             <div className="p-8 flex-grow flex flex-col bg-white dark:bg-neutral-800">
               <ul className="space-y-6 text-center flex-grow">
                 <li className="font-bold text-sm uppercase tracking-widest border-b pb-4 border-neutral-200 dark:border-neutral-700 leading-relaxed text-brand-charcoal dark:text-white">Current High School or<br/>College Student</li>
@@ -106,10 +126,15 @@ const Membership: React.FC = () => {
 
           {/* 1 YEAR PAID IN FULL */}
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100">
-            <div className="bg-brand-charcoal text-white p-6 text-center relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full"></div>
-              <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter relative z-10">1 YEAR PAID IN<br/>FULL</h3>
+            {/* Header Image */}
+            <div className="h-48 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.annual.image} alt="Full Facility" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+               <div className="absolute bottom-4 left-4 text-white">
+                 <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">1 YEAR PAID IN<br/>FULL</h3>
+               </div>
             </div>
+
             <div className="p-8 flex-grow flex flex-col bg-white dark:bg-neutral-800">
               <ul className="space-y-6 text-center flex-grow">
                 <li className="font-bold text-sm uppercase tracking-widest border-b pb-4 border-neutral-200 dark:border-neutral-700 leading-relaxed text-brand-charcoal dark:text-white">Full Year Paid Up<br/>Front</li>
