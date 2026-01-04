@@ -5,7 +5,11 @@ import Card from '../components/Card';
 
 const About: React.FC = () => {
   // REPLACE WITH YOUR IMAGE: This should be the Exterior of the building OR the Front Desk area
-  const HERO_IMAGE = "https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=1920&q=80";
+  const HERO_IMAGE = // ✅ Local hero image (GitHub Pages-safe)
+const HERO_IMAGE = new URL(
+  "media/lords-gym/LordsGym1.png",
+  import.meta.env.BASE_URL
+).toString();
 
   return (
     <>
