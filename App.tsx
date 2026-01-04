@@ -13,6 +13,7 @@ import Programs from './pages/Programs';
 import Calendar from './pages/Calendar';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
+import Outreach from './pages/Outreach';
 
 const App: React.FC = () => {
   // Simple Hash Router Implementation
@@ -43,6 +44,8 @@ const App: React.FC = () => {
         return <Home onNavigate={navigate} />;
       case '/membership':
         return <Membership />;
+      case '/outreach':
+        return <Outreach />;
       case '/calendar':
         return <Calendar />;
       case '/training':

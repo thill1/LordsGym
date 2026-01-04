@@ -28,7 +28,7 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl border-t-4 border-brand-red">
+    <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl">
       <h3 className="text-2xl font-bold mb-6 uppercase tracking-wider text-brand-charcoal dark:text-white">Send a Message</h3>
       
       {status === 'success' ? (

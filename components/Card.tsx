@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface CardProps {
@@ -12,7 +13,7 @@ const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = fal
     : "";
 
   return (
-    <div className={`bg-white dark:bg-neutral-800 border-l-4 border-brand-red shadow-md p-6 ${hoverClasses} ${className}`}>
+    <div className={`bg-white dark:bg-neutral-800 shadow-md p-6 ${hoverClasses} ${className}`}>
       {children}
     </div>
   );

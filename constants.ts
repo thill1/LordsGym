@@ -7,10 +7,12 @@ export const APP_NAME = "Lord's Gym";
 // In production, these should be set via environment variables (e.g., .env file or Vercel config)
 export const SHOPIFY_STORE_URL = (import.meta as any).env?.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
 export const MINDBODY_SITE_ID = (import.meta as any).env?.VITE_MINDBODY_SITE_ID || "123456"; 
+export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEKT1SC3YW/checkout/LM65OFKUNRAUMDU4YIMON77A?src=sheet";
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },
   { label: 'Membership', path: '/membership' },
+  { label: 'Outreach', path: '/outreach' },
   { label: '1-on-1 Training', path: '/training' },
   { label: 'Calendar', path: '/calendar' },
   { label: 'Shop', path: '/shop' },

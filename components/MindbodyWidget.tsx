@@ -13,7 +13,7 @@ const MindbodyWidget: React.FC<MindbodyWidgetProps> = ({ title, type = 'schedule
   return (
     <div className={`w-full bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 ${className}`}>
       <div className="flex justify-between items-center mb-6">
-         <h3 className="text-xl font-bold uppercase tracking-wider text-brand-red">{title}</h3>
+         <h3 className="text-xl font-bold uppercase tracking-wider text-brand-charcoal dark:text-white">{title}</h3>
          <div className="text-[10px] font-bold uppercase bg-neutral-100 dark:bg-neutral-700 px-2 py-1 rounded text-neutral-500">
             Powered by MindBody
          </div>

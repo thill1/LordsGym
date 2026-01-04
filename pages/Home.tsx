@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Section from '../components/Section';
 import Button from '../components/Button';
@@ -31,8 +32,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex flex-col justify-center h-full">
           <div className="max-w-3xl fade-in fade-in-delay-1">
-            <div className="inline-flex items-center gap-3 border-l-4 border-brand-red pl-4 mb-8">
-              <span className="h-px w-8 bg-brand-red hidden sm:block"></span>
+            <div className="inline-flex items-center gap-3 border-l-2 border-neutral-500 pl-4 mb-8">
+              <span className="h-px w-8 bg-neutral-500 hidden sm:block"></span>
               <p className="text-white font-bold tracking-[0.2em] uppercase text-sm">Founded in Faith. Forged in Iron.</p>
             </div>
             
@@ -40,12 +41,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               {hero.headline}
             </h1>
             
-            <p className="text-lg md:text-xl text-neutral-300 mb-10 max-w-xl leading-relaxed font-light">
+            <h2 className="text-lg md:text-xl text-neutral-300 mb-10 max-w-xl leading-relaxed font-light normal-case font-sans tracking-normal">
               {hero.subheadline}
-            </p>
+            </h2>
             
             <div className="flex flex-col sm:flex-row gap-5">
-              <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="shadow-brand-red/20 shadow-2xl">
+              <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="shadow-2xl">
                 {hero.ctaText}
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-brand-charcoal" onClick={() => onNavigate('/shop')}>
@@ -68,7 +69,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-3 gap-8 text-center divide-x divide-neutral-800">
                <div className="p-4">
-                  <div className="text-3xl md:text-4xl font-display font-bold text-brand-red mb-1">{values.stat1}</div>
+                  <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat1}</div>
                   <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label1}</div>
                </div>
                <div className="p-4">
@@ -76,7 +77,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label2}</div>
                </div>
                <div className="p-4">
-                  <div className="text-3xl md:text-4xl font-display font-bold text-brand-red mb-1">{values.stat3}</div>
+                  <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat3}</div>
                   <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label3}</div>
                </div>
             </div>
@@ -88,10 +89,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-                <span className="h-1 w-10 bg-brand-red"></span>
-                <span className="text-brand-red font-bold uppercase tracking-widest text-sm">New Arrivals</span>
+                <span className="h-1 w-10 bg-brand-charcoal dark:bg-white"></span>
+                <span className="text-brand-charcoal dark:text-white font-bold uppercase tracking-widest text-sm">New Arrivals</span>
             </div>
-            <h2 className="text-4xl font-bold text-brand-charcoal dark:text-white">Faith & Fitness <span className="text-neutral-400 dark:text-neutral-600">Apparel</span></h2>
+            <h2 className="text-4xl font-bold text-brand-charcoal dark:text-white">Faith & Fitness <span className="text-brand-red">Apparel</span></h2>
             <p className="text-neutral-500 mt-2 max-w-md">High-quality gear designed for the gym and the streets. Wear your testimony.</p>
           </div>
           <Button variant="ghost" className="group hover:text-brand-red" onClick={() => onNavigate('/shop')}>

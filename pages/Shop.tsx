@@ -25,7 +25,7 @@ const Shop: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-8">
           {/* Sidebar Filters */}
           <div className="w-full md:w-64 flex-shrink-0">
-            <h3 className="font-bold text-lg mb-4 border-b-2 border-brand-red dark:border-brand-red pb-2 uppercase tracking-tighter">Collections</h3>
+            <h3 className="font-bold text-lg mb-4 border-b border-neutral-200 dark:border-neutral-700 pb-2 uppercase tracking-tighter">Collections</h3>
             <ul className="space-y-2">
               {categories.map(category => (
                 <li key={category}>
@@ -33,8 +33,8 @@ const Shop: React.FC = () => {
                     onClick={() => setActiveCategory(category)}
                     className={`uppercase font-bold text-sm transition-colors ${
                       activeCategory === category 
-                        ? 'text-brand-red' 
-                        : 'text-neutral-500 hover:text-brand-red'
+                        ? 'text-brand-charcoal dark:text-white underline decoration-2 underline-offset-4 decoration-brand-red' 
+                        : 'text-neutral-500 hover:text-brand-charcoal dark:hover:text-white'
                     }`}
                   >
                     {category}

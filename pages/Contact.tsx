@@ -29,7 +29,7 @@ const Contact: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-1">Email</h3>
-                <p>info@lordsgymauburn.com</p>
+                <p>info@lordsgymoutreach.com</p>
               </div>
               
               <div className="pt-8">

@@ -6,7 +6,7 @@ import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product 
 // Initial Default State
 const DEFAULT_SETTINGS: SiteSettings = {
   siteName: APP_NAME,
-  contactEmail: "info@lordsgymauburn.com",
+  contactEmail: "info@lordsgymoutreach.com",
   contactPhone: "530-537-2105",
   address: "258 Elm Ave, Auburn, CA 95603",
   googleAnalyticsId: "",
@@ -20,7 +20,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
 const DEFAULT_HOME_CONTENT: HomePageContent = {
   hero: {
     headline: "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.",
-    subheadline: "More than a gym. We are a community dedicated to building strength inside and out. 24/7 Access in Auburn, CA.",
+    subheadline: "Our mission is to bring strength and healing to our community through fitness, Christ and service.",
     ctaText: "Join Now",
     backgroundImage: "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80"
   },
@@ -76,7 +76,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
-    const saved = localStorage.getItem('home_content');
+    // Version v2 used to force update the new hero text for existing users
+    const saved = localStorage.getItem('home_content_v2');
     return saved ? JSON.parse(saved) : DEFAULT_HOME_CONTENT;
   });
 
@@ -101,7 +102,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Persistence Effects
   useEffect(() => { localStorage.setItem('site_settings', JSON.stringify(settings)); }, [settings]);
-  useEffect(() => { localStorage.setItem('home_content', JSON.stringify(homeContent)); }, [homeContent]);
+  useEffect(() => { localStorage.setItem('home_content_v2', JSON.stringify(homeContent)); }, [homeContent]);
   useEffect(() => { localStorage.setItem('site_testimonials', JSON.stringify(testimonials)); }, [testimonials]);
   useEffect(() => { localStorage.setItem('shop_products', JSON.stringify(products)); }, [products]);
   useEffect(() => { localStorage.setItem('shop_cart', JSON.stringify(cart)); }, [cart]);

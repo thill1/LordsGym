@@ -1,44 +1,32 @@
-import React from "react";
-import logo from "../assets/logo/lords-gym-logo.jpg";
+import React from 'react';
 
-type LogoProps = {
+interface LogoProps {
   className?: string;
-  /**
-   * full = legacy alias (treat as nav)
-   * nav = top navigation
-   * footer = footer area
-   * icon = square icon
-   */
-  variant?: "full" | "nav" | "footer" | "icon";
-  alt?: string;
-};
+  variant?: 'full' | 'icon';
+}
 
-export default function Logo({
-  className = "",
-  variant = "nav",
-  alt = "Lord's Gym Auburn",
-}: LogoProps) {
-  const v = variant === "full" ? "nav" : variant;
-
-  // Twice as big vs prior sizing:
-  // Previous: nav h-9, footer h-12
-  // New:      nav h-16, footer h-20
-  const sizeClass =
-    v === "icon"
-      ? "h-12 w-12"
-      : v === "footer"
-      ? "h-20 w-auto"
-      : "h-16 w-auto"; // nav/full default
-
+const Logo: React.FC<LogoProps> = ({ className = '', variant = 'full' }) => {
   return (
-    <div className={`flex items-center ${className}`}>
-      <img
-        src={logo}
-        alt={alt}
-        className={`${sizeClass} object-contain`}
-        loading="eager"
-        decoding="async"
-      />
+    <div className={`flex items-center gap-2 ${className}`}>
+      {/* Icon Mark: Cross + L Motif */}
+      <svg
+        viewBox="0 0 100 100"
+        className="w-10 h-10 text-brand-red fill-current"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M20,10 L35,10 L35,60 L70,60 L70,75 L20,75 Z" className="text-current" /> {/* L Shape */}
+        <rect x="40" y="20" width="15" height="50" className="fill-brand-red" /> {/* Vertical Cross Bar */}
+        <rect x="25" y="35" width="45" height="15" className="fill-brand-red" /> {/* Horizontal Cross Bar */}
+      </svg>
+      
+      {variant === 'full' && (
+        <div className="flex flex-col leading-none uppercase font-display tracking-widest text-current">
+          <span className="text-xl font-bold">Lord's</span>
+          <span className="text-sm font-bold opacity-70">Gym</span>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default Logo;
