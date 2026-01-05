@@ -1,13 +1,13 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
+// Repo: https://thill1.github.io/LordsGym/
+// ✅ GitHub Pages project site base MUST be "/LordsGym/"
 export default defineConfig({
   plugins: [react()],
-  root: ".",
-  // Use relative base so assets work on GitHub Pages project sites AND locally
-  base: "./",
+  base: '/LordsGym/',
   build: {
-    outDir: "dist",
+    outDir: 'dist',
     emptyOutDir: true,
   },
 });
