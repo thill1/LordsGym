@@ -17,7 +17,7 @@ const getHeroImage = (filename: string) => {
 };
 
 const IMAGES = {
-  hero: getHeroImage('hero-background.jpg.jpg'), // Hero background
+  hero: getHeroImage('hero-background.jpg'), // Hero background
   trailer: getOutreachImage('outreach-trailer.jpg.jpeg'), // Trailer/Distribution vibe
   outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
   prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
