@@ -22,7 +22,7 @@ const IMAGES = {
   outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
   prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
   hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'), // Brotherhood/Support
-  community: getOutreachImage('outreach-community.jpg') // Community photo (bottom section)
+  community: getOutreachImage('outreach-community.jpg.jpeg') // Community photo (bottom section)
 };
 
 const Outreach: React.FC = () => {
