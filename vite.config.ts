@@ -1,13 +1,13 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ command }) => ({
+// Repo site URL: https://thill1.github.io/LordsGym/
+export default defineConfig({
   plugins: [react()],
-  root: ".",
-  // Dev at /, build for GitHub Pages project site at /LordsGym/
-  base: command === "build" ? "/LordsGym/" : "/",
+  root: '.',
+  base: '/LordsGym/',
   build: {
-    outDir: "dist",
+    outDir: 'dist',
     emptyOutDir: true,
   },
-}));
+});
