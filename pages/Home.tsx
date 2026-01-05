@@ -6,7 +6,7 @@ import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
-  // ✅ Optional to prevent build breaks if any file renders <Home /> without props
+  // Optional so build never breaks if someone renders <Home /> without props
   onNavigate?: (path: string) => void;
 }
 
@@ -14,28 +14,26 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent } = useStore();
   const { hero, values } = homeContent;
 
-  // ✅ Safe default navigation if prop is not passed (prevents TS build failure)
-  const navigate = onNavigate ?? ((path: string) => {
-    window.location.hash = path;
-  });
+  // Safe default navigation if prop is not passed
+  const navigate =
+    onNavigate ??
+    ((path: string) => {
+      window.location.hash = path;
+    });
 
-  // ✅ Local hero image (GitHub Pages-safe)
-  // File path in repo: public/media/lords-gym/LordsGym1.png
-  const HERO_BG_IMAGE = new URL(
-    'media/lords-gym/LordsGym1.png',
-    import.meta.env.BASE_URL
-  ).toString();
+  // ✅ GitHub Pages-safe PUBLIC asset path (NO new URL(base) usage)
+  // File location in repo: public/media/lords-gym/LordsGym1.png
+  const HERO_BG_IMAGE = `${import.meta.env.BASE_URL}media/lords-gym/LordsGym1.png`;
 
   // REPLACE THIS URL WITH A PHOTO OF YOUR MAIN GYM FLOOR
-  // Ideally a wide angle shot showing the scale of the facility
   const GYM_FLOOR_IMAGE =
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80";
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80';
 
   return (
     <>
       {/* Hero Section */}
       <section className="relative h-screen min-h-[600px] flex items-center bg-black overflow-hidden">
-        {/* Background Image with Ken Burns Effect */}
+        {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent z-10"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
@@ -65,7 +63,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-5">
-              <Button size="lg" variant="brand" onClick={() => navigate('/membership')} className="shadow-2xl">
+              <Button
+                size="lg"
+                variant="brand"
+                onClick={() => navigate('/membership')}
+                className="shadow-2xl"
+              >
                 {hero.ctaText}
               </Button>
               <Button
@@ -82,7 +85,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 text-white animate-bounce hidden md:block">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 opacity-50"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
@@ -93,15 +102,21 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 gap-8 text-center divide-x divide-neutral-800">
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat1}</div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
+                {values.stat1}
+              </div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label1}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat2}</div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
+                {values.stat2}
+              </div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label2}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat3}</div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
+                {values.stat3}
+              </div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label3}</div>
             </div>
           </div>
@@ -130,6 +145,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <span className="inline-block transition-transform group-hover:translate-x-1 ml-2">&rarr;</span>
           </Button>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {FEATURED_PRODUCTS.map((product) => (
             <ShopifyProduct key={product.id} product={product} />
@@ -137,7 +153,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </Section>
 
-      {/* Call to Action - REAL GYM PHOTO LOCATION */}
+      {/* Call to Action */}
       <Section bg="image" bgImage={GYM_FLOOR_IMAGE} className="text-center py-40 !bg-top">
         <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/40 p-10 rounded-2xl border border-white/10 shadow-2xl">
           <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 text-white uppercase leading-none drop-shadow-xl">
