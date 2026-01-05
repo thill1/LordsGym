@@ -6,7 +6,7 @@ import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
-  // Optional so build never breaks if someone renders <Home /> without props
+  // Optional so TS never breaks if some path renders <Home /> without props
   onNavigate?: (path: string) => void;
 }
 
@@ -14,20 +14,26 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent } = useStore();
   const { hero, values } = homeContent;
 
-  // Safe default navigation if prop is not passed
+  // Safe default navigation (prevents TS + runtime issues)
   const navigate =
     onNavigate ??
     ((path: string) => {
       window.location.hash = path;
     });
 
-  // ✅ GitHub Pages-safe PUBLIC asset path (NO new URL(base) usage)
-  // File location in repo: public/media/lords-gym/LordsGym1.png
-  const HERO_BG_IMAGE = `${import.meta.env.BASE_URL}media/lords-gym/LordsGym1.png`;
+  // ✅ GitHub Pages-safe public asset URL (NO new URL() runtime crash)
+  // File path in repo: public/media/lords-gym/LordsGym1.png
+  const FALLBACK_HERO_BG = `${import.meta.env.BASE_URL}media/lords-gym/LordsGym1.png`;
 
-  // REPLACE THIS URL WITH A PHOTO OF YOUR MAIN GYM FLOOR
+  // If Admin/Store provides a backgroundImage, use it; otherwise use local fallback.
+  const HERO_BG_IMAGE =
+    (hero?.backgroundImage && hero.backgroundImage.trim().length > 0)
+      ? hero.backgroundImage
+      : FALLBACK_HERO_BG;
+
+  // Call-to-action section image (still fine as URL)
   const GYM_FLOOR_IMAGE =
-    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80';
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80";
 
   return (
     <>
@@ -40,7 +46,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <img
             src={HERO_BG_IMAGE}
             alt="Lord's Gym Background"
-            className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite] transform transition-transform duration-[20s]"
+            className="w-full h-full object-cover opacity-60 scale-105 transform transition-transform duration-[20s]"
             style={{ animation: 'none' }}
           />
         </div>
@@ -85,13 +91,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 text-white animate-bounce hidden md:block">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 opacity-50"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
@@ -102,21 +102,15 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-3 gap-8 text-center divide-x divide-neutral-800">
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
-                {values.stat1}
-              </div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat1}</div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label1}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
-                {values.stat2}
-              </div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat2}</div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label2}</div>
             </div>
             <div className="p-4">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
-                {values.stat3}
-              </div>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat3}</div>
               <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label3}</div>
             </div>
           </div>
