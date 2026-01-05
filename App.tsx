@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { StoreProvider } from './context/StoreContext';
 import Layout from './components/Layout';
