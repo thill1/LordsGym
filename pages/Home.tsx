@@ -6,6 +6,7 @@ import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
+  // Optional so nothing breaks if Home is ever rendered without props
   onNavigate?: (path: string) => void;
 }
 
@@ -19,14 +20,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       window.location.hash = path;
     });
 
-  // ✅ GitHub Pages-safe local hero image (NO new URL())
+  // ✅ GitHub Pages-safe local hero path (NO new URL())
   // File path in repo: public/media/lords-gym/LordsGym1.png
   const FALLBACK_HERO_BG = `${import.meta.env.BASE_URL}media/lords-gym/LordsGym1.png`;
 
-  // Use CMS value if present, otherwise fallback local image
+  // Use CMS value if present; otherwise local fallback
   const HERO_BG_IMAGE = hero.backgroundImage?.trim() ? hero.backgroundImage : FALLBACK_HERO_BG;
 
-  // REPLACE THIS URL WITH A PHOTO OF YOUR MAIN GYM FLOOR
   const GYM_FLOOR_IMAGE =
     'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80';
 
