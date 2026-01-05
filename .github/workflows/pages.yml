@@ -1,4 +1,4 @@
-name: Build and Deploy GitHub Pages (main)
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -25,15 +25,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
-      # NOTE: Using npm install (NOT npm ci) because AI Studio syncs often omit lockfiles.
-      - name: Install dependencies
-        run: npm install
+      - name: Install
+        run: npm ci
 
       - name: Build
         run: npm run build
 
-      - name: Upload Pages artifact
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -41,6 +44,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
