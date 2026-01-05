@@ -19,7 +19,7 @@ const Section: React.FC<SectionProps> = ({
     default: "bg-white dark:bg-brand-charcoal text-brand-charcoal dark:text-white",
     alternate: "bg-white dark:bg-neutral-900 text-brand-charcoal dark:text-white",
     dark: "bg-brand-charcoal text-white",
-    image: "relative bg-cover bg-center bg-fixed text-white"
+    image: "relative bg-cover bg-center bg-no-repeat text-white"
   };
 
   const style = bg === 'image' && bgImage ? { backgroundImage: `url(${bgImage})` } : {};

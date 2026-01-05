@@ -105,10 +105,12 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           </nav>
 
           <div className="hidden lg:flex items-center space-x-5">
-            <ThemeToggle />
+            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+              <ThemeToggle />
+            </div>
             {/* Cart Icon */}
             <button 
-                className="relative p-2 text-current hover:text-brand-red transition-colors" 
+                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -142,7 +144,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           {/* Mobile Menu Controls */}
           <div className="lg:hidden flex items-center gap-4 relative z-50">
              <button 
-                className="relative p-2 text-current hover:text-brand-red transition-colors" 
+                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -155,7 +157,9 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 </span>
               )}
             </button>
-             <ThemeToggle />
+            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+              <ThemeToggle />
+            </div>
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 text-current focus:outline-none"
