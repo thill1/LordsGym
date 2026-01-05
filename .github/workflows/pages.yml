@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -25,15 +25,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
-      # ✅ Works even if you do NOT have package-lock.json
       - name: Install dependencies
         run: npm install
 
       - name: Build
         run: npm run build
 
-      - name: Configure Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
@@ -48,6 +48,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
