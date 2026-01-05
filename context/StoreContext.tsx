@@ -90,7 +90,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
     // Version v2 used to force update the new hero text for existing users
     const saved = localStorage.getItem('home_content_v2');
-    return saved ? JSON.parse(saved) : DEFAULT_HOME_CONTENT;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_HOME_CONTENT;
+    // Always ensure hero background uses the local image
+    return {
+      ...parsed,
+      hero: {
+        ...parsed.hero,
+        backgroundImage: getHeroImage('hero-background.jpg.jpg')
+      }
+    };
   });
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>(() => {
