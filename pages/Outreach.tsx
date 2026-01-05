@@ -4,25 +4,24 @@ import Section from '../components/Section';
 import Button from '../components/Button';
 import { SQUARE_DONATION_URL } from '../constants';
 
-// TOGGLE THIS TO TRUE WHEN YOU HAVE UPLOADED YOUR PHOTOS TO THE 'public' FOLDER
-const USE_LOCAL_PHOTOS = false; 
+// Helper function to get outreach image path
+const getOutreachImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/outreach/${filename}`;
+};
+
+// Helper function to get hero image path
+const getHeroImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/hero/${filename}`;
+};
 
 const IMAGES = {
-  hero: USE_LOCAL_PHOTOS 
-    ? "/outreach-storm.jpg" 
-    : "https://images.unsplash.com/photo-1499346030926-9a72daac6c63?auto=format&fit=crop&w=1920&q=80", // Stormy Sky
-  trailer: USE_LOCAL_PHOTOS 
-    ? "/outreach-trailer.jpg" 
-    : "https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?auto=format&fit=crop&w=800&q=80", // Trailer/Distribution vibe
-  outreach: USE_LOCAL_PHOTOS 
-    ? "/outreach-storm.jpg" 
-    : "https://images.unsplash.com/photo-1455642305367-68834a1da7ab?auto=format&fit=crop&w=800&q=80", // Stormy Road/Walking
-  prayer: USE_LOCAL_PHOTOS 
-    ? "/outreach-prayer.jpg" 
-    : "https://images.unsplash.com/photo-1629237320074-b5b4878a8731?auto=format&fit=crop&w=800&q=80", // Prayer Circle
-  hug: USE_LOCAL_PHOTOS 
-    ? "/outreach-hug.jpg" 
-    : "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80" // Brotherhood/Support
+  hero: getHeroImage('hero-background.jpg.jpg'), // Hero background
+  trailer: getOutreachImage('outreach-trailer.jpg.jpeg'), // Trailer/Distribution vibe
+  outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
+  prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
+  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg') // Brotherhood/Support
 };
 
 const Outreach: React.FC = () => {

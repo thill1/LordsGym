@@ -32,7 +32,7 @@ const ContactForm: React.FC = () => {
       <h3 className="text-2xl font-bold mb-6 uppercase tracking-wider text-brand-charcoal dark:text-white">Send a Message</h3>
       
       {status === 'success' ? (
-        <div className="text-center py-12 animate-fade-in">
+        <div className="text-center py-12 fade-in">
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

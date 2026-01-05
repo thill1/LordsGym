@@ -17,12 +17,24 @@ const DEFAULT_SETTINGS: SiteSettings = {
   }
 };
 
+// Helper to get local media image path
+const getMediaImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/${filename}`;
+};
+
+// Helper to get hero image path
+const getHeroImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/hero/${filename}`;
+};
+
 const DEFAULT_HOME_CONTENT: HomePageContent = {
   hero: {
     headline: "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.",
     subheadline: "Our mission is to bring strength and healing to our community through fitness, Christ and service.",
     ctaText: "Join Now",
-    backgroundImage: "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80"
+    backgroundImage: getHeroImage('hero-background.jpg.jpg')
   },
   values: {
     stat1: "24/7", label1: "Access",
@@ -87,8 +99,30 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
+    // Always use the latest products from constants as source of truth
+    // Only use localStorage if admin has made customizations (different product count or custom products)
     const saved = localStorage.getItem('shop_products');
-    return saved ? JSON.parse(saved) : ALL_PRODUCTS;
+    const savedProducts = saved ? JSON.parse(saved) : null;
+    
+    // If saved products exist and match the count/structure, merge to preserve admin edits
+    // Otherwise, use fresh ALL_PRODUCTS to ensure new merchandise appears
+    if (savedProducts && Array.isArray(savedProducts) && savedProducts.length === ALL_PRODUCTS.length) {
+      const productMap = new Map(savedProducts.map((p: Product) => [p.id, p]));
+      // Update all products from ALL_PRODUCTS to ensure images/titles are current
+      ALL_PRODUCTS.forEach(newProduct => {
+        const existing = productMap.get(newProduct.id);
+        // Keep admin customizations (price, etc) but update image and title
+        if (existing) {
+          productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
+        } else {
+          productMap.set(newProduct.id, newProduct);
+        }
+      });
+      return Array.from(productMap.values());
+    }
+    
+    // Use fresh products if structure changed or no saved data
+    return ALL_PRODUCTS;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -99,6 +133,31 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [programs] = useState<Program[]>(PROGRAMS); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Sync products with latest from constants on mount to ensure new merchandise appears
+  useEffect(() => {
+    setProducts(prevProducts => {
+      const currentProductIds = new Set(prevProducts.map(p => p.id));
+      const latestProductIds = new Set(ALL_PRODUCTS.map(p => p.id));
+      
+      // If product structure changed (new products added), update to latest
+      if (currentProductIds.size !== latestProductIds.size || 
+          !Array.from(latestProductIds).every(id => currentProductIds.has(id))) {
+        const productMap = new Map(prevProducts.map((p: Product) => [p.id, p]));
+        ALL_PRODUCTS.forEach(newProduct => {
+          const existing = productMap.get(newProduct.id);
+          // Update image and title from constants, preserve price if admin customized
+          if (existing) {
+            productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
+          } else {
+            productMap.set(newProduct.id, newProduct);
+          }
+        });
+        return Array.from(productMap.values());
+      }
+      return prevProducts;
+    });
+  }, []); // Only run on mount
 
   // Persistence Effects
   useEffect(() => { localStorage.setItem('site_settings', JSON.stringify(settings)); }, [settings]);

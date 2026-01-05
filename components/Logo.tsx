@@ -23,31 +23,32 @@ const Logo: React.FC<LogoProps> = ({
   const rawBase = (import.meta.env.BASE_URL ?? "/").toString();
   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 
-  // Files in repo:
-  // public/media/lords-gym/lords-gym-logo-dark.png
-  // public/media/lords-gym/lords-gym-logo-light.png
-  const logoDark = `${base}media/lords-gym/lords-gym-logo-dark.png`;
-  const logoLight = `${base}media/lords-gym/lords-gym-logo-light.png`;
+  // New logo file: lords-gym-logo.jpg (black and white design)
+  const logoPath = `${base}media/lords-gym/lords-gym-logo.jpg`;
 
   const effectiveVariant = variant === "full" ? "nav" : variant;
   const isIcon = effectiveVariant === "icon";
 
-  // Sizes (header/logo is intentionally bigger)
+  // Sizes (increased by 15% from current)
   const sizeClass = isIcon
-    ? "h-10 w-10"
+    ? "h-7 w-7" // 15% increase from h-6
     : effectiveVariant === "footer"
-      ? "h-20 w-auto"
-      : "h-14 w-auto";
+      ? "h-14 w-auto" // 15% increase from h-12
+      : variant === "full"
+      ? "h-14 w-auto" // 15% increase from h-12 (12 * 1.15 = 13.8, round to 14)
+      : "h-12 w-auto"; // 15% increase from h-10
 
-  const src = tone === "light" ? logoLight : logoDark;
+  // Use the new black and white logo for all contexts
+  const src = logoPath;
 
   return (
     <img
       src={src}
       alt={alt}
-      className={`${sizeClass} object-contain ${className}`}
+      className={`${sizeClass} object-contain border-0 ${className}`}
       loading="eager"
       decoding="async"
+      style={{ border: 'none', outline: 'none' }}
     />
   );
 };

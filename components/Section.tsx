@@ -16,8 +16,8 @@ const Section: React.FC<SectionProps> = ({
   bgImage
 }) => {
   const bgStyles = {
-    default: "bg-brand-offWhite dark:bg-brand-charcoal text-brand-charcoal dark:text-brand-offWhite",
-    alternate: "bg-white dark:bg-neutral-900 text-brand-charcoal dark:text-brand-offWhite",
+    default: "bg-white dark:bg-brand-charcoal text-brand-charcoal dark:text-white",
+    alternate: "bg-white dark:bg-neutral-900 text-brand-charcoal dark:text-white",
     dark: "bg-brand-charcoal text-white",
     image: "relative bg-cover bg-center bg-fixed text-white"
   };

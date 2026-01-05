@@ -6,14 +6,20 @@ import Button from '../components/Button';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../types';
 
-// REPLACE THESE WITH REAL FACILITY PHOTOS
+// Helper function to get facility image path
+const getFacilityImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/facility/${filename}`;
+};
+
+// Facility photos for membership cards
 const IMAGES = {
-  // Idea: Photo of your Treadmills, Ellipticals or Bikes
-  cardioArea: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-  // Idea: Photo of the Dumbbell Rack or Bench Press
-  freeWeights: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=800&q=80',
-  // Idea: Wide shot of the whole gym or Locker Rooms
-  fullFacility: 'https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=800&q=80'
+  // Regular Monthly - Red weight machines with dark gym interior
+  cardioArea: getFacilityImage('gym-weight-machines.png.png'),
+  // Student Monthly - Squat racks with mirrors, leg press machine
+  freeWeights: getFacilityImage('gym-squat-racks.png.png'),
+  // Annual - Multi-station weight machine with mural
+  fullFacility: getFacilityImage('gym-multi-station.png.png')
 };
 
 const MEMBERSHIP_PLANS: Record<string, Product> = {
@@ -74,10 +80,11 @@ const Membership: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto -mt-32">
           
           {/* REGULAR MONTHLY */}
-          <Card className="p-0 overflow-hidden flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100">
+          <Card className="p-0 overflow-visible flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100 relative">
+            <div className="absolute -top-2 -right-2 bg-brand-red text-white text-xs font-bold px-3 py-1 uppercase tracking-widest rotate-12 z-10 shadow-lg">Most Popular</div>
             {/* Header Image */}
-            <div className="h-48 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.regular.image} alt="Gym Facility" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            <div className="h-40 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.regular.image} alt="Gym Facility" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">REGULAR<br/>MONTHLY</h3>
@@ -101,10 +108,9 @@ const Membership: React.FC = () => {
           {/* STUDENT (Featured/Middle) */}
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl relative z-10 transition-transform hover:scale-105">
             {/* Header Image */}
-            <div className="h-48 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.student.image} alt="Gym Weights" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            <div className="h-40 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.student.image} alt="Gym Weights" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
-               <div className="absolute top-0 right-0 bg-brand-red text-white text-xs font-bold px-3 py-1 uppercase tracking-widest">Most Popular</div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">STUDENT</h3>
                </div>
@@ -127,8 +133,8 @@ const Membership: React.FC = () => {
           {/* 1 YEAR PAID IN FULL */}
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100">
             {/* Header Image */}
-            <div className="h-48 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.annual.image} alt="Full Facility" className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />
+            <div className="h-40 relative overflow-hidden">
+               <img src={MEMBERSHIP_PLANS.annual.image} alt="Full Facility" className="w-full h-full object-cover object-[center_30%] transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">1 YEAR PAID IN<br/>FULL</h3>
@@ -152,8 +158,8 @@ const Membership: React.FC = () => {
 
         {/* PROMO FOOTER */}
         <div className="mt-20 text-center space-y-2">
-          <p className="text-3xl md:text-5xl font-bold italic text-neutral-300 dark:text-neutral-700 uppercase tracking-tighter">No Long Term Contracts!</p>
-          <p className="text-3xl md:text-5xl font-bold italic text-neutral-300 dark:text-neutral-700 uppercase tracking-tighter">No Annual Fees!</p>
+          <p className="text-3xl md:text-5xl font-bold italic text-brand-red uppercase tracking-tighter font-graffiti">No Long Term Contracts!</p>
+          <p className="text-3xl md:text-5xl font-bold italic text-brand-red uppercase tracking-tighter font-graffiti">No Annual Fees!</p>
         </div>
       </Section>
 

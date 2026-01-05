@@ -1,43 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import { Theme } from '../types';
 
 const ThemeToggle: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>(Theme.DARK);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return true; // Default to dark mode
+    const saved = localStorage.getItem('theme');
+    // Default to dark mode if no preference is saved
+    return saved === 'light' ? false : true;
+  });
 
   useEffect(() => {
-    // Check local storage or system preference
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else if (systemPrefersDark) {
-      setTheme(Theme.DARK);
-    } else {
-      setTheme(Theme.LIGHT);
+    // Sync with HTML class on mount
+    const hasDark = document.documentElement.classList.contains('dark');
+    if (hasDark !== isDark) {
+      setIsDark(hasDark);
     }
   }, []);
 
   useEffect(() => {
-    if (theme === Theme.DARK) {
-      document.documentElement.classList.add('dark');
+    // Apply theme whenever state changes
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [isDark]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === Theme.DARK ? Theme.LIGHT : Theme.DARK);
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const newIsDark = !isDark;
+    
+    // Apply immediately
+    const root = document.documentElement;
+    if (newIsDark) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+    
+    // Update state
+    setIsDark(newIsDark);
   };
 
   return (
     <button 
-      onClick={toggleTheme}
-      className="p-2 rounded-full hover:bg-white/10 transition-colors text-current"
-      aria-label="Toggle Dark Mode"
+      type="button"
+      onClick={handleClick}
+      className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-neutral-800 transition-colors text-current focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red cursor-pointer relative z-50"
+      aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
     >
-      {theme === Theme.DARK ? (
+      {isDark ? (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>

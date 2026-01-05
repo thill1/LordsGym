@@ -5,8 +5,8 @@ export const APP_NAME = "Lord's Gym";
 
 // INTEGRATION KEYS
 // In production, these should be set via environment variables (e.g., .env file or Vercel config)
-export const SHOPIFY_STORE_URL = (import.meta as any).env?.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
-export const MINDBODY_SITE_ID = (import.meta as any).env?.VITE_MINDBODY_SITE_ID || "123456"; 
+export const SHOPIFY_STORE_URL = import.meta.env.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
+export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456"; 
 export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEKT1SC3YW/checkout/LM65OFKUNRAUMDU4YIMON77A?src=sheet";
 
 export const NAV_ITEMS: NavItem[] = [
@@ -40,49 +40,62 @@ export const TESTIMONIALS: Testimonial[] = [
   }
 ];
 
+// Helper function to get merchandise image path
+const getMerchImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/merchandise/${filename}`;
+};
+
 export const ALL_PRODUCTS: Product[] = [
-  // Men's Collection
+  // Men's Collection - New Merchandise
   {
     id: 'm1',
     title: "Lord's Cross Lifter Tee",
     price: 32.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('lords-cross-lifter-tee.png.jpg')
   },
   {
     id: 'm2',
-    title: "Squatting Cross Hoodie",
+    title: "Lord's Cross Carrier Hoodie",
     price: 55.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('lords-cross-carrier-hoodie.png.jpg')
   },
   {
     id: 'm3',
-    title: "Squatting Cross Tee",
-    price: 32.00,
+    title: "Lord's Squatting Cross Hoodie",
+    price: 55.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('lords-squatting-cross-hoodie.png.jpg')
   },
   {
     id: 'm4',
-    title: "Sin of the World Long Sleeve",
+    title: "Son of Man Long Sleeve",
     price: 38.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('son-of-man-long-sleeve.png.jpg')
   },
   {
     id: 'm5',
-    title: "Sin of the World Hoodie",
-    price: 55.00,
+    title: "Lord's Squatting Cross Tee",
+    price: 32.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('lords-squatting-cross-tee.png.jpg')
   },
   {
     id: 'm6',
-    title: "Cross Lifter Long Sleeve",
+    title: "Lord's Cross Lifter Long Sleeve",
     price: 38.00,
     category: "Men's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
+    image: getMerchImage('lords-cross-lifter-long-sleeve.png.jpg')
+  },
+  {
+    id: 'm7',
+    title: "Lord's Cross Barbell Hoodie",
+    price: 55.00,
+    category: "Men's Apparel",
+    image: getMerchImage('lords-cross-barbell-hoodie.png.jpg')
   },
   // Women's & Accessories
   {
@@ -101,6 +114,7 @@ export const ALL_PRODUCTS: Product[] = [
   }
 ];
 
+// Featured products for home page (new arrivals)
 export const FEATURED_PRODUCTS = ALL_PRODUCTS.slice(0, 4);
 
 export const PROGRAMS: Program[] = [

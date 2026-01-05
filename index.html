@@ -3,10 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lord’s Gym — Auburn, CA</title>
-
-    <!-- Keep Tailwind CDN if your project currently relies on it -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Lord's Gym — Auburn, CA</title>
+    <link rel="icon" type="image/jpeg" href="/media/lords-gym/lords-gym-logo.jpg" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Permanent+Marker&display=swap"
+      rel="stylesheet"
+    />
+    
+    <!-- Theme initialization script - must run before React -->
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        // Default to dark mode, only use light if explicitly set
+        if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+          // Ensure dark mode is saved if no preference exists
+          if (!theme) {
+            localStorage.setItem('theme', 'dark');
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
