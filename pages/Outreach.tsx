@@ -30,7 +30,6 @@ const Outreach: React.FC = () => {
     <>
       {/* Hero */}
       <Section bg="image" bgImage={IMAGES.hero} className="min-h-[70vh] flex items-center justify-center text-center relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-brand-charcoal z-0"></div>
         <div className="relative z-10 max-w-5xl mx-auto px-4 fade-in">
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold mb-6 text-white uppercase tracking-tight shadow-black drop-shadow-lg">
             Restoring <span className="text-brand-red">Hope</span>

@@ -90,11 +90,13 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 key={item.path}
                 onClick={() => handleNavClick(item.path)}
                 className={`text-base font-graffiti tracking-wide hover:text-brand-red transition-colors relative group py-0 ${
-                  currentPath === item.path 
-                    ? 'text-brand-red' 
-                    : 'text-current'
+                  currentPath === item.path
+                    ? 'text-brand-red'
+                    : isScrolled || isMobileMenuOpen
+                      ? 'text-brand-charcoal dark:text-white'
+                      : 'text-brand-charcoal dark:text-white'
                 }`}
-              >
+                >
                 {item.label}
                 {/* Red drip/underline effect on hover */}
                 <span className={`absolute bottom-0 left-0 h-1 rounded-full bg-brand-red transition-all duration-300 ease-out ${currentPath === item.path ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
