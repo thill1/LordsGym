@@ -1,31 +1,54 @@
-import React from 'react';
+import React from "react";
+
+type LogoVariant = "nav" | "footer" | "icon" | "full";
+type LogoTone = "light" | "dark";
 
 interface LogoProps {
   className?: string;
-  variant?: 'full' | 'icon';
+  variant?: LogoVariant;
+  tone?: LogoTone;
+  alt?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = '', variant = 'full' }) => {
+const Logo: React.FC<LogoProps> = ({
+  className = "",
+  variant = "nav",
+  tone = "dark",
+  alt = "Lord's Gym",
+}) => {
+  // IMPORTANT:
+  // Avoid: new URL("...", import.meta.env.BASE_URL)
+  // On GitHub Pages, BASE_URL is a *path* (e.g. "/LordsGym/"), not an absolute URL,
+  // and can crash with "Invalid base URL".
+  const rawBase = (import.meta.env.BASE_URL ?? "/").toString();
+  const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
+
+  // Files in repo:
+  // public/media/lords-gym/lords-gym-logo-dark.png
+  // public/media/lords-gym/lords-gym-logo-light.png
+  const logoDark = `${base}media/lords-gym/lords-gym-logo-dark.png`;
+  const logoLight = `${base}media/lords-gym/lords-gym-logo-light.png`;
+
+  const effectiveVariant = variant === "full" ? "nav" : variant;
+  const isIcon = effectiveVariant === "icon";
+
+  // Sizes (header/logo is intentionally bigger)
+  const sizeClass = isIcon
+    ? "h-10 w-10"
+    : effectiveVariant === "footer"
+      ? "h-20 w-auto"
+      : "h-14 w-auto";
+
+  const src = tone === "light" ? logoLight : logoDark;
+
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Icon Mark: Cross + L Motif */}
-      <svg
-        viewBox="0 0 100 100"
-        className="w-10 h-10 text-brand-red fill-current"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M20,10 L35,10 L35,60 L70,60 L70,75 L20,75 Z" className="text-current" /> {/* L Shape */}
-        <rect x="40" y="20" width="15" height="50" className="fill-brand-red" /> {/* Vertical Cross Bar */}
-        <rect x="25" y="35" width="45" height="15" className="fill-brand-red" /> {/* Horizontal Cross Bar */}
-      </svg>
-      
-      {variant === 'full' && (
-        <div className="flex flex-col leading-none uppercase font-display tracking-widest text-current">
-          <span className="text-xl font-bold">Lord's</span>
-          <span className="text-sm font-bold opacity-70">Gym</span>
-        </div>
-      )}
-    </div>
+    <img
+      src={src}
+      alt={alt}
+      className={`${sizeClass} object-contain ${className}`}
+      loading="eager"
+      decoding="async"
+    />
   );
 };
 
