@@ -34,7 +34,7 @@ const DEFAULT_HOME_CONTENT: HomePageContent = {
     headline: "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.",
     subheadline: "Our mission is to bring strength and healing to our community through fitness, Christ and service.",
     ctaText: "Join Now",
-    backgroundImage: getHeroImage('hero-background.jpg')
+    backgroundImage: getHeroImage('hero-background.jpg.jpg')
   },
   values: {
     stat1: "24/7", label1: "Access",
@@ -96,7 +96,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...parsed,
       hero: {
         ...parsed.hero,
-        backgroundImage: getHeroImage('hero-background.jpg')
+        backgroundImage: getHeroImage('hero-background.jpg.jpg')
       }
     };
   });
