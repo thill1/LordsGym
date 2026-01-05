@@ -122,7 +122,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       {/* CTA Section */}
       <Section bg="image" bgImage={ctaBgImage} className="text-white relative">
-        <div className="absolute inset-0 bg-black/85 pointer-events-none"></div>
         <div className="text-center max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-xl mb-8 text-red-100">
