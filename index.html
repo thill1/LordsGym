@@ -5,17 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lord's Gym Auburn</title>
 
-    <!-- Fonts (fixes "font removed" issue) -->
+    <!-- ✅ Fonts (restores typography if your Tailwind config references them) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <!-- ❌ DO NOT use Tailwind CDN in production. If you had it before, it caused the warning + style drift. -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
   </head>
   <body>
     <div id="root"></div>
-    <!-- Your entry file is in the project root (no /src) -->
-    <script type="module" src="/main.tsx"></script>
+
+    <!-- ✅ Correct entry for your repo (no /src/main.tsx) -->
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
