@@ -6,12 +6,18 @@ import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
-  onNavigate: (path: string) => void;
+  // ✅ Optional to prevent build breaks if any file renders <Home /> without props
+  onNavigate?: (path: string) => void;
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent } = useStore();
   const { hero, values } = homeContent;
+
+  // ✅ Safe default navigation if prop is not passed (prevents TS build failure)
+  const navigate = onNavigate ?? ((path: string) => {
+    window.location.hash = path;
+  });
 
   // ✅ Local hero image (GitHub Pages-safe)
   // File path in repo: public/media/lords-gym/LordsGym1.png
@@ -59,14 +65,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-5">
-              <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="shadow-2xl">
+              <Button size="lg" variant="brand" onClick={() => navigate('/membership')} className="shadow-2xl">
                 {hero.ctaText}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="border-white text-white hover:bg-white hover:text-brand-charcoal"
-                onClick={() => onNavigate('/shop')}
+                onClick={() => navigate('/shop')}
               >
                 Shop
               </Button>
@@ -119,7 +125,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               High-quality gear designed for the gym and the streets. Wear your testimony.
             </p>
           </div>
-          <Button variant="ghost" className="group hover:text-brand-red" onClick={() => onNavigate('/shop')}>
+          <Button variant="ghost" className="group hover:text-brand-red" onClick={() => navigate('/shop')}>
             View All Products
             <span className="inline-block transition-transform group-hover:translate-x-1 ml-2">&rarr;</span>
           </Button>
@@ -141,14 +147,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             Join a community that fights for you, not against you.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="min-w-[200px]">
+            <Button size="lg" variant="brand" onClick={() => navigate('/membership')} className="min-w-[200px]">
               Join Now
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="border-white text-white hover:bg-white hover:text-black min-w-[200px]"
-              onClick={() => onNavigate('/contact')}
+              onClick={() => navigate('/contact')}
             >
               Book a Tour
             </Button>
