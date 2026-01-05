@@ -1,67 +1,167 @@
-
 import React from 'react';
 import Section from '../components/Section';
-import Card from '../components/Card';
+import Button from '../components/Button';
+import { FEATURED_PRODUCTS } from '../constants';
+import ShopifyProduct from '../components/ShopifyProduct';
+import { useStore } from '../context/StoreContext';
 
-const About: React.FC = () => {
-  // REPLACE WITH YOUR IMAGE: This should be the Exterior of the building OR the Front Desk area
-  const HERO_IMAGE = // ✅ Local hero image (GitHub Pages-safe)
-const HERO_IMAGE = new URL(
-  "media/lords-gym/LordsGym1.png",
-  import.meta.env.BASE_URL
-).toString();
+interface HomeProps {
+  onNavigate: (path: string) => void;
+}
+
+const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  const { homeContent } = useStore();
+  const { hero, values } = homeContent;
+
+  // ✅ Local hero background image (GitHub Pages-safe)
+  // File path in repo: public/media/lords-gym/LordsGym1.png
+  const HERO_BG_IMAGE = new URL(
+    'media/lords-gym/LordsGym1.png',
+    import.meta.env.BASE_URL
+  ).toString();
+
+  // Call-to-action section background (left as-is to avoid drift)
+  const GYM_FLOOR_IMAGE =
+    'https://images.unsplash.com/photo-1540497077202-7c8a33801524?auto=format&fit=crop&w=1920&q=80';
 
   return (
     <>
-      <Section bg="image" bgImage={HERO_IMAGE} className="pt-32 pb-32 text-center">
-        <h1 className="text-6xl font-bold mb-6 text-white uppercase shadow-black drop-shadow-md"><span className="text-brand-red">Our</span> Story</h1>
-        <p className="text-2xl max-w-2xl mx-auto text-white drop-shadow-md">More than a gym. A movement.</p>
-      </Section>
+      {/* Hero Section */}
+      <section className="relative h-screen min-h-[600px] flex items-center bg-black overflow-hidden">
+        {/* Background Image with Ken Burns Effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
+          <img
+            src={HERO_BG_IMAGE}
+            alt="Lord's Gym Hero Background"
+            className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite] transform transition-transform duration-[20s]"
+            style={{ animation: 'none' }}
+          />
+        </div>
 
-      <Section>
-        <div className="max-w-4xl mx-auto space-y-12">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex flex-col justify-center h-full">
+          <div className="max-w-3xl fade-in fade-in-delay-1">
+            <div className="inline-flex items-center gap-3 border-l-2 border-neutral-500 pl-4 mb-8">
+              <span className="h-px w-8 bg-neutral-500 hidden sm:block"></span>
+              <p className="text-white font-bold tracking-[0.2em] uppercase text-sm">
+                Founded in Faith. Forged in Iron.
+              </p>
+            </div>
+
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-8 leading-none tracking-tight whitespace-pre-line">
+              {hero.headline}
+            </h1>
+
+            <h2 className="text-lg md:text-xl text-neutral-300 mb-10 max-w-xl leading-relaxed font-light normal-case font-sans tracking-normal">
+              {hero.subheadline}
+            </h2>
+
+            <div className="flex flex-col sm:flex-row gap-5">
+              <Button
+                size="lg"
+                variant="brand"
+                onClick={() => onNavigate('/membership')}
+                className="shadow-2xl"
+              >
+                {hero.ctaText}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white hover:text-brand-charcoal"
+                onClick={() => onNavigate('/shop')}
+              >
+                Shop
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 text-white animate-bounce hidden md:block">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 opacity-50"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      </section>
+
+      {/* Intro Stats / Values Section */}
+      <section className="bg-brand-charcoal text-white py-12 border-b border-neutral-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-3 gap-8 text-center divide-x divide-neutral-800">
+            <div className="p-4">
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat1}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label1}</div>
+            </div>
+            <div className="p-4">
+              <div className="text-3xl md:text-4xl font-display font-bold text-brand-red mb-1">{values.stat2}</div>
+              <div className="text-xs text-brand-red uppercase tracking-widest">{values.label2}</div>
+            </div>
+            <div className="p-4">
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{values.stat3}</div>
+              <div className="text-xs text-neutral-400 uppercase tracking-widest">{values.label3}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Merch Spotlight (Shopify) */}
+      <Section id="shop-preview" className="bg-brand-offWhite dark:bg-neutral-900">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
-            <h2 className="text-3xl font-bold mb-4 text-black dark:text-white">The <span className="text-brand-red">Mission</span></h2>
-            <p className="text-lg leading-relaxed text-neutral-600 dark:text-neutral-300">
-              Lord's Gym Auburn was established to provide a safe, positive environment for people to get fit, find community, and experience growth. We believe that physical discipline translates to mental and spiritual strength. Our facility is dedicated to the restoration and upliftment of the Auburn community.
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-1 w-10 bg-brand-charcoal dark:bg-white"></span>
+              <span className="text-brand-charcoal dark:text-white font-bold uppercase tracking-widest text-sm">
+                New Arrivals
+              </span>
+            </div>
+            <h2 className="text-4xl font-bold text-brand-charcoal dark:text-white">
+              Faith & Fitness <span className="text-brand-red">Apparel</span>
+            </h2>
+            <p className="text-neutral-500 mt-2 max-w-md">
+              High-quality gear designed for the gym and the streets. Wear your testimony.
             </p>
           </div>
+          <Button variant="ghost" className="group hover:text-brand-red" onClick={() => onNavigate('/shop')}>
+            View All Products
+            <span className="inline-block transition-transform group-hover:translate-x-1 ml-2">&rarr;</span>
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {FEATURED_PRODUCTS.map((product) => (
+            <ShopifyProduct key={product.id} product={product} />
+          ))}
+        </div>
+      </Section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             <div className="bg-neutral-100 dark:bg-neutral-800 p-8 rounded-lg border border-neutral-200 dark:border-neutral-700">
-                <h3 className="text-xl font-bold mb-4">Core Values</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-center"><span className="text-brand-red mr-2 font-bold">✦</span> Humility in Strength</li>
-                  <li className="flex items-center"><span className="text-brand-red mr-2 font-bold">✦</span> Excellence in Service</li>
-                  <li className="flex items-center"><span className="text-brand-red mr-2 font-bold">✦</span> Discipline & Focus</li>
-                  <li className="flex items-center"><span className="text-brand-red mr-2 font-bold">✦</span> Unwavering Faith</li>
-                </ul>
-             </div>
-             <div>
-               <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=600&q=80" alt="Community" className="rounded-lg shadow-lg w-full h-full object-cover grayscale" />
-             </div>
-          </div>
-
-          <div>
-             <h2 className="text-3xl font-bold mb-8 text-center">Leadership</h2>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-2xl mx-auto">
-               <Card className="text-center">
-                 <div className="w-24 h-24 mx-auto bg-neutral-200 rounded-full mb-4 overflow-hidden grayscale border-2 border-brand-red">
-                   <img src="https://images.unsplash.com/photo-1567013127542-490d757e51fc?auto=format&fit=crop&w=200&q=80" alt="Head Coach" className="w-full h-full object-cover" />
-                 </div>
-                 <h4 className="font-bold text-lg">Mark D.</h4>
-                 <p className="text-sm text-brand-red uppercase tracking-wide mb-2 font-bold">Head Coach</p>
-                 <p className="text-sm text-neutral-500">Expert trainer with over 15 years of experience in functional strength.</p>
-               </Card>
-               <Card className="text-center">
-                 <div className="w-24 h-24 mx-auto bg-neutral-200 rounded-full mb-4 overflow-hidden grayscale border-2 border-brand-red">
-                   <img src="https://images.unsplash.com/photo-1611672585731-fa1060a80330?auto=format&fit=crop&w=200&q=80" alt="Wellness Lead" className="w-full h-full object-cover" />
-                 </div>
-                 <h4 className="font-bold text-lg">Sarah J.</h4>
-                 <p className="text-sm text-brand-red uppercase tracking-wide mb-2 font-bold">Wellness & Strategy</p>
-                 <p className="text-sm text-neutral-500">Helping members fuel their bodies for high performance and longevity.</p>
-               </Card>
-             </div>
+      {/* Call to Action - REAL GYM PHOTO LOCATION */}
+      <Section bg="image" bgImage={GYM_FLOOR_IMAGE} className="text-center py-40 !bg-top">
+        <div className="max-w-3xl mx-auto backdrop-blur-sm bg-black/40 p-10 rounded-2xl border border-white/10 shadow-2xl">
+          <h2 className="text-5xl md:text-6xl font-display font-bold mb-6 text-white uppercase leading-none drop-shadow-xl">
+            Ready to Train With <span className="text-brand-red">Purpose?</span>
+          </h2>
+          <p className="text-xl md:text-2xl text-neutral-100 mb-10 font-light drop-shadow-md">
+            Join a community that fights for you, not against you.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button size="lg" variant="brand" onClick={() => onNavigate('/membership')} className="min-w-[200px]">
+              Join Now
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-black min-w-[200px]"
+              onClick={() => onNavigate('/contact')}
+            >
+              Book a Tour
+            </Button>
           </div>
         </div>
       </Section>
@@ -69,4 +169,4 @@ const HERO_IMAGE = new URL(
   );
 };
 
-export default About;
+export default Home;
