@@ -6,7 +6,6 @@ import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
 interface HomeProps {
-  // Optional so TS never breaks if some path renders <Home /> without props
   onNavigate?: (path: string) => void;
 }
 
@@ -14,26 +13,22 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent } = useStore();
   const { hero, values } = homeContent;
 
-  // Safe default navigation (prevents TS + runtime issues)
   const navigate =
     onNavigate ??
     ((path: string) => {
       window.location.hash = path;
     });
 
-  // ✅ GitHub Pages-safe public asset URL (NO new URL() runtime crash)
+  // ✅ GitHub Pages-safe local hero image (NO new URL())
   // File path in repo: public/media/lords-gym/LordsGym1.png
   const FALLBACK_HERO_BG = `${import.meta.env.BASE_URL}media/lords-gym/LordsGym1.png`;
 
-  // If Admin/Store provides a backgroundImage, use it; otherwise use local fallback.
-  const HERO_BG_IMAGE =
-    (hero?.backgroundImage && hero.backgroundImage.trim().length > 0)
-      ? hero.backgroundImage
-      : FALLBACK_HERO_BG;
+  // Use CMS value if present, otherwise fallback local image
+  const HERO_BG_IMAGE = hero.backgroundImage?.trim() ? hero.backgroundImage : FALLBACK_HERO_BG;
 
-  // Call-to-action section image (still fine as URL)
+  // REPLACE THIS URL WITH A PHOTO OF YOUR MAIN GYM FLOOR
   const GYM_FLOOR_IMAGE =
-    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80";
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80';
 
   return (
     <>
@@ -46,7 +41,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <img
             src={HERO_BG_IMAGE}
             alt="Lord's Gym Background"
-            className="w-full h-full object-cover opacity-60 scale-105 transform transition-transform duration-[20s]"
+            className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite] transform transition-transform duration-[20s]"
             style={{ animation: 'none' }}
           />
         </div>
@@ -69,12 +64,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </h2>
 
             <div className="flex flex-col sm:flex-row gap-5">
-              <Button
-                size="lg"
-                variant="brand"
-                onClick={() => navigate('/membership')}
-                className="shadow-2xl"
-              >
+              <Button size="lg" variant="brand" onClick={() => navigate('/membership')} className="shadow-2xl">
                 {hero.ctaText}
               </Button>
               <Button
@@ -123,23 +113,18 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="h-1 w-10 bg-brand-charcoal dark:bg-white"></span>
-              <span className="text-brand-charcoal dark:text-white font-bold uppercase tracking-widest text-sm">
-                New Arrivals
-              </span>
+              <span className="text-brand-charcoal dark:text-white font-bold uppercase tracking-widest text-sm">New Arrivals</span>
             </div>
             <h2 className="text-4xl font-bold text-brand-charcoal dark:text-white">
               Faith & Fitness <span className="text-brand-red">Apparel</span>
             </h2>
-            <p className="text-neutral-500 mt-2 max-w-md">
-              High-quality gear designed for the gym and the streets. Wear your testimony.
-            </p>
+            <p className="text-neutral-500 mt-2 max-w-md">High-quality gear designed for the gym and the streets. Wear your testimony.</p>
           </div>
           <Button variant="ghost" className="group hover:text-brand-red" onClick={() => navigate('/shop')}>
             View All Products
             <span className="inline-block transition-transform group-hover:translate-x-1 ml-2">&rarr;</span>
           </Button>
         </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {FEATURED_PRODUCTS.map((product) => (
             <ShopifyProduct key={product.id} product={product} />
