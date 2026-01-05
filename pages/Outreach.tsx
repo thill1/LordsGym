@@ -21,7 +21,8 @@ const IMAGES = {
   trailer: getOutreachImage('outreach-trailer.jpg.jpeg'), // Trailer/Distribution vibe
   outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
   prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
-  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg') // Brotherhood/Support
+  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'), // Brotherhood/Support
+  community: getOutreachImage('outreach-community.jpg') // Community photo (bottom section)
 };
 
 const Outreach: React.FC = () => {
@@ -146,7 +147,7 @@ const Outreach: React.FC = () => {
                </ul>
             </div>
             <div className="relative h-full min-h-[400px] rounded-lg overflow-hidden border border-white/10 shadow-2xl">
-               <img src={IMAGES.hug} alt="Support Group" className="absolute inset-0 w-full h-full object-cover grayscale opacity-60 hover:opacity-80 transition-opacity" />
+               <img src={IMAGES.community} alt="Community" className="absolute inset-0 w-full h-full object-cover grayscale opacity-60 hover:opacity-80 transition-opacity" />
                <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal to-transparent"></div>
                <div className="absolute bottom-8 left-8 right-8">
                   <p className="text-xl italic font-serif text-white mb-4">
