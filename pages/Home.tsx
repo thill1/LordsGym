@@ -47,7 +47,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             size="lg" 
             variant="brand" 
             onClick={() => onNavigate('/membership')}
-            className="min-w-[200px]"
+            className="min-w-[200px] !bg-brand-red !text-white !border-brand-red hover:!bg-brand-charcoal hover:!border-brand-charcoal dark:!bg-brand-red dark:!text-white dark:!border-brand-red"
           >
             {heroCtaText}
           </Button>

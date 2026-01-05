@@ -146,8 +146,8 @@ const Outreach: React.FC = () => {
                   </li>
                </ul>
             </div>
-            <div className="relative h-full min-h-[400px] rounded-lg overflow-hidden border border-white/10 shadow-2xl">
-               <img src={IMAGES.community} alt="Community" className="absolute inset-0 w-full h-full object-cover grayscale opacity-60 hover:opacity-80 transition-opacity" />
+            <div className="relative h-full min-h-[400px] rounded-lg overflow-hidden border border-white/10 shadow-2xl group">
+               <img src={IMAGES.community} alt="Community" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-60 hover:opacity-80 transition-all duration-700" />
                <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal to-transparent"></div>
                <div className="absolute bottom-8 left-8 right-8">
                   <p className="text-xl italic font-serif text-white mb-4">
