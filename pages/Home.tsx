@@ -18,6 +18,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const heroSubheadline = homeContent?.hero?.subheadline || "Our mission is to bring strength and healing to our community through fitness, Christ and service.";
   const heroCtaText = homeContent?.hero?.ctaText || "Join Now";
   const heroBgImage = homeContent?.hero?.backgroundImage || "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80";
+  
+  // Helper to get CTA background image
+  const getCtaImage = () => {
+    const base = import.meta.env.BASE_URL || '/';
+    return `${base}media/hero/cta-background.jpg`;
+  };
+  const ctaBgImage = getCtaImage();
 
   const values = homeContent?.values || {
     stat1: "24/7", label1: "Access",
@@ -114,8 +121,9 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       {/* ARCHIVED: Testimonials section removed - see pages/archived/HomeTestimonialsSection.tsx */}
 
       {/* CTA Section */}
-      <Section className="bg-brand-red text-white">
-        <div className="text-center max-w-3xl mx-auto">
+      <Section bg="image" bgImage={ctaBgImage} className="text-white relative">
+        <div className="absolute inset-0 bg-black/85 pointer-events-none"></div>
+        <div className="text-center max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-xl mb-8 text-red-100">
             Join a community that trains with purpose and lives with faith.
