@@ -22,7 +22,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   // Helper to get CTA background image
   const getCtaImage = () => {
     const base = import.meta.env.BASE_URL || '/';
-    return `${base}media/hero/cta-background.jpg`;
+    return `${base}media/hero/cta-background.jpg.png`;
   };
   const ctaBgImage = getCtaImage();
 
