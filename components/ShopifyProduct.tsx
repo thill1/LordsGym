@@ -52,7 +52,7 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`text-[10px] w-8 h-8 flex items-center justify-center rounded border transition-colors font-bold ${
+                    className={`text-xs sm:text-[10px] w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded border transition-colors font-bold touch-manipulation ${
                       selectedSize === size 
                         ? 'bg-brand-charcoal text-white border-brand-charcoal dark:bg-white dark:text-brand-charcoal' 
                         : 'bg-transparent text-neutral-500 border-neutral-200 hover:border-brand-red'

@@ -2,6 +2,7 @@ import React from 'react';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import MetaTags from '../components/MetaTags';
 import { useStore } from '../context/StoreContext';
 import { FEATURED_PRODUCTS } from '../constants';
 // ARCHIVED: Testimonials section removed - see pages/archived/HomeTestimonialsSection.tsx
@@ -34,6 +35,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
   return (
     <>
+      <MetaTags
+        title="Train with Purpose, Live with Faith"
+        description={heroSubheadline}
+        image={heroBgImage}
+        path="/"
+      />
       {/* Hero Section */}
       <Section bg="image" bgImage={heroBgImage} className="pt-20 pb-16 min-h-[600px] flex items-center">
         <div className="text-center max-w-4xl mx-auto">

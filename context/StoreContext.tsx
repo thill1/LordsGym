@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product } from '../types';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { runMigrations } from '../lib/migration';
 
 // Initial Default State
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -81,7 +83,10 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load from LocalStorage or use Defaults
+  const [isLoading, setIsLoading] = useState(true);
+  const [migrationRun, setMigrationRun] = useState(false);
+
+  // Load from LocalStorage or use Defaults (fallback)
   const [settings, setSettings] = useState<SiteSettings>(() => {
     const saved = localStorage.getItem('site_settings');
     return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
@@ -142,8 +147,101 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [programs] = useState<Program[]>(PROGRAMS); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Load data from Supabase on mount (if configured)
+  useEffect(() => {
+    const loadFromSupabase = async () => {
+      if (!isSupabaseConfigured()) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Run migration once on first load
+        if (!migrationRun) {
+          await runMigrations();
+          setMigrationRun(true);
+        }
+
+        // Load settings
+        const { data: settingsData } = await supabase
+          .from('settings')
+          .select('*')
+          .eq('id', 'default')
+          .single();
+
+        if (settingsData) {
+          setSettings({
+            siteName: settingsData.site_name,
+            contactEmail: settingsData.contact_email,
+            contactPhone: settingsData.contact_phone,
+            address: settingsData.address,
+            googleAnalyticsId: settingsData.google_analytics_id || '',
+            announcementBar: settingsData.announcement_bar as SiteSettings['announcementBar']
+          });
+        }
+
+        // Load home content
+        const { data: homeData } = await supabase
+          .from('home_content')
+          .select('*')
+          .eq('id', 'default')
+          .single();
+
+        if (homeData) {
+          const content = {
+            hero: homeData.hero as HomePageContent['hero'],
+            values: homeData.values as HomePageContent['values']
+          };
+          // Ensure hero background uses local image
+          content.hero.backgroundImage = getHeroImage('hero-background.jpg.jpg');
+          setHomeContent(content);
+        }
+
+        // Load testimonials
+        const { data: testimonialsData } = await supabase
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (testimonialsData) {
+          setTestimonials(testimonialsData.map(t => ({
+            id: t.id,
+            name: t.name,
+            role: t.role,
+            quote: t.quote
+          })));
+        }
+
+        // Load products
+        const { data: productsData } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            category: p.category,
+            image: p.image
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading data from Supabase:', error);
+        // Fallback to localStorage on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFromSupabase();
+  }, [migrationRun]);
+
   // Sync products with latest from constants on mount to ensure new merchandise appears
   useEffect(() => {
+    if (isLoading) return;
+    
     setProducts(prevProducts => {
       const currentProductIds = new Set(prevProducts.map(p => p.id));
       const latestProductIds = new Set(ALL_PRODUCTS.map(p => p.id));
@@ -165,14 +263,96 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return prevProducts;
     });
-  }, []); // Only run on mount
+  }, [isLoading]); // Run after Supabase load completes
 
-  // Persistence Effects
-  useEffect(() => { localStorage.setItem('site_settings', JSON.stringify(settings)); }, [settings]);
-  useEffect(() => { localStorage.setItem('home_content_v2', JSON.stringify(homeContent)); }, [homeContent]);
-  useEffect(() => { localStorage.setItem('site_testimonials', JSON.stringify(testimonials)); }, [testimonials]);
-  useEffect(() => { localStorage.setItem('shop_products', JSON.stringify(products)); }, [products]);
-  useEffect(() => { localStorage.setItem('shop_cart', JSON.stringify(cart)); }, [cart]);
+  // Persistence Effects - Save to both localStorage and Supabase
+  useEffect(() => {
+    localStorage.setItem('site_settings', JSON.stringify(settings));
+    
+    if (isSupabaseConfigured() && !isLoading) {
+      supabase
+        .from('settings')
+        .upsert({
+          id: 'default',
+          site_name: settings.siteName,
+          contact_email: settings.contactEmail,
+          contact_phone: settings.contactPhone,
+          address: settings.address,
+          google_analytics_id: settings.googleAnalyticsId || null,
+          announcement_bar: settings.announcementBar,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving settings to Supabase:', error);
+        });
+    }
+  }, [settings, isLoading]);
+
+  useEffect(() => {
+    localStorage.setItem('home_content_v2', JSON.stringify(homeContent));
+    
+    if (isSupabaseConfigured() && !isLoading) {
+      supabase
+        .from('home_content')
+        .upsert({
+          id: 'default',
+          hero: homeContent.hero,
+          values: homeContent.values,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving home content to Supabase:', error);
+        });
+    }
+  }, [homeContent, isLoading]);
+
+  useEffect(() => {
+    localStorage.setItem('site_testimonials', JSON.stringify(testimonials));
+    
+    if (isSupabaseConfigured() && !isLoading) {
+      // Note: This will create duplicates if not careful. Consider using upsert with id.
+      testimonials.forEach(testimonial => {
+        supabase
+          .from('testimonials')
+          .upsert({
+            id: testimonial.id,
+            name: testimonial.name,
+            role: testimonial.role,
+            quote: testimonial.quote,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' })
+          .then(({ error }) => {
+            if (error) console.error('Error saving testimonial to Supabase:', error);
+          });
+      });
+    }
+  }, [testimonials, isLoading]);
+
+  useEffect(() => {
+    localStorage.setItem('shop_products', JSON.stringify(products));
+    
+    if (isSupabaseConfigured() && !isLoading) {
+      products.forEach(product => {
+        supabase
+          .from('products')
+          .upsert({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            category: product.category,
+            image: product.image,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'id' })
+          .then(({ error }) => {
+            if (error) console.error('Error saving product to Supabase:', error);
+          });
+      });
+    }
+  }, [products, isLoading]);
+
+  useEffect(() => {
+    localStorage.setItem('shop_cart', JSON.stringify(cart));
+  }, [cart]);
 
   // Check Auth on Mount
   useEffect(() => {
@@ -181,14 +361,109 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   // Actions
-  const updateSettings = (newSettings: SiteSettings) => setSettings(newSettings);
-  const updateHomeContent = (newContent: HomePageContent) => setHomeContent(newContent);
-  const addTestimonial = (t: Testimonial) => setTestimonials(prev => [...prev, t]);
-  const deleteTestimonial = (id: number) => setTestimonials(prev => prev.filter(t => t.id !== id));
+  const updateSettings = async (newSettings: SiteSettings) => {
+    setSettings(newSettings);
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('settings')
+        .upsert({
+          id: 'default',
+          site_name: newSettings.siteName,
+          contact_email: newSettings.contactEmail,
+          contact_phone: newSettings.contactPhone,
+          address: newSettings.address,
+          google_analytics_id: newSettings.googleAnalyticsId || null,
+          announcement_bar: newSettings.announcementBar,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    }
+  };
+
+  const updateHomeContent = async (newContent: HomePageContent) => {
+    setHomeContent(newContent);
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('home_content')
+        .upsert({
+          id: 'default',
+          hero: newContent.hero,
+          values: newContent.values,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    }
+  };
+
+  const addTestimonial = async (t: Testimonial) => {
+    setTestimonials(prev => [...prev, t]);
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('testimonials')
+        .insert({
+          id: t.id,
+          name: t.name,
+          role: t.role,
+          quote: t.quote
+        });
+    }
+  };
+
+  const deleteTestimonial = async (id: number) => {
+    setTestimonials(prev => prev.filter(t => t.id !== id));
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('testimonials')
+        .delete()
+        .eq('id', id);
+    }
+  };
   
-  const addProduct = (p: Product) => setProducts(prev => [...prev, p]);
-  const updateProduct = (p: Product) => setProducts(prev => prev.map(item => item.id === p.id ? p : item));
-  const deleteProduct = (id: string) => setProducts(prev => prev.filter(item => item.id !== id));
+  const addProduct = async (p: Product) => {
+    setProducts(prev => [...prev, p]);
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('products')
+        .insert({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          category: p.category,
+          image: p.image
+        });
+    }
+  };
+
+  const updateProduct = async (p: Product) => {
+    setProducts(prev => prev.map(item => item.id === p.id ? p : item));
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('products')
+        .upsert({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          category: p.category,
+          image: p.image,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    setProducts(prev => prev.filter(item => item.id !== id));
+    
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+    }
+  };
 
   const login = (password: string) => {
     if (password === 'admin123') {

@@ -15,7 +15,7 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-bold tracking-wider uppercase transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95";
+  const baseStyles = "inline-flex items-center justify-center font-bold tracking-wider uppercase transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95 touch-manipulation min-h-[44px] min-w-[44px]";
   
   const variants = {
     // Brand: Neutral by default, Red accent only on hover
@@ -35,7 +35,7 @@ const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "text-xs px-4 py-2",
+    sm: "text-xs px-4 py-2.5",
     md: "text-sm px-6 py-3",
     lg: "text-base px-8 py-4"
   };

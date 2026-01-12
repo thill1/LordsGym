@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { StoreProvider } from './context/StoreContext';
+import { AuthProvider } from './context/AuthContext';
+import { CalendarProvider } from './context/CalendarContext';
+import { ToastProvider } from './context/ToastContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Membership from './pages/Membership';
@@ -71,20 +75,34 @@ const App: React.FC = () => {
   // If Admin, don't show the standard Layout (Admin has its own sidebar)
   if (currentPath === '/admin') {
      return (
-       <StoreProvider>
-         <div className="fade-in">{renderPage()}</div>
-       </StoreProvider>
+       <ErrorBoundary>
+         <ToastProvider>
+           <AuthProvider>
+             <StoreProvider>
+               <div className="fade-in">{renderPage()}</div>
+             </StoreProvider>
+           </AuthProvider>
+         </ToastProvider>
+       </ErrorBoundary>
      );
   }
 
   return (
-    <StoreProvider>
-      <Layout currentPath={currentPath} onNavigate={navigate}>
-        <div className="fade-in">
-          {renderPage()}
-        </div>
-      </Layout>
-    </StoreProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
+          <StoreProvider>
+            <CalendarProvider>
+              <Layout currentPath={currentPath} onNavigate={navigate}>
+                <div className="fade-in">
+                  {renderPage()}
+                </div>
+              </Layout>
+            </CalendarProvider>
+          </StoreProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 };
 

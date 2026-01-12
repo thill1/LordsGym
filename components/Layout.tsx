@@ -175,11 +175,23 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
         </div>
       </header>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800 mt-[73px]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <nav className="space-y-4">
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Menu Drawer */}
+      <div
+        className={`lg:hidden fixed inset-x-0 top-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800 transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
+        style={{ marginTop: '73px' }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <nav className="space-y-4">
               {NAV_ITEMS.map((item) => (
                 <button
                   key={item.path}
@@ -212,7 +224,6 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
             </nav>
           </div>
         </div>
-      )}
 
       {/* Cart Drawer */}
       <CartDrawer onCheckout={handleCheckout} />

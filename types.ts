@@ -24,6 +24,10 @@ export interface Product {
   price: number;
   image: string;
   category: string;
+  featured?: boolean;
+  description?: string;
+  inventory?: Record<string, number>;
+  variants?: Record<string, any>;
 }
 
 export interface CartItem extends Product {
