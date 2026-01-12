@@ -22,15 +22,42 @@ if (isSupabaseConfigured()) {
   });
 } else {
   console.warn('Supabase environment variables are not set. Using localStorage fallback.');
-  // Create a client with placeholder values to prevent crashes
-  // All operations will fail gracefully, but the app won't crash
-  supabase = createClient('https://placeholder.supabase.co', 'placeholder-key', {
+  // Create a mock client that implements the SupabaseClient interface
+  // but doesn't actually make any API calls
+  supabase = {
     auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
-  });
+      getUser: async () => ({ data: { user: null }, error: null }),
+      signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: 'Supabase not configured' } as any }),
+      signOut: async () => ({ error: null }),
+      resetPasswordForEmail: async () => ({ error: { message: 'Supabase not configured' } as any }),
+      updateUser: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } as any }),
+      onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
+      admin: {
+        listUsers: async () => ({ data: { users: [] }, error: null }),
+      },
+    } as any,
+    storage: {
+      from: () => ({
+        upload: async () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+        download: async () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        remove: async () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+        list: async () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+      }) as any,
+    },
+    from: () => ({
+      select: () => ({ data: null, error: null }),
+      insert: () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+      update: () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+      upsert: () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+      delete: () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+      eq: function() { return this; },
+      neq: function() { return this; },
+      in: function() { return this; },
+      order: function() { return this; },
+      single: function() { return Promise.resolve({ data: null, error: null }); },
+    }) as any,
+  } as any as SupabaseClient;
 }
 
 export { supabase };
