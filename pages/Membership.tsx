@@ -49,7 +49,7 @@ const MEMBERSHIP_PLANS: Record<string, Product> = {
 const SETUP_FEE: Product = {
   id: 'fee-setup',
   title: 'Initiation / Setup Fee',
-  price: 78.00,
+  price: 39.00,
   category: 'Fee',
   image: 'https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=800&q=80'
 };
@@ -99,7 +99,7 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 p-4 text-center rounded shadow-inner">
                 <div className="text-4xl font-bold text-brand-red">$39</div>
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
-                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $78 One-Time Setup Fee</div>
+                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
               <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('regular')}>Join Now</Button>
             </div>
@@ -124,7 +124,7 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 p-4 text-center rounded shadow-inner">
                 <div className="text-4xl font-bold text-brand-red">$29</div>
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
-                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $78 One-Time Setup Fee</div>
+                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
               <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('student')}>Join Now</Button>
             </div>
@@ -149,7 +149,7 @@ const Membership: React.FC = () => {
               <div className="mt-8 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 p-4 text-center rounded shadow-inner">
                 <div className="text-4xl font-bold text-brand-red">$360</div>
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">1 Year</div>
-                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $78 One-Time Setup Fee</div>
+                <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
               <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('annual')}>Join Now</Button>
             </div>
@@ -169,7 +169,7 @@ const Membership: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
               <div>
                 <h4 className="font-bold text-lg mb-2 text-brand-charcoal dark:text-white">Why is there a setup fee?</h4>
-                <p className="text-neutral-500">The $78 setup fee covers your initial onboarding, mobile app activation, and administrative setup to get you 24/7 access immediately.</p>
+                <p className="text-neutral-500">The $39 setup fee covers your initial onboarding, mobile app activation, and administrative setup to get you 24/7 access immediately.</p>
               </div>
               <div>
                 <h4 className="font-bold text-lg mb-2 text-brand-charcoal dark:text-white">How do I verify my Student status?</h4>

@@ -2,7 +2,7 @@
 import React from 'react';
 import Section from '../components/Section';
 import Button from '../components/Button';
-import { SQUARE_DONATION_URL } from '../constants';
+import { SQUARE_DONATION_LINKS } from '../constants';
 
 // Helper function to get outreach image path
 const getOutreachImage = (filename: string) => {
@@ -41,7 +41,7 @@ const Outreach: React.FC = () => {
              <Button 
                size="lg" 
                variant="brand" 
-               onClick={() => window.open(SQUARE_DONATION_URL, '_blank')}
+               onClick={() => window.open(SQUARE_DONATION_LINKS.default, '_blank')}
                className="shadow-xl transform hover:scale-105 transition-all text-lg px-10"
              >
                Donate Today
@@ -166,23 +166,32 @@ const Outreach: React.FC = () => {
                Your generosity fills gas tanks, buys sleeping bags, and provides AA/NA literature for those seeking a new life.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-               <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg">
+               <button
+                  onClick={() => window.open(SQUARE_DONATION_LINKS.amount25, '_blank')}
+                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left"
+               >
                   <div className="text-4xl font-bold text-brand-charcoal dark:text-white mb-2">$25</div>
                   <p className="text-neutral-500 text-sm">Hygiene kits and socks for 5 people.</p>
-               </div>
-               <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg transform md:-translate-y-4">
+               </button>
+               <button
+                  onClick={() => window.open(SQUARE_DONATION_LINKS.amount50, '_blank')}
+                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg transform md:-translate-y-4 hover:shadow-xl transition-all cursor-pointer hover:scale-105 text-left"
+               >
                   <div className="text-4xl font-bold text-brand-charcoal dark:text-white mb-2">$50</div>
                   <p className="text-neutral-500 text-sm">Recovery bibles and workbooks for a small group.</p>
-               </div>
-               <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg">
+               </button>
+               <button
+                  onClick={() => window.open(SQUARE_DONATION_LINKS.amount100, '_blank')}
+                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left"
+               >
                   <div className="text-4xl font-bold text-brand-charcoal dark:text-white mb-2">$100</div>
                   <p className="text-neutral-500 text-sm">Gas for the outreach truck for one week.</p>
-               </div>
+               </button>
             </div>
             
             <Button 
                size="lg" 
-               onClick={() => window.open(SQUARE_DONATION_URL, '_blank')}
+               onClick={() => window.open(SQUARE_DONATION_LINKS.default, '_blank')}
                className="px-12 py-4 text-xl"
              >
                Donate

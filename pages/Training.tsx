@@ -65,7 +65,29 @@ const Training: React.FC = () => {
             </div>
           </div>
 
-          <div>
+          <div className="space-y-6">
+            {/* Coach Image Display */}
+            <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-2xl">
+              {selectedCoach === 'Bradley Parker' && (
+                <img 
+                  src="/media/training/Brad - Bradley Parker's photo.jpeg" 
+                  alt="Bradley Parker" 
+                  className="w-full h-full object-cover"
+                />
+              )}
+              {selectedCoach === 'Kourtney Brothers' && (
+                <img 
+                  src="/media/training/Kourtney - Kourtney Brothers' photo.JPEG" 
+                  alt="Kourtney Brothers" 
+                  className="w-full h-full object-cover"
+                />
+              )}
+              {selectedCoach === 'Other' && (
+                <div className="w-full h-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                  <p className="text-neutral-500 dark:text-neutral-400 text-lg">Select a coach to view their photo</p>
+                </div>
+              )}
+            </div>
             <MindbodyWidget title={`Book with ${selectedCoach}`} type="appointment" className="shadow-2xl" />
           </div>
         </div>

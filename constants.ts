@@ -9,13 +9,25 @@ export const SHOPIFY_STORE_URL = import.meta.env.VITE_SHOPIFY_STORE_URL || "http
 export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456"; 
 export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEKT1SC3YW/checkout/LM65OFKUNRAUMDU4YIMON77A?src=sheet";
 
+// Square donation links for preset amounts
+// To create these links:
+// 1. Go to Square Dashboard > Payments & orders > Payment links
+// 2. Create a new payment link for each amount ($25, $50, $100)
+// 3. Replace the URLs below with your generated links
+export const SQUARE_DONATION_LINKS = {
+  default: SQUARE_DONATION_URL, // Fallback to original link
+  amount25: SQUARE_DONATION_URL, // TODO: Replace with $25 Square payment link
+  amount50: SQUARE_DONATION_URL, // TODO: Replace with $50 Square payment link
+  amount100: SQUARE_DONATION_URL, // TODO: Replace with $100 Square payment link
+};
+
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/' },
   { label: 'Membership', path: '/membership' },
-  { label: 'Outreach', path: '/outreach' },
+  { label: 'Shop', path: '/shop' },
   { label: '1-on-1 Training', path: '/training' },
   { label: 'Calendar', path: '/calendar' },
-  { label: 'Shop', path: '/shop' },
+  { label: 'Outreach', path: '/outreach' },
   { label: 'Contact', path: '/contact' },
 ];
 
