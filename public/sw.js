@@ -1,11 +1,12 @@
 // Service Worker for Lord's Gym - Offline Support
 const CACHE_NAME = 'lords-gym-v1';
+// Get base path from scope (e.g., '/LordsGym/' or '/')
+const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '') || '/';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/manifest.json'
-];
+  `${BASE_PATH}`,
+  `${BASE_PATH}index.html`,
+  `${BASE_PATH}styles.css`
+].filter(Boolean);
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {

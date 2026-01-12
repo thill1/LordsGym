@@ -87,6 +87,12 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
   }
 
   try {
+    // Only try to get user if Supabase is actually configured
+    // The placeholder client will fail, so we need to check first
+    if (!isSupabaseConfigured()) {
+      return null;
+    }
+    
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
@@ -101,7 +107,8 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       role: userRole as 'admin' | 'editor' | 'member'
     };
   } catch (error) {
-    console.error('Error getting current user:', error);
+    // Silently fail - this is expected when Supabase is not configured
+    console.warn('Error getting current user (non-critical):', error);
     return null;
   }
 };

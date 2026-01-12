@@ -26,7 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentUser = await getCurrentUser();
       setUser(currentUser);
     } catch (error) {
-      console.error('Error checking session:', error);
+      // Silently fail - this is expected when Supabase is not configured
+      console.warn('Error checking session (non-critical):', error);
       setUser(null);
     } finally {
       setIsLoading(false);
