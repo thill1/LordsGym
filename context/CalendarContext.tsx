@@ -37,8 +37,12 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (fetchError) throw fetchError;
 
       if (data) {
+        // Filter to only show Community, Outreach, and Holiday events
+        const allowedTypes = ['community', 'outreach', 'holiday'];
+        const filteredData = data.filter(event => allowedTypes.includes(event.class_type?.toLowerCase()));
+        
         // Get booking counts for each event
-        const eventIds = data.map(e => e.id);
+        const eventIds = filteredData.map(e => e.id);
         const { data: bookingsData } = await supabase
           .from('calendar_bookings')
           .select('event_id')
@@ -52,7 +56,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           });
         }
 
-        setEvents(data.map(event => ({
+        setEvents(filteredData.map(event => ({
           id: event.id,
           title: event.title,
           description: event.description,

@@ -8,7 +8,7 @@ import { runMigrations } from '../lib/migration';
 // Initial Default State
 const DEFAULT_SETTINGS: SiteSettings = {
   siteName: APP_NAME,
-  contactEmail: "info@lordsgymoutreach.com",
+  contactEmail: "lordsgymoutreach@gmail.com",
   contactPhone: "530-537-2105",
   address: "258 Elm Ave, Auburn, CA 95603",
   googleAnalyticsId: "",

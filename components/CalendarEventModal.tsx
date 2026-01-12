@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCalendar } from '../context/CalendarContext';
-import { formatTime, formatDate, getClassTypeColor } from '../lib/calendar-utils';
+import { formatTime, formatDate, getClassTypeColor, getEventTypeIcon } from '../lib/calendar-utils';
 import CalendarBookingForm from './CalendarBookingForm';
 import Button from './Button';
 
@@ -40,7 +40,8 @@ const CalendarEventModal: React.FC<CalendarEventModalProps> = ({
           </div>
 
           <div className="space-y-4">
-            <div>
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
               <span className={`px-3 py-1 rounded text-sm font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
                 {event.class_type}
               </span>

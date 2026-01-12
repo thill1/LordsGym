@@ -1,4 +1,5 @@
 // Calendar utility functions
+import React from 'react';
 
 export interface CalendarEvent {
   id: string;
@@ -130,12 +131,45 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
  */
 export const getClassTypeColor = (classType: string): string => {
   const colors: Record<string, string> = {
-    strength: 'bg-red-100 text-red-800 border-red-500 dark:bg-red-900/20 dark:text-red-200',
-    cardio: 'bg-blue-100 text-blue-800 border-blue-500 dark:bg-blue-900/20 dark:text-blue-200',
-    recovery: 'bg-emerald-100 text-emerald-800 border-emerald-500 dark:bg-emerald-900/20 dark:text-emerald-200',
     community: 'bg-amber-100 text-amber-800 border-amber-500 dark:bg-amber-900/20 dark:text-amber-200',
+    outreach: 'bg-purple-100 text-purple-800 border-purple-500 dark:bg-purple-900/20 dark:text-purple-200',
+    holiday: 'bg-green-100 text-green-800 border-green-500 dark:bg-green-900/20 dark:text-green-200',
   };
   return colors[classType] || 'bg-neutral-100 text-neutral-800 border-neutral-500';
+};
+
+/**
+ * Get icon component for event type
+ */
+export const getEventTypeIcon = (classType: string): JSX.Element => {
+  const iconClass = "w-5 h-5";
+  
+  switch (classType) {
+    case 'community':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      );
+    case 'outreach':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      );
+    case 'holiday':
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      );
+  }
 };
 
 /**

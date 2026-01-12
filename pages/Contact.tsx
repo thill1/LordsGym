@@ -6,14 +6,14 @@ import ContactForm from '../components/ContactForm';
 const Contact: React.FC = () => {
   return (
     <>
-      <Section bg="dark" className="pt-32 pb-16 text-center">
-        <h1 className="text-5xl font-bold mb-4">
-          <span className="text-brand-red">Visit</span> <span className="text-white">Us</span>
+      <Section bg="dark" className="pt-4 pb-1 text-center">
+        <h1 className="text-5xl font-bold mb-2">
+          <span className="text-brand-red">Contact</span> <span className="text-white">Us</span>
         </h1>
         <p className="text-xl text-neutral-300">Come experience the difference.</p>
       </Section>
 
-      <Section>
+      <Section className="!pt-0">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           {/* Info Side */}
           <div className="fade-in">
@@ -29,7 +29,7 @@ const Contact: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-bold text-black dark:text-white uppercase tracking-wider text-sm mb-1">Email</h3>
-                <p>info@lordsgymoutreach.com</p>
+                <p>lordsgymoutreach@gmail.com</p>
               </div>
               
               <div className="pt-8">

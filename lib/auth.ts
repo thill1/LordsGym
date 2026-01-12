@@ -13,10 +13,11 @@ export interface AuthUser {
 export const signIn = async (email: string, password: string): Promise<{ user: AuthUser | null; error: Error | null }> => {
   if (!isSupabaseConfigured()) {
     // Fallback to localStorage auth for development
-    if (password === 'admin123') {
+    // Dev credentials: any email with password 'dev' or 'admin123'
+    if (password === 'dev' || password === 'admin123') {
       const fallbackUser: AuthUser = {
         id: 'local-admin',
-        email: 'admin@lordsgym.com',
+        email: email || 'admin@lordsgym.com',
         role: 'admin'
       };
       localStorage.setItem('admin_auth', 'true');

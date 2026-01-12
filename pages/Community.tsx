@@ -51,7 +51,7 @@ const Community: React.FC = () => {
         <p className="max-w-2xl mx-auto text-neutral-500 mb-8">
           We are always looking for local businesses, churches, and individuals to partner with us in our mission. Whether through financial support, equipment donation, or volunteering.
         </p>
-        <Button size="lg" onClick={() => window.location.href = 'mailto:outreach@lordsgymauburn.com'}>Contact Outreach Director</Button>
+        <Button size="lg" onClick={() => window.location.href = 'mailto:lordsgymoutreach@gmail.com'}>Contact Outreach Director</Button>
       </Section>
     </>
   );

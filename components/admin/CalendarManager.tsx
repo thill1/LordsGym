@@ -36,7 +36,7 @@ const CalendarManager: React.FC = () => {
     start_time: '',
     end_time: '',
     instructor_id: '',
-    class_type: 'strength',
+    class_type: 'community',
     capacity: ''
   });
 
@@ -97,7 +97,7 @@ const CalendarManager: React.FC = () => {
         start_time: '',
         end_time: '',
         instructor_id: '',
-        class_type: 'strength',
+        class_type: 'community',
         capacity: ''
       });
     }
@@ -165,19 +165,22 @@ const CalendarManager: React.FC = () => {
   };
 
   const classTypes = [
-    { value: 'strength', label: 'Strength' },
-    { value: 'cardio', label: 'Cardio/HIIT' },
-    { value: 'recovery', label: 'Recovery' },
-    { value: 'community', label: 'Community' }
+    { value: 'community', label: 'Community' },
+    { value: 'outreach', label: 'Outreach' },
+    { value: 'holiday', label: 'Holiday' }
   ];
 
-  const filteredEvents = events.filter(event => {
-    const matchesClassType = filterClassType === 'all' || event.class_type === filterClassType;
-    const matchesSearch = searchQuery === '' || 
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesClassType && matchesSearch;
-  });
+  // Filter to only show Community, Outreach, and Holiday events
+  const allowedTypes = ['community', 'outreach', 'holiday'];
+  const filteredEvents = events
+    .filter(event => allowedTypes.includes(event.class_type?.toLowerCase()))
+    .filter(event => {
+      const matchesClassType = filterClassType === 'all' || event.class_type === filterClassType;
+      const matchesSearch = searchQuery === '' || 
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesClassType && matchesSearch;
+    });
 
   return (
     <div className="space-y-8 fade-in">
@@ -211,10 +214,9 @@ const CalendarManager: React.FC = () => {
           className="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
         >
           <option value="all">All Types</option>
-          <option value="strength">Strength</option>
-          <option value="cardio">Cardio/HIIT</option>
-          <option value="recovery">Recovery</option>
           <option value="community">Community</option>
+          <option value="outreach">Outreach</option>
+          <option value="holiday">Holiday</option>
         </select>
       </div>
 

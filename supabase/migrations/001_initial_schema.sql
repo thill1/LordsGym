@@ -219,7 +219,7 @@ INSERT INTO settings (id, site_name, contact_email, contact_phone, address, anno
 VALUES (
   'default',
   'Lord''s Gym',
-  'info@lordsgymoutreach.com',
+  'lordsgymoutreach@gmail.com',
   '530-537-2105',
   '258 Elm Ave, Auburn, CA 95603',
   '{"enabled": false, "message": "Join now and get your first month for $10!", "link": "/membership"}'::jsonb

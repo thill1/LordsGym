@@ -6,6 +6,7 @@ import {
   formatTime,
   isSameDay,
   getClassTypeColor,
+  getEventTypeIcon,
   sortEventsByTime,
   CalendarView as ViewType
 } from '../lib/calendar-utils';
@@ -15,7 +16,6 @@ interface CalendarViewProps {
   currentDate: Date;
   onDateChange: (date: Date) => void;
   onEventClick?: (eventId: string) => void;
-  filterClassType?: string;
   searchQuery?: string;
 }
 
@@ -33,19 +33,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   currentDate,
   onDateChange,
   onEventClick,
-  filterClassType = 'all',
   searchQuery = ''
 }) => {
   const { events, isLoading } = useCalendar();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Filter events
+  // Filter events by search query only (events are already filtered by type in CalendarContext)
   const filteredEvents = events.filter(event => {
-    const matchesClassType = filterClassType === 'all' || event.class_type === filterClassType;
     const matchesSearch = searchQuery === '' || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesClassType && matchesSearch;
+    return matchesSearch;
   });
 
   const handleDateClick = (date: Date) => {
@@ -129,10 +127,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                         e.stopPropagation();
                         if (onEventClick) onEventClick(event.id);
                       }}
-                      className={`text-[10px] px-1.5 py-1 rounded truncate border-l-2 ${getClassTypeColor(event.class_type)}`}
+                      className={`text-[10px] px-1.5 py-1 rounded truncate border-l-2 flex items-center gap-1 ${getClassTypeColor(event.class_type)}`}
                     >
+                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
                       <span className="font-bold mr-1">{formatTime(event.start_time)}</span>
-                      {event.title}
+                      <span className="truncate">{event.title}</span>
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
@@ -176,6 +175,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex-grow">
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
                       <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
                       <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
                         {event.class_type}
@@ -256,9 +256,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                       <div
                         key={event.id}
                         onClick={() => onEventClick && onEventClick(event.id)}
-                        className={`p-2 rounded border-l-4 cursor-pointer hover:opacity-80 transition-opacity ${getClassTypeColor(event.class_type)}`}
+                        className={`p-2 rounded border-l-4 cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 ${getClassTypeColor(event.class_type)}`}
                       >
-                        <div className="flex items-center justify-between">
+                        <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
+                        <div className="flex items-center justify-between flex-grow">
                           <span className="font-bold text-sm">{event.title}</span>
                           <span className="text-xs font-bold">{formatTime(event.start_time)}</span>
                         </div>
@@ -308,7 +309,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getClassTypeColor(event.class_type)}`}
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
+                      <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
+                    </div>
                     <span className="text-sm font-bold text-brand-red">
                       {formatTime(event.start_time)} - {formatTime(event.end_time)}
                     </span>
