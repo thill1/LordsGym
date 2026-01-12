@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { CalendarEvent } from '../lib/calendar-utils';
+import { getHolidaysForRange } from '../lib/us-holidays';
 
 interface CalendarContextType {
   events: CalendarEvent[];
@@ -8,9 +8,14 @@ interface CalendarContextType {
   error: string | null;
   loadEvents: () => Promise<void>;
   refreshEvents: () => Promise<void>;
+  addEvent: (event: Omit<CalendarEvent, 'id'>) => void;
+  updateEvent: (id: string, event: Partial<CalendarEvent>) => void;
+  deleteEvent: (id: string) => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'lords_gym_calendar_events';
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -18,56 +23,25 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
 
   const loadEvents = async () => {
-    if (!isSupabaseConfigured()) {
-      // Fallback to empty array if Supabase not configured
-      setEvents([]);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .order('start_time', { ascending: true });
+      // Load custom events from localStorage (Community and Outreach only)
+      const savedEventsJson = localStorage.getItem(STORAGE_KEY);
+      const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
 
-      if (fetchError) throw fetchError;
+      // Generate US holidays for current year and next year
+      const currentYear = new Date().getFullYear();
+      const holidays = getHolidaysForRange(currentYear, currentYear + 1);
 
-      if (data) {
-        // Filter to only show Community, Outreach, and Holiday events
-        const allowedTypes = ['community', 'outreach', 'holiday'];
-        const filteredData = data.filter(event => allowedTypes.includes(event.class_type?.toLowerCase()));
-        
-        // Get booking counts for each event
-        const eventIds = filteredData.map(e => e.id);
-        const { data: bookingsData } = await supabase
-          .from('calendar_bookings')
-          .select('event_id')
-          .in('event_id', eventIds)
-          .eq('status', 'confirmed');
+      // Combine custom events with holidays
+      const allEvents = [...customEvents, ...holidays];
 
-        const bookingCounts = new Map<string, number>();
-        if (bookingsData) {
-          bookingsData.forEach(booking => {
-            bookingCounts.set(booking.event_id, (bookingCounts.get(booking.event_id) || 0) + 1);
-          });
-        }
+      // Sort by start time
+      allEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
-        setEvents(filteredData.map(event => ({
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          start_time: event.start_time,
-          end_time: event.end_time,
-          instructor_id: event.instructor_id,
-          class_type: event.class_type,
-          capacity: event.capacity,
-          booked_count: bookingCounts.get(event.id) || 0
-        })));
-      }
+      setEvents(allEvents);
     } catch (err) {
       console.error('Error loading calendar events:', err);
       setError('Failed to load calendar events');
@@ -77,34 +51,52 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const saveCustomEvents = (customEvents: CalendarEvent[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customEvents));
+    } catch (err) {
+      console.error('Error saving calendar events:', err);
+      throw err;
+    }
+  };
+
+  const addEvent = (event: Omit<CalendarEvent, 'id'>) => {
+    const newEvent: CalendarEvent = {
+      ...event,
+      id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
+    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
+    const updatedEvents = [...customEvents, newEvent];
+    saveCustomEvents(updatedEvents);
+    loadEvents();
+  };
+
+  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
+    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
+    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
+    const updatedEvents = customEvents.map(event => 
+      event.id === id ? { ...event, ...updates } : event
+    );
+    saveCustomEvents(updatedEvents);
+    loadEvents();
+  };
+
+  const deleteEvent = (id: string) => {
+    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
+    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
+    const updatedEvents = customEvents.filter(event => event.id !== id);
+    saveCustomEvents(updatedEvents);
+    loadEvents();
+  };
+
   const refreshEvents = async () => {
     await loadEvents();
   };
 
   useEffect(() => {
     loadEvents();
-
-    // Set up real-time subscription if Supabase is configured
-    if (isSupabaseConfigured()) {
-      const channel = supabase
-        .channel('calendar_events_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'calendar_events'
-          },
-          () => {
-            loadEvents();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
   }, []);
 
   return (
@@ -114,7 +106,10 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isLoading,
         error,
         loadEvents,
-        refreshEvents
+        refreshEvents,
+        addEvent,
+        updateEvent,
+        deleteEvent
       }}
     >
       {children}

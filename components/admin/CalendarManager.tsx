@@ -1,30 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { useCalendar } from '../../context/CalendarContext';
+import { CalendarEvent } from '../../lib/calendar-utils';
 import ConfirmDialog from '../ConfirmDialog';
-import RecurringEventsManager from './RecurringEventsManager';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string;
-  instructor_id: string | null;
-  class_type: string;
-  capacity: number | null;
-  recurring_pattern_id: string | null;
-}
-
-interface Instructor {
-  id: string;
-  name: string;
-}
 
 const CalendarManager: React.FC = () => {
   const { showSuccess, showError } = useToast();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const { events, isLoading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendar();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; eventId: string | null }>({ isOpen: false, eventId: null });
@@ -35,49 +17,21 @@ const CalendarManager: React.FC = () => {
     description: '',
     start_time: '',
     end_time: '',
-    instructor_id: '',
-    class_type: 'community',
+    class_type: 'community' as 'community' | 'outreach',
     capacity: ''
   });
 
   useEffect(() => {
-    loadEvents();
-    loadInstructors();
-  }, []);
-
-  const loadEvents = async () => {
-    if (!isSupabaseConfigured()) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .select('*')
-        .order('start_time');
-
-      if (error) throw error;
-      if (data) setEvents(data);
-    } catch (error) {
-      console.error('Error loading events:', error);
-    }
-  };
-
-  const loadInstructors = async () => {
-    if (!isSupabaseConfigured()) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('instructors')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      if (data) setInstructors(data);
-    } catch (error) {
-      console.error('Error loading instructors:', error);
-    }
-  };
+    refreshEvents();
+  }, [refreshEvents]);
 
   const openModal = (event?: CalendarEvent) => {
+    // Only allow editing Community and Outreach events (not holidays)
+    if (event && event.class_type === 'holiday') {
+      showError('Holidays are automatically generated and cannot be edited.');
+      return;
+    }
+
     if (event) {
       setEditingEvent(event);
       setFormData({
@@ -85,8 +39,7 @@ const CalendarManager: React.FC = () => {
         description: event.description || '',
         start_time: event.start_time.slice(0, 16), // Format for datetime-local input
         end_time: event.end_time.slice(0, 16),
-        instructor_id: event.instructor_id || '',
-        class_type: event.class_type,
+        class_type: event.class_type as 'community' | 'outreach',
         capacity: event.capacity?.toString() || ''
       });
     } else {
@@ -96,7 +49,6 @@ const CalendarManager: React.FC = () => {
         description: '',
         start_time: '',
         end_time: '',
-        instructor_id: '',
         class_type: 'community',
         capacity: ''
       });
@@ -104,57 +56,45 @@ const CalendarManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSupabaseConfigured()) return;
 
     try {
-      const eventData = {
+      const eventData: Omit<CalendarEvent, 'id'> = {
         title: formData.title,
         description: formData.description || null,
         start_time: new Date(formData.start_time).toISOString(),
         end_time: new Date(formData.end_time).toISOString(),
-        instructor_id: formData.instructor_id || null,
+        instructor_id: null,
         class_type: formData.class_type,
-        capacity: formData.capacity ? parseInt(formData.capacity) : null,
-        updated_at: new Date().toISOString()
+        capacity: formData.capacity ? parseInt(formData.capacity) : null
       };
 
       if (editingEvent) {
-        const { error } = await supabase
-          .from('calendar_events')
-          .update(eventData)
-          .eq('id', editingEvent.id);
-
-        if (error) throw error;
+        updateEvent(editingEvent.id, eventData);
+        showSuccess('Event updated successfully!');
       } else {
-        const { error } = await supabase
-          .from('calendar_events')
-          .insert(eventData);
-
-        if (error) throw error;
+        addEvent(eventData);
+        showSuccess('Event added successfully!');
       }
 
       setIsModalOpen(false);
-      await loadEvents();
-      showSuccess('Event saved successfully!');
     } catch (error) {
       console.error('Error saving event:', error);
       showError('Failed to save event.');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!isSupabaseConfigured()) return;
+  const handleDelete = (id: string) => {
+    const event = events.find(e => e.id === id);
+    if (event && event.class_type === 'holiday') {
+      showError('Holidays are automatically generated and cannot be deleted.');
+      setDeleteConfirm({ isOpen: false, eventId: null });
+      return;
+    }
 
     try {
-      const { error } = await supabase
-        .from('calendar_events')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      await loadEvents();
+      deleteEvent(id);
       showSuccess('Event deleted successfully!');
       setDeleteConfirm({ isOpen: false, eventId: null });
     } catch (error) {
@@ -166,8 +106,7 @@ const CalendarManager: React.FC = () => {
 
   const classTypes = [
     { value: 'community', label: 'Community' },
-    { value: 'outreach', label: 'Outreach' },
-    { value: 'holiday', label: 'Holiday' }
+    { value: 'outreach', label: 'Outreach' }
   ];
 
   // Filter to only show Community, Outreach, and Holiday events
@@ -194,9 +133,10 @@ const CalendarManager: React.FC = () => {
         </button>
       </div>
 
-      {/* Recurring Events Section */}
-      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
-        <RecurringEventsManager />
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+        <p className="text-sm text-blue-800 dark:text-blue-200">
+          <strong>Note:</strong> US Federal Holidays are automatically generated and displayed. You can only add and edit Community and Outreach events.
+        </p>
       </div>
 
       {/* Filters */}
@@ -220,11 +160,10 @@ const CalendarManager: React.FC = () => {
         </select>
       </div>
 
-      {!isSupabaseConfigured() ? (
+      {isLoading ? (
         <div className="bg-white dark:bg-neutral-800 p-12 rounded-lg shadow-sm text-center">
-          <p className="text-neutral-500 dark:text-neutral-400">
-            Calendar management requires Supabase backend configuration.
-          </p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-red mx-auto"></div>
+          <p className="mt-4 text-neutral-500 dark:text-neutral-400">Loading events...</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm overflow-hidden">
@@ -250,39 +189,52 @@ const CalendarManager: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredEvents.map(event => (
-                    <tr key={event.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
-                      <td className="p-4 font-bold text-sm dark:text-white">{event.title}</td>
-                      <td className="p-4">
-                        <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
-                          {event.class_type}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                        {new Date(event.start_time).toLocaleString()}
-                      </td>
-                      <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                        {new Date(event.end_time).toLocaleString()}
-                      </td>
-                      <td className="p-4 text-sm dark:text-white">
-                        {event.capacity || 'Unlimited'}
-                      </td>
-                      <td className="p-4 text-right space-x-3">
-                        <button
-                          onClick={() => openModal(event)}
-                          className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })}
-                          className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  filteredEvents.map(event => {
+                    const isHoliday = event.class_type === 'holiday';
+                    return (
+                      <tr key={event.id} className={`hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors ${isHoliday ? 'opacity-75' : ''}`}>
+                        <td className="p-4 font-bold text-sm dark:text-white">
+                          {event.title}
+                          {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto-generated)</span>}
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
+                            {event.class_type}
+                          </span>
+                        </td>
+                        <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                          {new Date(event.start_time).toLocaleString()}
+                        </td>
+                        <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                          {new Date(event.end_time).toLocaleString()}
+                        </td>
+                        <td className="p-4 text-sm dark:text-white">
+                          {event.capacity || 'Unlimited'}
+                        </td>
+                        <td className="p-4 text-right space-x-3">
+                          {!isHoliday && (
+                            <>
+                              <button
+                                onClick={() => openModal(event)}
+                                className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })}
+                                className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                          {isHoliday && (
+                            <span className="text-xs text-neutral-400 italic">Read-only</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -341,10 +293,10 @@ const CalendarManager: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Class Type</label>
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
                   <select
                     value={formData.class_type}
-                    onChange={(e) => setFormData({ ...formData, class_type: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' })}
                     className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   >
                     {classTypes.map(type => (
@@ -362,19 +314,6 @@ const CalendarManager: React.FC = () => {
                     className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Instructor</label>
-                <select
-                  value={formData.instructor_id}
-                  onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
-                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                >
-                  <option value="">No instructor</option>
-                  {instructors.map(instructor => (
-                    <option key={instructor.id} value={instructor.id}>{instructor.name}</option>
-                  ))}
-                </select>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">
                 <button
