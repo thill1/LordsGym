@@ -19,13 +19,6 @@ interface CalendarViewProps {
   searchQuery?: string;
 }
 
-interface CalendarViewProps {
-  view: ViewType;
-  currentDate: Date;
-  onDateChange: (date: Date) => void;
-  onEventClick?: (eventId: string) => void;
-}
-
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const CalendarView: React.FC<CalendarViewProps> = ({
