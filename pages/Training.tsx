@@ -86,6 +86,12 @@ const Training: React.FC = () => {
                   src={getTrainingImage("Brad - Bradley Parker's photo.jpeg")} 
                   alt="Bradley Parker" 
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load Bradley Parker image:', e.currentTarget.src);
+                    // Fallback: try without encoding
+                    const fallbackSrc = `${import.meta.env.BASE_URL || '/'}media/training/Brad - Bradley Parker's photo.jpeg`.replace(/\/\/+/g, '/');
+                    e.currentTarget.src = fallbackSrc;
+                  }}
                 />
               )}
               {selectedCoach === 'Kourtney Brothers' && (
@@ -93,6 +99,12 @@ const Training: React.FC = () => {
                   src={getTrainingImage("Kourtney - Kourtney Brothers' photo.JPEG")} 
                   alt="Kourtney Brothers" 
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load Kourtney Brothers image:', e.currentTarget.src);
+                    // Fallback: try without encoding
+                    const fallbackSrc = `${import.meta.env.BASE_URL || '/'}media/training/Kourtney - Kourtney Brothers' photo.JPEG`.replace(/\/\/+/g, '/');
+                    e.currentTarget.src = fallbackSrc;
+                  }}
                 />
               )}
               {selectedCoach === 'Other' && (
