@@ -9,7 +9,10 @@ const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-co
 // Helper function to get training image path
 const getTrainingImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
-  return `${base}media/training/${filename}`.replace(/\/\/+/g, '/');
+  // Ensure base ends with / and remove leading / from filename if present
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
+  return `${cleanBase}media/training/${cleanFilename}`.replace(/\/\/+/g, '/');
 };
 
 const Training: React.FC = () => {
