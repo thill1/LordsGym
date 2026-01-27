@@ -4,7 +4,6 @@ import { supabase, isSupabaseConfigured } from './supabase';
 export interface AuthUser {
   id: string;
   email: string;
-  role?: 'admin' | 'editor' | 'member';
 }
 
 /**
@@ -17,8 +16,7 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
     if (password === 'dev' || password === 'admin123') {
       const fallbackUser: AuthUser = {
         id: 'local-admin',
-        email: email || 'admin@lordsgym.com',
-        role: 'admin'
+        email: email || 'admin@lordsgym.com'
       };
       localStorage.setItem('admin_auth', 'true');
       localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
@@ -41,13 +39,9 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
       return { user: null, error: new Error('No user data returned') };
     }
 
-    // Get user role from user metadata or a separate table
-    const userRole = data.user.user_metadata?.role || 'member';
-    
     const user: AuthUser = {
       id: data.user.id,
-      email: data.user.email || '',
-      role: userRole as 'admin' | 'editor' | 'member'
+      email: data.user.email || ''
     };
 
     return { user, error: null };
@@ -100,12 +94,9 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       return null;
     }
 
-    const userRole = user.user_metadata?.role || 'member';
-    
     return {
       id: user.id,
-      email: user.email || '',
-      role: userRole as 'admin' | 'editor' | 'member'
+      email: user.email || ''
     };
   } catch (error) {
     // Silently fail - this is expected when Supabase is not configured
@@ -115,11 +106,10 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
 };
 
 /**
- * Check if user has admin or editor role
+ * Check if user is authenticated (has admin access)
  */
 export const hasAdminAccess = (user: AuthUser | null): boolean => {
-  if (!user) return false;
-  return user.role === 'admin' || user.role === 'editor';
+  return !!user;
 };
 
 /**

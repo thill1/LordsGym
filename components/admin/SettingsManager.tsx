@@ -10,7 +10,36 @@ const SettingsManager: React.FC = () => {
       <h1 className="text-3xl font-bold dark:text-white mb-6">Global Settings</h1>
 
       <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
-        <h3 className="text-xl font-bold mb-4 dark:text-white">Announcement Bar</h3>
+        <h3 className="text-xl font-bold mb-4 dark:text-white">Site Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Site Name</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+              value={settings.siteName}
+              onChange={(e) => updateSettings({ ...settings, siteName: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Google Analytics ID</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+              value={settings.googleAnalyticsId || ''}
+              onChange={(e) => updateSettings({ ...settings, googleAnalyticsId: e.target.value })}
+              placeholder="G-XXXXXXXXXX"
+            />
+            <p className="text-xs text-neutral-500 mt-1">Enter your Google Analytics tracking ID</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+        <h3 className="text-xl font-bold mb-4 dark:text-white">Announcement Bar (Top Banner)</h3>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+          Controls the top banner displayed across all pages. The banner appears with a red background and white text.
+        </p>
         <div className="space-y-4">
           <div className="flex items-center">
             <input
@@ -20,7 +49,7 @@ const SettingsManager: React.FC = () => {
               onChange={(e) => updateSettings({ ...settings, announcementBar: { ...settings.announcementBar, enabled: e.target.checked } })}
               className="mr-2"
             />
-            <label htmlFor="announceToggle" className="text-sm font-bold dark:text-white">Enable Top Bar</label>
+            <label htmlFor="announceToggle" className="text-sm font-bold dark:text-white">Enable Top Banner</label>
           </div>
           <div>
             <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Message</label>
@@ -30,6 +59,17 @@ const SettingsManager: React.FC = () => {
               value={settings.announcementBar.message}
               onChange={(e) => updateSettings({ ...settings, announcementBar: { ...settings.announcementBar, message: e.target.value } })}
             />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Link (Optional)</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+              value={settings.announcementBar.link || ''}
+              onChange={(e) => updateSettings({ ...settings, announcementBar: { ...settings.announcementBar, link: e.target.value || undefined } })}
+              placeholder="/membership"
+            />
+            <p className="text-xs text-neutral-500 mt-1">URL to navigate to when banner is clicked</p>
           </div>
         </div>
       </div>

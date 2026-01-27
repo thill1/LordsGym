@@ -61,9 +61,9 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-neutral-950">
-      {/* Announcement Bar */}
+      {/* Announcement Bar - Admin Controlled */}
       {announceEnabled && announceMessage.trim() && (
-        <div className="w-full bg-brand-charcoal text-white">
+        <div className="w-full bg-brand-red text-white" style={{ backgroundColor: '#dc2626' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center justify-center">
             {announceMessage}
           </div>

@@ -1,42 +1,39 @@
 // Service Worker for Lord's Gym - Offline Support
-const CACHE_NAME = 'lords-gym-v1';
+// Increment version number when deploying to force cache invalidation
+const CACHE_VERSION = 'lords-gym-v3';
+const CACHE_NAME = CACHE_VERSION;
 // Get base path from scope (e.g., '/LordsGym/' or '/')
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '') || '/';
-const STATIC_ASSETS = [
-  `${BASE_PATH}`,
-  `${BASE_PATH}index.html`,
-  `${BASE_PATH}styles.css`
-].filter(Boolean);
 
-// Install event - cache static assets
+// Install event - skip waiting to activate immediately
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .catch((err) => {
-        console.error('Service Worker install error:', err);
-      })
-  );
+  console.log('Service Worker installing with cache:', CACHE_NAME);
+  // Skip waiting so new service worker activates immediately
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up ALL old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating, clearing old caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      // Delete ALL old caches (not just ones that don't match current name)
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .filter((name) => name.startsWith('lords-gym-'))
+          .map((name) => {
+            console.log('Deleting old cache:', name);
+            return caches.delete(name);
+          })
       );
+    }).then(() => {
+      // Claim all clients immediately
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network First strategy for fresh content
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (event.request.method !== 'GET') {
@@ -48,38 +45,78 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        // Return cached version if available
+  const url = new URL(event.request.url);
+  const isNavigation = event.request.mode === 'navigate';
+  const isHTML = event.request.headers.get('accept')?.includes('text/html');
+  const isAsset = url.pathname.includes('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+
+  // For HTML/navigation requests: Network First (always get fresh content)
+  if (isNavigation || isHTML) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // If network succeeds, cache and return
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // If network fails, try cache as fallback
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // If no cache, try to return index.html for navigation
+            if (isNavigation) {
+              return caches.match(`${BASE_PATH}index.html`).catch(() => null);
+            }
+            return new Response('Offline', { status: 503 });
+          });
+        })
+    );
+    return;
+  }
+
+  // For static assets (JS/CSS with hashes): Cache First (they're already versioned)
+  if (isAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-
-        // Otherwise fetch from network
-        return fetch(event.request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response for caching
+        // If not in cache, fetch from network and cache
+        return fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
             const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
 
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // If network fails and it's a navigation request, return offline page
-            if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
-            }
+  // For other requests: Network First
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
           });
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });

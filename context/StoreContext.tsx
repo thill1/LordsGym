@@ -69,6 +69,7 @@ interface StoreContextType {
   updateSettings: (settings: SiteSettings) => void;
   updateHomeContent: (content: HomePageContent) => void;
   addTestimonial: (t: Testimonial) => void;
+  updateTestimonial: (id: number, t: Partial<Testimonial>) => void;
   deleteTestimonial: (id: number) => void;
   addProduct: (product: Product) => void;
   updateProduct: (product: Product) => void;
@@ -410,6 +411,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const updateTestimonial = async (id: number, updates: Partial<Testimonial>) => {
+    let updatedTestimonial: Testimonial | undefined;
+    setTestimonials(prev => {
+      const updated = prev.map(t => {
+        if (t.id === id) {
+          updatedTestimonial = { ...t, ...updates };
+          return updatedTestimonial;
+        }
+        return t;
+      });
+      return updated;
+    });
+    
+    if (isSupabaseConfigured() && updatedTestimonial) {
+      await supabase
+        .from('testimonials')
+        .update({
+          name: updatedTestimonial.name,
+          role: updatedTestimonial.role,
+          quote: updatedTestimonial.quote,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+    }
+  };
+
   const deleteTestimonial = async (id: number) => {
     setTestimonials(prev => prev.filter(t => t.id !== id));
     
@@ -542,6 +569,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updateSettings,
       updateHomeContent,
       addTestimonial,
+      updateTestimonial,
       deleteTestimonial,
       addProduct,
       updateProduct,

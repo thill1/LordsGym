@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
-import { useAutoSave } from '../../lib/useAutoSave';
-import VersionHistory from './VersionHistory';
 import RichTextEditor from './RichTextEditor';
-import { UndoRedoManager } from '../../lib/undo-redo';
-import { setGlobalUndoRedoHandlers } from '../../lib/keyboard-shortcuts';
+import Button from '../Button';
 
 interface Page {
   id: string;
@@ -24,10 +21,7 @@ const PageEditor: React.FC = () => {
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [draggedSection, setDraggedSection] = useState<number | null>(null);
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const undoRedoManagerRef = useRef<UndoRedoManager<Page> | null>(null);
+  const [contentHtml, setContentHtml] = useState('');
 
   const pageSlugs = [
     { slug: 'home', title: 'Home' },
@@ -43,23 +37,20 @@ const PageEditor: React.FC = () => {
     loadPages();
   }, []);
 
-  // Initialize undo/redo manager when page is selected
   useEffect(() => {
     if (selectedPage) {
-      if (!undoRedoManagerRef.current) {
-        undoRedoManagerRef.current = new UndoRedoManager<Page>(selectedPage);
-      }
-      
-      // Register global undo/redo handlers for keyboard shortcuts
-      if (isEditing) {
-        setGlobalUndoRedoHandlers(handleUndo, handleRedo);
+      // Initialize content HTML from page content
+      if (selectedPage.content && typeof selectedPage.content === 'object') {
+        if (selectedPage.content.html) {
+          setContentHtml(selectedPage.content.html);
+        } else {
+          setContentHtml('');
+        }
+      } else {
+        setContentHtml('');
       }
     }
-    
-    return () => {
-      setGlobalUndoRedoHandlers(() => {}, () => {});
-    };
-  }, [selectedPage, isEditing]);
+  }, [selectedPage]);
 
   const loadPages = async () => {
     if (!isSupabaseConfigured()) return;
@@ -95,7 +86,7 @@ const PageEditor: React.FC = () => {
         .insert({
           slug,
           title,
-          content: {},
+          content: { html: '' },
           published: true
         });
     } catch (error) {
@@ -103,64 +94,23 @@ const PageEditor: React.FC = () => {
     }
   };
 
-  // Update undo/redo history when page content changes
-  const handlePageChange = (updatedPage: Page) => {
-    setSelectedPage(updatedPage);
-    if (undoRedoManagerRef.current && isEditing) {
-      undoRedoManagerRef.current.push(updatedPage);
-    }
-  };
-
-  const handleUndo = () => {
-    if (undoRedoManagerRef.current && undoRedoManagerRef.current.canUndo()) {
-      const previousState = undoRedoManagerRef.current.undo();
-      if (previousState) {
-        setSelectedPage(previousState);
-      }
-    }
-  };
-
-  const handleRedo = () => {
-    if (undoRedoManagerRef.current && undoRedoManagerRef.current.canRedo()) {
-      const nextState = undoRedoManagerRef.current.redo();
-      if (nextState) {
-        setSelectedPage(nextState);
-      }
-    }
-  };
-
   const handleSave = async () => {
     if (!selectedPage || !isSupabaseConfigured()) return;
 
+    setIsSaving(true);
     try {
-      // Save version history before updating
-      const storedVersions = localStorage.getItem(`page_versions_${selectedPage.id}`);
-      const versions = storedVersions ? JSON.parse(storedVersions) : [];
-      versions.push({
-        id: Date.now().toString(),
-        page_id: selectedPage.id,
-        content: selectedPage.content,
-        created_at: new Date().toISOString(),
-        created_by: null
-      });
-      // Keep only last 10 versions
-      const recentVersions = versions.slice(-10);
-      localStorage.setItem(`page_versions_${selectedPage.id}`, JSON.stringify(recentVersions));
+      const updatedPage = {
+        ...selectedPage,
+        content: { html: contentHtml },
+        updated_at: new Date().toISOString()
+      };
 
       const { error } = await supabase
         .from('pages')
-        .update({
-          ...selectedPage,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatedPage)
         .eq('id', selectedPage.id);
 
       if (error) throw error;
-      
-      // Clear undo/redo history after save
-      if (undoRedoManagerRef.current) {
-        undoRedoManagerRef.current.clear();
-      }
       
       setIsEditing(false);
       await loadPages();
@@ -168,42 +118,22 @@ const PageEditor: React.FC = () => {
     } catch (error) {
       console.error('Error saving page:', error);
       showError('Failed to save page.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleRestoreVersion = (version: any) => {
+  const handleCancel = () => {
+    setIsEditing(false);
     if (selectedPage) {
-      setSelectedPage({
-        ...selectedPage,
-        content: version.content
-      });
-      setShowVersionHistory(false);
+      // Reset content HTML
+      if (selectedPage.content && typeof selectedPage.content === 'object' && selectedPage.content.html) {
+        setContentHtml(selectedPage.content.html);
+      } else {
+        setContentHtml('');
+      }
     }
   };
-
-  // Auto-save when editing
-  useAutoSave(
-    selectedPage,
-    async (page) => {
-      if (page && isEditing && isSupabaseConfigured()) {
-        setIsSaving(true);
-        try {
-          await supabase
-            .from('pages')
-            .update({
-              ...page,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', page.id);
-        } catch (error) {
-          console.error('Auto-save error:', error);
-        } finally {
-          setTimeout(() => setIsSaving(false), 500);
-        }
-      }
-    },
-    2000 // 2 second delay
-  );
 
   return (
     <div className="space-y-8 fade-in">
@@ -249,164 +179,73 @@ const PageEditor: React.FC = () => {
 
         {/* Page Editor */}
         <div className="lg:col-span-2">
-          {showVersionHistory && selectedPage ? (
-            <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold dark:text-white">Version History</h2>
-                <button
-                  onClick={() => setShowVersionHistory(false)}
-                  className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-                >
-                  Close
-                </button>
-              </div>
-              <VersionHistory pageId={selectedPage.id} onRestore={handleRestoreVersion} />
-            </div>
-          ) : selectedPage ? (
+          {selectedPage ? (
             <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm space-y-6">
               <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-bold dark:text-white">{selectedPage.title}</h2>
-                  {isEditing && isSaving && (
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 flex items-center gap-1">
-                      <span className="animate-spin">⏳</span> Auto-saving...
-                    </p>
-                  )}
-                  {isEditing && !isSaving && selectedPage && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">All changes saved</p>
-                  )}
-                </div>
+                <h2 className="text-2xl font-bold dark:text-white">{selectedPage.title}</h2>
                 <div className="flex gap-2">
-                  {selectedPage && (
-                    <button
-                      onClick={() => setShowVersionHistory(!showVersionHistory)}
-                      className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-                    >
-                      History
-                    </button>
+                  {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)} size="sm">
+                      Edit
+                    </Button>
                   )}
                   {isEditing && (
-                    <button
-                      onClick={() => setIsPreviewMode(!isPreviewMode)}
-                      className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-                    >
-                      {isPreviewMode ? 'Edit' : 'Preview'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setIsEditing(!isEditing);
-                      setIsPreviewMode(false);
-                    }}
-                    className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-                  >
-                    {isEditing ? 'Cancel' : 'Edit'}
-                  </button>
-                  {isEditing && (
-                    <button
-                      onClick={handleSave}
-                      className="px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Save Changes
-                    </button>
+                    <>
+                      <Button onClick={handleCancel} variant="outline" size="sm">
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSave} disabled={isSaving} size="sm">
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
 
-              {isEditing && isPreviewMode ? (
-                <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-6 bg-neutral-50 dark:bg-neutral-900">
-                  <h3 className="text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-4">Preview Mode</h3>
-                  <div className="prose dark:prose-invert max-w-none">
-                    {selectedPage.content && typeof selectedPage.content === 'object' ? (
-                      <div className="space-y-4">
-                        {Array.isArray(selectedPage.content.sections) ? (
-                          selectedPage.content.sections.map((section: any, index: number) => (
-                            <div key={index} className="p-4 bg-white dark:bg-neutral-800 rounded border">
-                              <h4 className="font-bold text-lg dark:text-white mb-2">{section.title || `Section ${index + 1}`}</h4>
-                              <p className="text-neutral-700 dark:text-neutral-300">{section.content || ''}</p>
-                            </div>
-                          ))
-                        ) : (
-                          <pre className="text-sm dark:text-white">{JSON.stringify(selectedPage.content, null, 2)}</pre>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-neutral-500 dark:text-neutral-400">No content to preview</p>
-                    )}
-                  </div>
-                </div>
-              ) : isEditing ? (
+              {isEditing ? (
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Meta Title</label>
                     <input
                       type="text"
                       value={selectedPage.meta_title || ''}
-                      onChange={(e) => handlePageChange({ ...selectedPage, meta_title: e.target.value })}
+                      onChange={(e) => setSelectedPage({ ...selectedPage, meta_title: e.target.value })}
                       className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                      placeholder="Page title for SEO"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Meta Description</label>
                     <textarea
                       value={selectedPage.meta_description || ''}
-                      onChange={(e) => handlePageChange({ ...selectedPage, meta_description: e.target.value })}
+                      onChange={(e) => setSelectedPage({ ...selectedPage, meta_description: e.target.value })}
                       rows={3}
                       className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                      placeholder="Page description for SEO"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Content Sections</label>
-                    {selectedPage.content && typeof selectedPage.content === 'object' && Array.isArray(selectedPage.content.sections) ? (
-                      <div className="space-y-2">
-                        {selectedPage.content.sections.map((section: any, index: number) => (
-                          <div
-                            key={index}
-                            draggable
-                            onDragStart={() => setDraggedSection(index)}
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                              if (draggedSection !== null && draggedSection !== index) {
-                                const newSections = [...selectedPage.content.sections];
-                                const [removed] = newSections.splice(draggedSection, 1);
-                                newSections.splice(index, 0, removed);
-                                setSelectedPage({
-                                  ...selectedPage,
-                                  content: { ...selectedPage.content, sections: newSections }
-                                });
-                                setDraggedSection(index);
-                              }
-                            }}
-                            onDragEnd={() => setDraggedSection(null)}
-                            className="p-3 border rounded bg-white dark:bg-neutral-900 dark:border-neutral-700 cursor-move hover:border-brand-red transition-colors"
-                          >
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold text-sm dark:text-white">{section.title || `Section ${index + 1}`}</span>
-                              <span className="text-xs text-neutral-500">⋮⋮</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <textarea
-                        value={JSON.stringify(selectedPage.content, null, 2)}
-                        onChange={(e) => {
-                          try {
-                            setSelectedPage({ ...selectedPage, content: JSON.parse(e.target.value) });
-                          } catch (err) {
-                            // Invalid JSON, ignore
-                          }
-                        }}
-                        rows={10}
-                        className="w-full p-2 border rounded font-mono text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                      />
-                    )}
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Meta Image URL</label>
+                    <input
+                      type="text"
+                      value={selectedPage.meta_image || ''}
+                      onChange={(e) => setSelectedPage({ ...selectedPage, meta_image: e.target.value })}
+                      className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                      placeholder="/media/hero/hero-background.jpg.jpg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Page Content</label>
+                    <RichTextEditor
+                      value={contentHtml}
+                      onChange={setContentHtml}
+                    />
                   </div>
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       checked={selectedPage.published}
-                      onChange={(e) => handlePageChange({ ...selectedPage, published: e.target.checked })}
+                      onChange={(e) => setSelectedPage({ ...selectedPage, published: e.target.checked })}
                       className="mr-2"
                     />
                     <label className="text-sm font-bold dark:text-neutral-300">Published</label>
@@ -431,6 +270,13 @@ const PageEditor: React.FC = () => {
                     }`}>
                       {selectedPage.published ? 'Published' : 'Draft'}
                     </span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-neutral-500 dark:text-neutral-400 mb-2">Content Preview</h3>
+                    <div 
+                      className="prose dark:prose-invert max-w-none p-4 bg-neutral-50 dark:bg-neutral-900 rounded border"
+                      dangerouslySetInnerHTML={{ __html: contentHtml || '<p class="text-neutral-500">No content</p>' }}
+                    />
                   </div>
                 </div>
               )}

@@ -17,7 +17,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'home', label: 'Home Page', icon: '🏠' },
     { id: 'pages', label: 'Page Content', icon: '📄' },
+    { id: 'testimonials', label: 'Testimonials', icon: '💬' },
     { id: 'store', label: 'Store / Merch', icon: '🛍️' },
     { id: 'calendar', label: 'Calendar', icon: '📅' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },

@@ -14,6 +14,8 @@ import ProductBulkOperations from '../components/admin/ProductBulkOperations';
 import ActivityLogs from '../components/admin/ActivityLogs';
 import SettingsManager from '../components/admin/SettingsManager';
 import SEOManager from '../components/admin/SEOManager';
+import HomeContentEditor from '../components/admin/HomeContentEditor';
+import TestimonialsManager from '../components/admin/TestimonialsManager';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
 
@@ -30,7 +32,7 @@ const Admin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'pages' | 'store' | 'calendar' | 'media' | 'users' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
 
@@ -222,7 +224,9 @@ const Admin: React.FC = () => {
       {/* Main Content */}
       <div className="flex-grow md:ml-64 p-8">
         {activeTab === 'dashboard' && <AdminDashboard />}
+        {activeTab === 'home' && <HomeContentEditor />}
         {activeTab === 'pages' && <PageEditor />}
+        {activeTab === 'testimonials' && <TestimonialsManager />}
         {activeTab === 'calendar' && <CalendarManager />}
         {activeTab === 'media' && <MediaLibrary />}
         {activeTab === 'users' && <UserManagement />}

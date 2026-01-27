@@ -16,6 +16,31 @@ export const registerServiceWorker = () => {
             .register(swPath)
             .then((registration) => {
               console.log('Service Worker registered successfully:', registration.scope);
+              
+              // Check for updates on page load
+              registration.update();
+              
+              // Listen for service worker updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New service worker available
+                      console.log('New service worker available. Page will reload in 1 second.');
+                      // Auto-reload after 1 second to get the new version
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 1000);
+                    }
+                  });
+                }
+              });
+              
+              // Check for updates every 5 minutes
+              setInterval(() => {
+                registration.update();
+              }, 5 * 60 * 1000);
             })
             .catch((error) => {
               // Silently fail - service worker is optional
