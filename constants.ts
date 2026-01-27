@@ -14,11 +14,30 @@ export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEK
 // 1. Go to Square Dashboard > Payments & orders > Payment links
 // 2. Create a new payment link for each amount ($25, $50, $100)
 // 3. Replace the URLs below with your generated links
+// If you have separate links, they will be used. Otherwise, amount parameters will be appended.
 export const SQUARE_DONATION_LINKS = {
   default: SQUARE_DONATION_URL, // Fallback to original link
   amount25: SQUARE_DONATION_URL, // TODO: Replace with $25 Square payment link
   amount50: SQUARE_DONATION_URL, // TODO: Replace with $50 Square payment link
   amount100: SQUARE_DONATION_URL, // TODO: Replace with $100 Square payment link
+};
+
+// Helper function to get donation URL with amount parameter
+// If a specific amount link is configured (different from default), use it
+// Otherwise, append the amount as a URL parameter
+export const getDonationUrl = (amount: number): string => {
+  const amountKey = `amount${amount}` as keyof typeof SQUARE_DONATION_LINKS;
+  const specificLink = SQUARE_DONATION_LINKS[amountKey];
+  
+  // If specific link is configured and different from default, use it
+  if (specificLink && specificLink !== SQUARE_DONATION_LINKS.default) {
+    return specificLink;
+  }
+  
+  // Otherwise, append amount parameter to default URL
+  const baseUrl = SQUARE_DONATION_LINKS.default;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${separator}amount=${amount}`;
 };
 
 export const NAV_ITEMS: NavItem[] = [

@@ -1,0 +1,26 @@
+# Cursor Rules for Lord's Gym Project
+
+## Browser Automation
+
+**ALWAYS use Google Chrome (system default browser) for browser automation tasks.**
+
+- **NEVER use** `cursor-ide-browser` or `cursor-browser-extension` MCP servers
+- **ALWAYS use** `user-chrome-devtools` MCP server for browser automation
+- When opening URLs or performing browser tasks, use Chrome DevTools connection
+- Chrome DevTools connects to the user's authenticated Chrome session
+- This ensures access to authenticated websites like Supabase dashboard
+
+## Browser Automation Guidelines
+
+1. For any browser-related task, use the `user-chrome-devtools` MCP server
+2. Use `navigate_page` to open URLs in Chrome
+3. Use Chrome DevTools methods for interaction (click, fill, etc.)
+4. Never attempt to use Cursor's built-in browser for authenticated sessions
+
+## MCP Server Priority
+
+When multiple browser MCP servers are available:
+1. **Primary**: `user-chrome-devtools` (Chrome DevTools)
+2. **Never use**: `cursor-ide-browser` or `cursor-browser-extension`
+
+This ensures all browser automation uses the user's authenticated Chrome session.

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:supabase": "node scripts/setup-supabase.js",
+    "setup:supabase:ps1": "powershell -ExecutionPolicy Bypass -File scripts/setup-supabase.ps1"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

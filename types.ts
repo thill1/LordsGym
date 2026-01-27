@@ -51,6 +51,23 @@ export enum Theme {
 
 // --- CMS & BACKEND TYPES ---
 
+/** Target page for a popup: 'all' = every page, or a specific path */
+export type PopupTargetPage = 'all' | '/' | '/membership' | '/outreach' | '/training' | '/shop' | '/contact' | '/calendar';
+
+export interface PopupModalConfig {
+  id: string;
+  enabled: boolean;
+  title: string;
+  body: string;
+  ctaText?: string;
+  ctaLink?: string;
+  targetPage: PopupTargetPage;
+  /** Delay in ms before showing (e.g. 1500 = 1.5s after page load) */
+  showAfterDelayMs: number;
+  /** If true, show at most once per browser session */
+  showOncePerSession: boolean;
+}
+
 export interface SiteSettings {
   siteName: string;
   contactEmail: string;
@@ -62,6 +79,7 @@ export interface SiteSettings {
     message: string;
     link?: string;
   };
+  popupModals: PopupModalConfig[];
 }
 
 export interface HomePageContent {

@@ -1,7 +1,7 @@
 # Supabase CLI Configuration
 # This file configures Supabase for local development and migration management
 
-project_id = "your-project-ref-here"
+project_id = "mrptukahxloqpdqiaxkb"
 
 [api]
 enabled = true

@@ -24,6 +24,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'calendar', label: 'Calendar', icon: '📅' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },
     { id: 'users', label: 'Users', icon: '👥' },
+    { id: 'popups', label: 'Popups', icon: '📣' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'activity', label: 'Activity Logs', icon: '📋' },
     { id: 'settings', label: 'Global Settings', icon: '⚙️' },

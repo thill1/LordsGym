@@ -13,6 +13,7 @@ import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ProductBulkOperations from '../components/admin/ProductBulkOperations';
 import ActivityLogs from '../components/admin/ActivityLogs';
 import SettingsManager from '../components/admin/SettingsManager';
+import PopupModalsManager from '../components/admin/PopupModalsManager';
 import SEOManager from '../components/admin/SEOManager';
 import HomeContentEditor from '../components/admin/HomeContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
@@ -32,7 +33,7 @@ const Admin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
 
@@ -230,6 +231,7 @@ const Admin: React.FC = () => {
         {activeTab === 'calendar' && <CalendarManager />}
         {activeTab === 'media' && <MediaLibrary />}
         {activeTab === 'users' && <UserManagement />}
+        {activeTab === 'popups' && <PopupModalsManager />}
         {activeTab === 'analytics' && <AnalyticsDashboard />}
         {activeTab === 'activity' && <ActivityLogs />}
         {activeTab === 'settings' && <SettingsManager />}

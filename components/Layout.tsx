@@ -4,6 +4,7 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import Button from "./Button";
 import CartDrawer from "./CartDrawer";
+import PopupModalManager from "./PopupModalManager";
 import { NAV_ITEMS } from "../constants";
 
 interface LayoutProps {
@@ -227,6 +228,9 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
       {/* Cart Drawer */}
       <CartDrawer onCheckout={handleCheckout} />
+
+      {/* Admin-controlled popup modal (page-specific or site-wide) */}
+      <PopupModalManager currentPath={currentPath} onNavigate={handleNavClick} />
 
       {/* Main */}
       <main className={`flex-1 ${isScrolled || settings.announcementBar.enabled ? 'pt-[73px]' : 'pt-0'}`}>{children}</main>

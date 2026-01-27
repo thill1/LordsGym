@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
-import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product } from '../types';
+import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { runMigrations } from '../lib/migration';
 
@@ -16,7 +16,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
     enabled: false,
     message: "Join now and get your first month for $10!",
     link: "/membership"
-  }
+  },
+  popupModals: []
 };
 
 // Helper to get local media image path
@@ -90,7 +91,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load from LocalStorage or use Defaults (fallback)
   const [settings, setSettings] = useState<SiteSettings>(() => {
     const saved = localStorage.getItem('site_settings');
-    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      popupModals: Array.isArray(parsed.popupModals) ? parsed.popupModals : []
+    };
   });
 
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
@@ -177,7 +183,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             contactPhone: settingsData.contact_phone,
             address: settingsData.address,
             googleAnalyticsId: settingsData.google_analytics_id || '',
-            announcementBar: settingsData.announcement_bar as SiteSettings['announcementBar']
+            announcementBar: settingsData.announcement_bar as SiteSettings['announcementBar'],
+            popupModals: (settingsData.popup_modals as PopupModalConfig[] | null) ?? []
           });
         }
 
@@ -281,6 +288,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           address: settings.address,
           google_analytics_id: settings.googleAnalyticsId || null,
           announcement_bar: settings.announcementBar,
+          popup_modals: settings.popupModals ?? [],
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' })
         .then(({ error }) => {
