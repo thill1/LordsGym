@@ -9,10 +9,9 @@ const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-co
 // Helper function to get training image path
 const getTrainingImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
-  // URL encode the filename to handle special characters like apostrophes
-  // Split path and encode only the filename part
-  const encodedFilename = encodeURIComponent(filename);
-  return `${base}media/training/${encodedFilename}`.replace(/\/\/+/g, '/');
+  // Use the same pattern as other image helpers in the codebase
+  // Modern browsers and servers handle apostrophes in filenames correctly
+  return `${base}media/training/${filename}`.replace(/\/\/+/g, '/');
 };
 
 const Training: React.FC = () => {
