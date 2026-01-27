@@ -4,6 +4,8 @@ import Section from '../components/Section';
 import ShopifyProduct from '../components/ShopifyProduct';
 import { useStore } from '../context/StoreContext';
 
+const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
+
 const Shop: React.FC = () => {
   const { products } = useStore();
   const [activeCategory, setActiveCategory] = useState<string>('All Products');
@@ -16,9 +18,11 @@ const Shop: React.FC = () => {
 
   return (
     <>
-      <Section bg="dark" className="pt-32 pb-16 text-center">
-        <h1 className="text-5xl font-bold mb-4 uppercase"><span className="text-brand-red">Lord's</span> Gym Store</h1>
-        <p className="text-xl text-neutral-400">Wear the mission. All proceeds support our outreach programs.</p>
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-16">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold mb-4 uppercase text-white drop-shadow-lg"><span className="text-brand-red">Lord's</span> Gym Store</h1>
+          <p className="text-xl text-white/90 drop-shadow-md">Wear the mission. All proceeds support our outreach programs.</p>
+        </div>
       </Section>
 
       <Section>

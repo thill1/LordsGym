@@ -4,6 +4,7 @@ import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { runMigrations } from '../lib/migration';
+import { safeGet, safeSet } from '../lib/localStorage';
 
 // Initial Default State
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -88,22 +89,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLoading, setIsLoading] = useState(true);
   const [migrationRun, setMigrationRun] = useState(false);
 
-  // Load from LocalStorage or use Defaults (fallback)
+  // Load from LocalStorage or use Defaults (fallback) — safe for quota/private mode
   const [settings, setSettings] = useState<SiteSettings>(() => {
-    const saved = localStorage.getItem('site_settings');
-    const parsed = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    const parsed = safeGet<Partial<SiteSettings>>('site_settings', DEFAULT_SETTINGS);
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
-      popupModals: Array.isArray(parsed.popupModals) ? parsed.popupModals : []
+      popupModals: Array.isArray(parsed?.popupModals) ? parsed.popupModals : []
     };
   });
 
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
-    // Version v2 used to force update the new hero text for existing users
-    const saved = localStorage.getItem('home_content_v2');
-    const parsed = saved ? JSON.parse(saved) : DEFAULT_HOME_CONTENT;
-    // Always ensure hero background uses the local image
+    const parsed = safeGet<HomePageContent>('home_content_v2', DEFAULT_HOME_CONTENT);
     return {
       ...parsed,
       hero: {
@@ -114,15 +111,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [testimonials, setTestimonials] = useState<Testimonial[]>(() => {
-    const saved = localStorage.getItem('site_testimonials');
-    return saved ? JSON.parse(saved) : TESTIMONIALS;
+    return safeGet<Testimonial[]>('site_testimonials', TESTIMONIALS);
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
-    // Always use the latest products from constants as source of truth
-    // Only use localStorage if admin has made customizations (different product count or custom products)
-    const saved = localStorage.getItem('shop_products');
-    const savedProducts = saved ? JSON.parse(saved) : null;
+    const savedProducts = safeGet<Product[] | null>('shop_products', null);
     
     // If saved products exist and match the count/structure, merge to preserve admin edits
     // Otherwise, use fresh ALL_PRODUCTS to ensure new merchandise appears
@@ -146,8 +139,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('shop_cart');
-    return saved ? JSON.parse(saved) : [];
+    return safeGet<CartItem[]>('shop_cart', []);
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -170,6 +162,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Load settings
+        // Check if localStorage has popup data - if so, preserve it (user's local changes take precedence)
+        const savedLocalSettings = localStorage.getItem('site_settings');
+        let hasLocalPopupData = false;
+        
+        if (savedLocalSettings) {
+          try {
+            const parsed = JSON.parse(savedLocalSettings) as Partial<SiteSettings>;
+            hasLocalPopupData = Array.isArray(parsed?.popupModals) && parsed.popupModals.length > 0;
+          } catch {
+            hasLocalPopupData = false;
+          }
+        }
+        
         const { data: settingsData } = await supabase
           .from('settings')
           .select('*')
@@ -177,6 +182,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .single();
 
         if (settingsData) {
+          // Get current localStorage settings to preserve popupModals if they exist
+          const localSettings = hasLocalPopupData 
+            ? safeGet<Partial<SiteSettings>>('site_settings', DEFAULT_SETTINGS)
+            : null;
+          
           setSettings({
             siteName: settingsData.site_name,
             contactEmail: settingsData.contact_email,
@@ -184,40 +194,91 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             address: settingsData.address,
             googleAnalyticsId: settingsData.google_analytics_id || '',
             announcementBar: settingsData.announcement_bar as SiteSettings['announcementBar'],
-            popupModals: (settingsData.popup_modals as PopupModalConfig[] | null) ?? []
+            // Preserve localStorage popupModals if they exist, otherwise use Supabase data
+            popupModals: hasLocalPopupData && localSettings?.popupModals
+              ? localSettings.popupModals
+              : ((settingsData.popup_modals as PopupModalConfig[] | null) ?? [])
           });
         }
 
         // Load home content
-        const { data: homeData } = await supabase
-          .from('home_content')
-          .select('*')
-          .eq('id', 'default')
-          .single();
+        // Check if localStorage has saved data that differs from defaults - if so, keep it (user's local changes take precedence)
+        const savedLocalContent = localStorage.getItem('home_content_v2');
+        let hasLocalData = false;
+        
+        if (savedLocalContent) {
+          try {
+            const parsed = JSON.parse(savedLocalContent) as HomePageContent;
+            // Check if headline has been changed from default (most common user edit)
+            hasLocalData = parsed.hero?.headline !== DEFAULT_HOME_CONTENT.hero.headline;
+          } catch {
+            // If parsing fails, assume no local data
+            hasLocalData = false;
+          }
+        }
+        
+        if (!hasLocalData) {
+          // Only load from Supabase if localStorage is empty or has defaults
+          const { data: homeData } = await supabase
+            .from('home_content')
+            .select('*')
+            .eq('id', 'default')
+            .single();
 
-        if (homeData) {
-          const content = {
-            hero: homeData.hero as HomePageContent['hero'],
-            values: homeData.values as HomePageContent['values']
-          };
-          // Ensure hero background uses local image
-          content.hero.backgroundImage = getHeroImage('hero-background.jpg.jpg');
-          setHomeContent(content);
+          if (homeData) {
+            const content = {
+              hero: homeData.hero as HomePageContent['hero'],
+              values: homeData.values as HomePageContent['values']
+            };
+            // Ensure hero background uses local image
+            content.hero.backgroundImage = getHeroImage('hero-background.jpg.jpg');
+            setHomeContent(content);
+          }
+        } else {
+          // Keep localStorage data - user's changes are preserved
+          const localContent = safeGet<HomePageContent>('home_content_v2', DEFAULT_HOME_CONTENT);
+          setHomeContent({
+            ...localContent,
+            hero: {
+              ...localContent.hero,
+              backgroundImage: getHeroImage('hero-background.jpg.jpg')
+            }
+          });
         }
 
         // Load testimonials
-        const { data: testimonialsData } = await supabase
-          .from('testimonials')
-          .select('*')
-          .order('created_at', { ascending: false });
+        // Check if localStorage has saved testimonials - if so, preserve them (user's local changes take precedence)
+        const savedLocalTestimonials = localStorage.getItem('site_testimonials');
+        let hasLocalTestimonials = false;
+        
+        if (savedLocalTestimonials) {
+          try {
+            const parsed = JSON.parse(savedLocalTestimonials) as Testimonial[];
+            hasLocalTestimonials = Array.isArray(parsed) && parsed.length > 0;
+          } catch {
+            hasLocalTestimonials = false;
+          }
+        }
+        
+        if (!hasLocalTestimonials) {
+          // Only load from Supabase if localStorage is empty
+          const { data: testimonialsData } = await supabase
+            .from('testimonials')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        if (testimonialsData) {
-          setTestimonials(testimonialsData.map(t => ({
-            id: t.id,
-            name: t.name,
-            role: t.role,
-            quote: t.quote
-          })));
+          if (testimonialsData && testimonialsData.length > 0) {
+            setTestimonials(testimonialsData.map(t => ({
+              id: t.id,
+              name: t.name,
+              role: t.role,
+              quote: t.quote
+            })));
+          }
+        } else {
+          // Keep localStorage testimonials - user's changes are preserved
+          const localTestimonials = safeGet<Testimonial[]>('site_testimonials', TESTIMONIALS);
+          setTestimonials(localTestimonials);
         }
 
         // Load products
@@ -275,7 +336,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Persistence Effects - Save to both localStorage and Supabase
   useEffect(() => {
-    localStorage.setItem('site_settings', JSON.stringify(settings));
+    safeSet('site_settings', settings);
     
     if (isSupabaseConfigured() && !isLoading) {
       supabase
@@ -298,7 +359,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [settings, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem('home_content_v2', JSON.stringify(homeContent));
+    safeSet('home_content_v2', homeContent);
     
     if (isSupabaseConfigured() && !isLoading) {
       supabase
@@ -316,7 +377,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [homeContent, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem('site_testimonials', JSON.stringify(testimonials));
+    safeSet('site_testimonials', testimonials);
     
     if (isSupabaseConfigured() && !isLoading) {
       // Note: This will create duplicates if not careful. Consider using upsert with id.
@@ -338,7 +399,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [testimonials, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem('shop_products', JSON.stringify(products));
+    safeSet('shop_products', products);
     
     if (isSupabaseConfigured() && !isLoading) {
       products.forEach(product => {
@@ -360,7 +421,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [products, isLoading]);
 
   useEffect(() => {
-    localStorage.setItem('shop_cart', JSON.stringify(cart));
+    safeSet('shop_cart', cart);
   }, [cart]);
 
   // Check Auth on Mount
@@ -384,6 +445,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           address: newSettings.address,
           google_analytics_id: newSettings.googleAnalyticsId || null,
           announcement_bar: newSettings.announcementBar,
+          popup_modals: newSettings.popupModals ?? [],
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
     }

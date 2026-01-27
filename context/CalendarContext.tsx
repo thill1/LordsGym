@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CalendarEvent } from '../lib/calendar-utils';
 import { getHolidaysForRange } from '../lib/us-holidays';
+import { safeGet, safeSet } from '../lib/localStorage';
 
 interface CalendarContextType {
   events: CalendarEvent[];
@@ -26,21 +27,11 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       setIsLoading(true);
       setError(null);
-
-      // Load custom events from localStorage (Community and Outreach only)
-      const savedEventsJson = localStorage.getItem(STORAGE_KEY);
-      const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
-
-      // Generate US holidays for current year and next year
+      const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
       const currentYear = new Date().getFullYear();
       const holidays = getHolidaysForRange(currentYear, currentYear + 1);
-
-      // Combine custom events with holidays
       const allEvents = [...customEvents, ...holidays];
-
-      // Sort by start time
       allEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
       setEvents(allEvents);
     } catch (err) {
       console.error('Error loading calendar events:', err);
@@ -52,12 +43,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const saveCustomEvents = (customEvents: CalendarEvent[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customEvents));
-    } catch (err) {
-      console.error('Error saving calendar events:', err);
-      throw err;
-    }
+    safeSet(STORAGE_KEY, customEvents);
   };
 
   const addEvent = (event: Omit<CalendarEvent, 'id'>) => {
@@ -65,18 +51,14 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...event,
       id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
-
-    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
-    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
-    const updatedEvents = [...customEvents, newEvent];
-    saveCustomEvents(updatedEvents);
+    const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
+    saveCustomEvents([...customEvents, newEvent]);
     loadEvents();
   };
 
   const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
-    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
-    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
-    const updatedEvents = customEvents.map(event => 
+    const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
+    const updatedEvents = customEvents.map((event) =>
       event.id === id ? { ...event, ...updates } : event
     );
     saveCustomEvents(updatedEvents);
@@ -84,10 +66,8 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const deleteEvent = (id: string) => {
-    const savedEventsJson = localStorage.getItem(STORAGE_KEY);
-    const customEvents: CalendarEvent[] = savedEventsJson ? JSON.parse(savedEventsJson) : [];
-    const updatedEvents = customEvents.filter(event => event.id !== id);
-    saveCustomEvents(updatedEvents);
+    const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
+    saveCustomEvents(customEvents.filter((event) => event.id !== id));
     loadEvents();
   };
 

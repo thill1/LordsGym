@@ -3,9 +3,9 @@ import Section from '../components/Section';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import MetaTags from '../components/MetaTags';
+import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { useStore } from '../context/StoreContext';
 import { FEATURED_PRODUCTS } from '../constants';
-// ARCHIVED: Testimonials section removed - see pages/archived/HomeTestimonialsSection.tsx
 // ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx
 
 interface HomeProps {
@@ -13,7 +13,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
-  const { homeContent } = useStore();
+  const { homeContent, testimonials } = useStore();
 
   const heroHeadline = homeContent?.hero?.headline || "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.";
   const heroSubheadline = homeContent?.hero?.subheadline || "Our mission is to bring strength and healing to our community through fitness, Christ and service.";
@@ -125,7 +125,18 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </Section>
 
-      {/* ARCHIVED: Testimonials section removed - see pages/archived/HomeTestimonialsSection.tsx */}
+      {/* Testimonials Section */}
+      {testimonials && testimonials.length > 0 && (
+        <Section bg="dark">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4 text-white">What Our Community Says</h2>
+            <p className="text-lg text-neutral-300">
+              Hear from members who train with purpose and live with faith
+            </p>
+          </div>
+          <TestimonialsCarousel testimonials={testimonials} autoScrollInterval={5000} />
+        </Section>
+      )}
 
       {/* CTA Section */}
       <Section bg="image" bgImage={ctaBgImage} className="text-white relative">

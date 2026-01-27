@@ -6,6 +6,8 @@ interface SectionProps {
   id?: string;
   bg?: 'default' | 'alternate' | 'dark' | 'image';
   bgImage?: string;
+  /** When bg="image", use e.g. "center top" to show upper part of photo (avoid cutting off heads) */
+  bgImagePosition?: string;
 }
 
 const Section: React.FC<SectionProps> = ({ 
@@ -13,25 +15,40 @@ const Section: React.FC<SectionProps> = ({
   className = '', 
   id,
   bg = 'default',
-  bgImage
+  bgImage,
+  bgImagePosition = 'center center'
 }) => {
   const bgStyles = {
     default: "bg-white dark:bg-brand-charcoal text-brand-charcoal dark:text-white",
     alternate: "bg-white dark:bg-neutral-900 text-brand-charcoal dark:text-white",
     dark: "bg-brand-charcoal text-white",
-    image: "relative bg-cover bg-center bg-no-repeat text-white"
+    image: "relative text-white overflow-hidden"
   };
 
-  const style = bg === 'image' && bgImage ? { backgroundImage: `url(${bgImage})` } : {};
+  const bgImageStyle = bg === 'image' && bgImage
+    ? {
+        backgroundImage: `url(${bgImage})`,
+        backgroundPosition: bgImagePosition,
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        filter: 'grayscale(100%)'
+      }
+    : {};
 
   return (
     <section 
       id={id} 
       className={`py-16 md:py-24 px-4 sm:px-6 lg:px-8 ${bgStyles[bg]} ${className}`}
-      style={style}
     >
-      {bg === 'image' && (
-        <div className="absolute inset-0 bg-black/70 pointer-events-none"></div>
+      {bg === 'image' && bgImage && (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={bgImageStyle}
+            aria-hidden
+          />
+          <div className="absolute inset-0 bg-black/70 pointer-events-none z-0" />
+        </>
       )}
       <div className={`max-w-7xl mx-auto relative z-10`}>
         {children}

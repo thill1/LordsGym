@@ -224,7 +224,7 @@ const Admin: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-grow md:ml-64 p-8">
-        {activeTab === 'dashboard' && <AdminDashboard />}
+        {activeTab === 'dashboard' && <AdminDashboard onTabChange={setActiveTab} />}
         {activeTab === 'home' && <HomeContentEditor />}
         {activeTab === 'pages' && <PageEditor />}
         {activeTab === 'testimonials' && <TestimonialsManager />}

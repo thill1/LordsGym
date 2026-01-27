@@ -1,0 +1,11 @@
+@page {
+  margin-bottom: 30mm;
+}
+
+@page {
+  @bottom-center {
+    content: "Sentient Partners and all rights reserved";
+    font-size: 10px;
+    color: #666;
+  }
+}

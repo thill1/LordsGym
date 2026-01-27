@@ -55,21 +55,39 @@ const PopupModalManager: React.FC<PopupModalManagerProps> = ({ currentPath, onNa
   const { settings } = useStore();
   const popups = settings?.popupModals ?? [];
   const active = selectActivePopup(popups, currentPath);
+  
+  // Debug logging (remove in production if needed)
+  useEffect(() => {
+    if (popups.length > 0) {
+      console.log('[PopupModalManager] Popups:', popups);
+      console.log('[PopupModalManager] Current path:', currentPath);
+      console.log('[PopupModalManager] Active popup:', active);
+    }
+  }, [popups, currentPath, active]);
 
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Reset visibility when active popup changes
+    setVisible(false);
+    
     if (!active) {
-      setVisible(false);
       return;
     }
+    
+    // Check if this popup was already dismissed this session
     if (active.showOncePerSession && wasDismissedThisSession(active.id)) {
       return;
     }
+    
+    // Show popup after delay
     const delay = Math.max(0, active.showAfterDelayMs ?? 1000);
-    const t = window.setTimeout(() => setVisible(true), delay);
+    const t = window.setTimeout(() => {
+      setVisible(true);
+    }, delay);
+    
     return () => clearTimeout(t);
-  }, [active?.id, active?.showAfterDelayMs, active?.showOncePerSession]);
+  }, [active?.id, active?.showAfterDelayMs, active?.showOncePerSession, currentPath]);
 
   const handleClose = () => {
     setVisible(false);

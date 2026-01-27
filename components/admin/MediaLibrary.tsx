@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { safeGet, safeSet } from '../../lib/localStorage';
 import ConfirmDialog from '../ConfirmDialog';
 import { replaceImageUrl } from '../../lib/image-url-replacer';
 import Button from '../Button';
+
+const MEDIA_STORAGE_KEY = 'lords_gym_media_library';
 
 interface MediaItem {
   id: string;
@@ -17,9 +20,13 @@ interface MediaItem {
   created_at: string;
 }
 
+function loadMediaFromLocalStorage(): MediaItem[] {
+  return safeGet<MediaItem[]>(MEDIA_STORAGE_KEY, []);
+}
+
 const MediaLibrary: React.FC = () => {
   const { showSuccess, showError } = useToast();
-  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>(loadMediaFromLocalStorage);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,68 +35,86 @@ const MediaLibrary: React.FC = () => {
   const [replaceUrlModal, setReplaceUrlModal] = useState<{ isOpen: boolean; oldUrl: string }>({ isOpen: false, oldUrl: '' });
   const [newUrl, setNewUrl] = useState('');
 
-  // Load media from Supabase
-  const loadMedia = async () => {
+  const loadMedia = useCallback(async () => {
     if (!isSupabaseConfigured()) {
-      // Fallback: show message
+      setMedia(loadMediaFromLocalStorage());
       return;
     }
-
     try {
       const { data, error } = await supabase
         .from('media')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       if (data) setMedia(data);
     } catch (error) {
       console.error('Error loading media:', error);
+      setMedia(loadMediaFromLocalStorage());
     }
-  };
-
-  React.useEffect(() => {
-    loadMedia();
   }, []);
+
+  useEffect(() => {
+    loadMedia();
+  }, [loadMedia]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !isSupabaseConfigured()) return;
+    if (!file) return;
 
-    setIsUploading(true);
-
-    try {
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `media/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-
-      // Save metadata to database
-      const { error: dbError } = await supabase
-        .from('media')
-        .insert({
+    if (!isSupabaseConfigured()) {
+      setIsUploading(true);
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        const newItem: MediaItem = {
+          id: crypto.randomUUID?.() ?? `media-${Date.now()}`,
           filename: file.name,
-          url: publicUrl,
+          url: dataUrl,
           file_type: file.type,
           file_size: file.size,
           folder: null,
           tags: null,
-          alt_text: null
+          alt_text: null,
+          created_at: new Date().toISOString()
+        };
+        setMedia((prev) => {
+          const next = [newItem, ...prev];
+          safeSet(MEDIA_STORAGE_KEY, next);
+          return next;
         });
+        showSuccess('File uploaded successfully!');
+      } catch (err) {
+        console.error('Error uploading file:', err);
+        showError('Failed to upload file. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+      e.target.value = '';
+      return;
+    }
 
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `media/${fileName}`;
+      const { error: uploadError } = await supabase.storage.from('media').upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(filePath);
+      const { error: dbError } = await supabase.from('media').insert({
+        filename: file.name,
+        url: publicUrl,
+        file_type: file.type,
+        file_size: file.size,
+        folder: null,
+        tags: null,
+        alt_text: null
+      });
       if (dbError) throw dbError;
-
       await loadMedia();
       showSuccess('File uploaded successfully!');
     } catch (error) {
@@ -98,17 +123,22 @@ const MediaLibrary: React.FC = () => {
     } finally {
       setIsUploading(false);
     }
+    e.target.value = '';
   };
 
   const handleDelete = async (id: string) => {
-    if (!isSupabaseConfigured()) return;
-
+    if (!isSupabaseConfigured()) {
+      setMedia((prev) => {
+        const next = prev.filter((m) => m.id !== id);
+        safeSet(MEDIA_STORAGE_KEY, next);
+        return next;
+      });
+      showSuccess('Media item deleted successfully!');
+      setDeleteConfirm({ isOpen: false, itemId: null });
+      return;
+    }
     try {
-      const { error } = await supabase
-        .from('media')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('media').delete().eq('id', id);
       if (error) throw error;
       await loadMedia();
       showSuccess('Media item deleted successfully!');
@@ -121,15 +151,21 @@ const MediaLibrary: React.FC = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (!isSupabaseConfigured() || selectedItems.size === 0) return;
-
+    if (selectedItems.size === 0) return;
+    if (!isSupabaseConfigured()) {
+      const ids = Array.from(selectedItems);
+      setMedia((prev) => {
+        const next = prev.filter((m) => !ids.includes(m.id));
+        safeSet(MEDIA_STORAGE_KEY, next);
+        return next;
+      });
+      setSelectedItems(new Set());
+      showSuccess(`${ids.length} media item(s) deleted successfully!`);
+      return;
+    }
     try {
       const ids = Array.from(selectedItems);
-      const { error } = await supabase
-        .from('media')
-        .delete()
-        .in('id', ids);
-
+      const { error } = await supabase.from('media').delete().in('id', ids);
       if (error) throw error;
       await loadMedia();
       setSelectedItems(new Set());
@@ -230,9 +266,7 @@ const MediaLibrary: React.FC = () => {
       {filteredMedia.length === 0 ? (
         <div className="bg-white dark:bg-neutral-800 p-12 rounded-lg shadow-sm text-center">
           <p className="text-neutral-500 dark:text-neutral-400">
-            {isSupabaseConfigured() 
-              ? 'No media found. Upload your first image to get started.'
-              : 'Supabase not configured. Media library requires backend setup.'}
+            No media found. Upload your first image to get started.
           </p>
         </div>
       ) : (

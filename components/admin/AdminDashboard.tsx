@@ -1,7 +1,11 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onTabChange?: (tab: 'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity') => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {
   const { products, testimonials } = useStore();
 
   // Mock metrics - these would come from Supabase in production
@@ -79,15 +83,24 @@ const AdminDashboard: React.FC = () => {
       <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
         <h3 className="text-xl font-bold mb-4 dark:text-white">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left">
+          <button 
+            onClick={() => onTabChange?.('store')}
+            className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left cursor-pointer"
+          >
             <h4 className="font-bold text-sm dark:text-white mb-1">Add New Product</h4>
             <p className="text-xs text-neutral-500">Create a new store item</p>
           </button>
-          <button className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left">
+          <button 
+            onClick={() => onTabChange?.('calendar')}
+            className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left cursor-pointer"
+          >
             <h4 className="font-bold text-sm dark:text-white mb-1">Schedule Class</h4>
             <p className="text-xs text-neutral-500">Add calendar event</p>
           </button>
-          <button className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left">
+          <button 
+            onClick={() => onTabChange?.('home')}
+            className="p-4 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors text-left cursor-pointer"
+          >
             <h4 className="font-bold text-sm dark:text-white mb-1">Edit Home Page</h4>
             <p className="text-xs text-neutral-500">Update hero content</p>
           </button>

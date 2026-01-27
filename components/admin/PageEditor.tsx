@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { safeGet, safeSet } from '../../lib/localStorage';
 import RichTextEditor from './RichTextEditor';
 import Button from '../Button';
+
+const PAGE_STORAGE_KEY = 'lords_gym_page_content';
 
 interface Page {
   id: string;
@@ -15,46 +18,50 @@ interface Page {
   published: boolean;
 }
 
+const pageSlugs = [
+  { slug: 'home', title: 'Home' },
+  { slug: 'about', title: 'About' },
+  { slug: 'membership', title: 'Membership' },
+  { slug: 'training', title: '1-on-1 Training' },
+  { slug: 'programs', title: 'Programs' },
+  { slug: 'outreach', title: 'Outreach' },
+  { slug: 'contact', title: 'Contact' }
+];
+
+function defaultPage(slug: string, title: string): Page {
+  return {
+    id: slug,
+    slug,
+    title,
+    content: { html: '' },
+    meta_title: null,
+    meta_description: null,
+    meta_image: null,
+    published: true
+  };
+}
+
+function loadPagesFromLocalStorage(): Page[] {
+  const saved = safeGet<Page[]>(PAGE_STORAGE_KEY, []);
+  return pageSlugs.map(({ slug, title }) => {
+    const p = saved.find((x) => x.slug === slug);
+    return p ? { ...defaultPage(slug, title), ...p, slug, title } : defaultPage(slug, title);
+  });
+}
+
 const PageEditor: React.FC = () => {
   const { showSuccess, showError } = useToast();
-  const [pages, setPages] = useState<Page[]>([]);
+  const [pages, setPages] = useState<Page[]>(loadPagesFromLocalStorage);
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [contentHtml, setContentHtml] = useState('');
 
-  const pageSlugs = [
-    { slug: 'home', title: 'Home' },
-    { slug: 'about', title: 'About' },
-    { slug: 'membership', title: 'Membership' },
-    { slug: 'training', title: '1-on-1 Training' },
-    { slug: 'programs', title: 'Programs' },
-    { slug: 'outreach', title: 'Outreach' },
-    { slug: 'contact', title: 'Contact' }
-  ];
-
-  useEffect(() => {
-    loadPages();
-  }, []);
-
-  useEffect(() => {
-    if (selectedPage) {
-      // Initialize content HTML from page content
-      if (selectedPage.content && typeof selectedPage.content === 'object') {
-        if (selectedPage.content.html) {
-          setContentHtml(selectedPage.content.html);
-        } else {
-          setContentHtml('');
-        }
-      } else {
-        setContentHtml('');
-      }
+  const loadPages = useCallback(async () => {
+    if (!isSupabaseConfigured()) {
+      setPages(loadPagesFromLocalStorage());
+      return;
     }
-  }, [selectedPage]);
-
-  const loadPages = async () => {
-    if (!isSupabaseConfigured()) return;
-
     try {
       const { data, error } = await supabase
         .from('pages')
@@ -62,56 +69,75 @@ const PageEditor: React.FC = () => {
         .order('title');
 
       if (error) throw error;
-      if (data) {
+      if (data && data.length > 0) {
         setPages(data);
-        // Create default pages if they don't exist
-        for (const pageSlug of pageSlugs) {
-          if (!data.find(p => p.slug === pageSlug.slug)) {
-            await createDefaultPage(pageSlug.slug, pageSlug.title);
-          }
-        }
-        await loadPages(); // Reload after creating defaults
+        return;
       }
+      // No rows: ensure defaults exist and persist to localStorage for demo consistency
+      const local = loadPagesFromLocalStorage();
+      for (const pageSlug of pageSlugs) {
+        if (!data?.find((p) => p.slug === pageSlug.slug)) {
+          await createDefaultPage(pageSlug.slug, pageSlug.title);
+        }
+      }
+      const { data: after } = await supabase.from('pages').select('*').order('title');
+      if (after?.length) setPages(after);
+      else setPages(local);
     } catch (error) {
       console.error('Error loading pages:', error);
+      setPages(loadPagesFromLocalStorage());
     }
-  };
+  }, []);
 
   const createDefaultPage = async (slug: string, title: string) => {
     if (!isSupabaseConfigured()) return;
-
     try {
-      await supabase
-        .from('pages')
-        .insert({
-          slug,
-          title,
-          content: { html: '' },
-          published: true
-        });
+      await supabase.from('pages').insert({
+        slug,
+        title,
+        content: { html: '' },
+        published: true
+      });
     } catch (error) {
       console.error('Error creating default page:', error);
     }
   };
 
+  useEffect(() => {
+    loadPages();
+  }, [loadPages]);
+
+  useEffect(() => {
+    if (selectedPage) {
+      if (selectedPage.content && typeof selectedPage.content === 'object' && selectedPage.content.html) {
+        setContentHtml(selectedPage.content.html);
+      } else {
+        setContentHtml('');
+      }
+    }
+  }, [selectedPage]);
+
   const handleSave = async () => {
-    if (!selectedPage || !isSupabaseConfigured()) return;
+    if (!selectedPage) return;
 
     setIsSaving(true);
     try {
-      const updatedPage = {
+      const updatedPage: Page = {
         ...selectedPage,
-        content: { html: contentHtml },
-        updated_at: new Date().toISOString()
+        content: { html: contentHtml }
       };
+      const newPages = pages.map((p) => (p.slug === selectedPage.slug ? updatedPage : p));
+      setPages(newPages);
+      safeSet(PAGE_STORAGE_KEY, newPages);
 
-      const { error } = await supabase
-        .from('pages')
-        .update(updatedPage)
-        .eq('id', selectedPage.id);
+      if (isSupabaseConfigured()) {
+        const { error } = await supabase
+          .from('pages')
+          .update({ ...updatedPage, updated_at: new Date().toISOString() })
+          .eq('id', selectedPage.id);
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-      
       setIsEditing(false);
       await loadPages();
       showSuccess('Page saved successfully!');

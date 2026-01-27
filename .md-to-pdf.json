@@ -1,0 +1,14 @@
+{
+  "pdf_options": {
+    "displayHeaderFooter": true,
+    "footerTemplate": "<div style='font-size:9px;text-align:center;width:100%;color:#666;padding-top:10px;line-height:1.4;'><div>Sentient Partners | Client Deliverable | Confidential and Proprietary | sentientpartners.ai</div><div style='margin-top:2px;'>© 2026 Sentient Partners</div></div>",
+    "format": "A4",
+    "margin": {
+      "top": "20mm",
+      "right": "15mm",
+      "bottom": "30mm",
+      "left": "15mm"
+    },
+    "printBackground": true
+  }
+}

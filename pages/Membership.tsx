@@ -6,6 +6,9 @@ import Button from '../components/Button';
 import { useStore } from '../context/StoreContext';
 import { Product } from '../types';
 
+// Hero placeholder (public folder)
+const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
+
 // Helper function to get facility image path
 const getFacilityImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
@@ -68,14 +71,16 @@ const Membership: React.FC = () => {
 
   return (
     <>
-      <Section bg="dark" className="text-center pt-32 pb-24">
-        <div className="relative inline-block mb-4">
-          <h1 className="text-5xl font-bold">MONTH-TO-MONTH</h1>
-          <span className="absolute -right-6 -top-4 border border-white/20 text-white bg-brand-red px-2 py-1 rotate-12 font-bold uppercase tracking-widest text-xs shadow-lg">Memberships</span>
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-24">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <div className="relative inline-block mb-4">
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">MONTH-TO-MONTH</h1>
+            <span className="absolute -right-6 -top-4 border border-white/20 text-white bg-brand-red px-2 py-1 rotate-12 font-bold uppercase tracking-widest text-xs shadow-lg">Memberships</span>
+          </div>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto mt-4 drop-shadow-md">
+            Join the community built on faith and forged in iron.
+          </p>
         </div>
-        <p className="text-xl text-neutral-400 max-w-2xl mx-auto mt-4">
-          Join the community built on faith and forged in iron.
-        </p>
       </Section>
 
       <Section className="bg-neutral-100 dark:bg-neutral-900">

@@ -4,16 +4,20 @@ import Section from '../components/Section';
 import Button from '../components/Button';
 import MindbodyWidget from '../components/MindbodyWidget';
 
+const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
+
 const Training: React.FC = () => {
   const [selectedCoach, setSelectedCoach] = useState('Bradley Parker');
 
   return (
     <>
-      <Section bg="dark" className="pt-32 pb-16 text-center">
-        <h1 className="text-5xl font-bold mb-4"><span className="text-brand-red">1-on-1</span> Personal Training</h1>
-        <p className="text-xl text-neutral-300 max-w-2xl mx-auto">
-          Customized coaching to reach your spiritual and physical peak.
-        </p>
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-16">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold mb-4 text-white drop-shadow-lg"><span className="text-brand-red">1-on-1</span> Personal Training</h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto drop-shadow-md">
+            Customized coaching to reach your spiritual and physical peak.
+          </p>
+        </div>
       </Section>
 
       <Section>

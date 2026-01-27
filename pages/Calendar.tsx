@@ -8,6 +8,8 @@ import { CalendarView as ViewType } from '../lib/calendar-utils';
 import { downloadICal, ICalEvent } from '../lib/ical-export';
 import { useCalendar } from '../context/CalendarContext';
 
+const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
+
 const Calendar: React.FC = () => {
   const { events } = useCalendar();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -46,11 +48,13 @@ const Calendar: React.FC = () => {
 
   return (
     <>
-      <Section bg="dark" className="pt-32 pb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Lord's Gym <span className="text-brand-red">Calendar</span></h1>
-        <p className="text-lg md:text-xl text-neutral-300 px-4">
-          View our Community, Outreach, and Holiday events.
-        </p>
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-12">
+        <div className="relative z-10 max-w-4xl mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Lord's Gym <span className="text-brand-red">Calendar</span></h1>
+          <p className="text-lg md:text-xl text-white/90 drop-shadow-md">
+            View our Community, Outreach, and Holiday events.
+          </p>
+        </div>
       </Section>
 
       <Section>

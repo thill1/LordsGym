@@ -3,14 +3,18 @@ import React from 'react';
 import Section from '../components/Section';
 import ContactForm from '../components/ContactForm';
 
+const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
+
 const Contact: React.FC = () => {
   return (
     <>
-      <Section bg="dark" className="pt-4 pb-1 text-center">
-        <h1 className="text-5xl font-bold mb-2">
-          <span className="text-brand-red">Contact</span> <span className="text-white">Us</span>
-        </h1>
-        <p className="text-xl text-neutral-300">Come experience the difference.</p>
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-16">
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold mb-2 text-white drop-shadow-lg">
+            <span className="text-brand-red">Contact</span> <span className="text-white">Us</span>
+          </h1>
+          <p className="text-xl text-white/90 drop-shadow-md">Come experience the difference.</p>
+        </div>
       </Section>
 
       <Section className="!pt-0">

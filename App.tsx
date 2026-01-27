@@ -79,7 +79,9 @@ const App: React.FC = () => {
          <ToastProvider>
            <AuthProvider>
              <StoreProvider>
-               <div className="fade-in">{renderPage()}</div>
+               <CalendarProvider>
+                 <div className="fade-in">{renderPage()}</div>
+               </CalendarProvider>
              </StoreProvider>
            </AuthProvider>
          </ToastProvider>
