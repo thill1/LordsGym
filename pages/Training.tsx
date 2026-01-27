@@ -6,6 +6,12 @@ import MindbodyWidget from '../components/MindbodyWidget';
 
 const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
 
+// Helper function to get training image path
+const getTrainingImage = (filename: string) => {
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}media/training/${filename}`.replace(/\/\/+/g, '/');
+};
+
 const Training: React.FC = () => {
   const [selectedCoach, setSelectedCoach] = useState('Bradley Parker');
 
@@ -74,14 +80,14 @@ const Training: React.FC = () => {
             <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-2xl">
               {selectedCoach === 'Bradley Parker' && (
                 <img 
-                  src="/media/training/Brad - Bradley Parker's photo.jpeg" 
+                  src={getTrainingImage("Brad - Bradley Parker's photo.jpeg")} 
                   alt="Bradley Parker" 
                   className="w-full h-full object-cover"
                 />
               )}
               {selectedCoach === 'Kourtney Brothers' && (
                 <img 
-                  src="/media/training/Kourtney - Kourtney Brothers' photo.JPEG" 
+                  src={getTrainingImage("Kourtney - Kourtney Brothers' photo.JPEG")} 
                   alt="Kourtney Brothers" 
                   className="w-full h-full object-cover"
                 />
