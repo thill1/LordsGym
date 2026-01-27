@@ -10,9 +10,9 @@ const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-co
 const getTrainingImage = (filename: string) => {
   const rawBase = (import.meta.env.BASE_URL ?? "/").toString();
   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
-  // URL encode the filename to handle apostrophes and special characters
-  const encodedFilename = encodeURIComponent(filename);
-  return `${base}media/training/${encodedFilename}`;
+  // Don't encode - let the browser/server handle apostrophes naturally
+  // The replace handles double slashes that might occur
+  return `${base}media/training/${filename}`.replace(/\/\/+/g, '/');
 };
 
 const Training: React.FC = () => {
