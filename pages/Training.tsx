@@ -9,10 +9,10 @@ const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-co
 // Helper function to get training image path
 const getTrainingImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
-  // Ensure base ends with / and remove leading / from filename if present
-  const cleanBase = base.endsWith('/') ? base : `${base}/`;
-  const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
-  return `${cleanBase}media/training/${cleanFilename}`.replace(/\/\/+/g, '/');
+  // URL encode the filename to handle special characters like apostrophes
+  // Split path and encode only the filename part
+  const encodedFilename = encodeURIComponent(filename);
+  return `${base}media/training/${encodedFilename}`.replace(/\/\/+/g, '/');
 };
 
 const Training: React.FC = () => {
