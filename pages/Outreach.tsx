@@ -53,32 +53,32 @@ const Outreach: React.FC = () => {
       {/* Photo Grid (Representing the real-world impact) */}
       <Section className="py-20 bg-neutral-100 dark:bg-neutral-900">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Photo 1: Trailer/Distribution */}
+            {/* Photo 1: Community Outreach */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.trailer} alt="Distribution Trailer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.trailer} alt="Community Outreach" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Essentials</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Community Outreach</p>
                 </div>
             </div>
-            {/* Photo 2: Walking to tents */}
+            {/* Photo 2: Cal Trans - Litter Pickup */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.outreach} alt="Encampment Outreach" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.outreach} alt="Cal Trans - Litter Pickup" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Outreach</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Cal Trans - Litter Pickup</p>
                 </div>
             </div>
-            {/* Photo 3: Prayer */}
+            {/* Photo 3: 12 Step - Self Help */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.prayer} alt="Prayer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.prayer} alt="12 Step - Self Help" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Prayer</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">12 Step - Self Help</p>
                 </div>
             </div>
-             {/* Photo 4: Embrace */}
+             {/* Photo 4: Bible Study */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.hug} alt="Brotherhood" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.hug} alt="Bible Study" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Brotherhood</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Bible Study</p>
                 </div>
             </div>
         </div>
