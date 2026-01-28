@@ -168,21 +168,21 @@ const Outreach: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                <button
                   onClick={() => window.open(getDonationUrl(25), '_blank')}
-                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left flex items-center justify-center"
+                  className="bg-brand-red p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left flex items-center justify-center"
                >
-                  <div className="text-4xl font-bold text-brand-charcoal dark:text-white">$25</div>
+                  <div className="text-4xl font-bold text-white">$25</div>
                </button>
                <button
                   onClick={() => window.open(getDonationUrl(50), '_blank')}
-                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg transform md:-translate-y-4 hover:shadow-xl transition-all cursor-pointer hover:scale-105 text-left flex items-center justify-center"
+                  className="bg-brand-red p-8 rounded-lg shadow-lg transform md:-translate-y-4 hover:shadow-xl transition-all cursor-pointer hover:scale-105 text-left flex items-center justify-center"
                >
-                  <div className="text-4xl font-bold text-brand-charcoal dark:text-white">$50</div>
+                  <div className="text-4xl font-bold text-white">$50</div>
                </button>
                <button
                   onClick={() => window.open(getDonationUrl(100), '_blank')}
-                  className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left flex items-center justify-center"
+                  className="bg-brand-red p-8 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 text-left flex items-center justify-center"
                >
-                  <div className="text-4xl font-bold text-brand-charcoal dark:text-white">$100</div>
+                  <div className="text-4xl font-bold text-white">$100</div>
                </button>
             </div>
             
