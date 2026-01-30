@@ -38,6 +38,24 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
     }
   });
 
+  // Ensure desktop JOIN NOW button is hidden on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (joinNowBtnRef.current) {
+        const isMobile = window.innerWidth < 1024;
+        if (isMobile) {
+          joinNowBtnRef.current.style.display = 'none';
+          joinNowBtnRef.current.style.visibility = 'hidden';
+          joinNowBtnRef.current.style.opacity = '0';
+        }
+      }
+    };
+    
+    handleResize(); // Check on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
