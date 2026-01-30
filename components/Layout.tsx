@@ -21,7 +21,13 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
   };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  // Initialize isMobile based on window width (check if window is available for SSR)
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
   const joinNowBtnRef = React.useRef<HTMLButtonElement>(null);
   const joinNowMobileBtnRef = React.useRef<HTMLButtonElement>(null);
 
