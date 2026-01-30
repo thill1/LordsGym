@@ -21,6 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
   };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const joinNowBtnRef = React.useRef<HTMLButtonElement>(null);
   const joinNowMobileBtnRef = React.useRef<HTMLButtonElement>(null);
 
@@ -38,22 +39,27 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
     }
   });
 
-  // Ensure desktop JOIN NOW button is hidden on mobile
+  // Detect mobile viewport and hide desktop JOIN NOW button
   useEffect(() => {
-    const handleResize = () => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
       if (joinNowBtnRef.current) {
-        const isMobile = window.innerWidth < 1024;
-        if (isMobile) {
+        if (window.innerWidth < 1024) {
           joinNowBtnRef.current.style.display = 'none';
           joinNowBtnRef.current.style.visibility = 'hidden';
           joinNowBtnRef.current.style.opacity = '0';
+          joinNowBtnRef.current.style.width = '0';
+          joinNowBtnRef.current.style.height = '0';
+          joinNowBtnRef.current.style.overflow = 'hidden';
+          joinNowBtnRef.current.style.position = 'absolute';
+          joinNowBtnRef.current.style.left = '-9999px';
         }
       }
     };
     
-    handleResize(); // Check on mount
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    checkMobile(); // Check on mount
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Scroll detection
@@ -124,42 +130,44 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           </nav>
 
           {/* Desktop Right Side Controls - Completely hidden on mobile */}
-          <div className="desktop-header-controls hidden lg:flex items-center space-x-5 flex-shrink-0">
-            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
-              <ThemeToggle />
+          {!isMobile && (
+            <div className="desktop-header-controls hidden lg:flex items-center space-x-5 flex-shrink-0">
+              <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+                <ThemeToggle />
+              </div>
+              {/* Cart Icon */}
+              <button 
+                  className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                  aria-label="Cart" 
+                  onClick={openCart}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              <button
+                ref={joinNowBtnRef}
+                onClick={() => handleNavClick('/membership')}
+                className="join-now-btn desktop-join-now-btn hidden lg:inline-flex items-center justify-center font-bold tracking-wider uppercase text-xs px-4 py-2 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 whitespace-nowrap"
+                style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#1a1a1a';
+                  e.currentTarget.style.borderColor = '#1a1a1a';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626';
+                  e.currentTarget.style.borderColor = '#dc2626';
+                }}
+              >
+                Join Now
+              </button>
             </div>
-            {/* Cart Icon */}
-            <button 
-                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
-                aria-label="Cart" 
-                onClick={openCart}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-            <button
-              ref={joinNowBtnRef}
-              onClick={() => handleNavClick('/membership')}
-              className="join-now-btn desktop-join-now-btn hidden lg:inline-flex items-center justify-center font-bold tracking-wider uppercase text-xs px-4 py-2 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 whitespace-nowrap"
-              style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1a1a1a';
-                e.currentTarget.style.borderColor = '#1a1a1a';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc2626';
-                e.currentTarget.style.borderColor = '#dc2626';
-              }}
-            >
-              Join Now
-            </button>
-          </div>
+          )}
 
           {/* Mobile Menu Controls - Only visible on mobile */}
           <div className="lg:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
