@@ -95,6 +95,48 @@ html.dark body {
   transition-duration: 150ms;
 }
 
+/* Mobile UX Improvements */
+@layer base {
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text selection on buttons and interactive elements */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Better touch targets */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+}
+
 /* Join Now Button - Force Red Background */
 @layer utilities {
   button.join-now-btn,
@@ -109,5 +151,53 @@ html.dark body {
     background-color: #1a1a1a !important;
     border-color: #1a1a1a !important;
     color: #ffffff !important;
+  }
+}
+
+/* Ensure desktop navigation elements are completely hidden on mobile/tablet */
+@media (max-width: 1023px) {
+  /* Hide desktop nav container and desktop controls */
+  header nav.hidden.lg\\:flex,
+  header > div > div.hidden.lg\\:flex,
+  .desktop-header-controls,
+  header div[class*="hidden"][class*="lg:flex"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+  
+  /* Hide desktop JOIN NOW button directly - target by multiple methods */
+  header .desktop-join-now-btn,
+  header button.desktop-join-now-btn,
+  header > div > div.hidden.lg\\:flex button.join-now-btn,
+  header .desktop-header-controls button.join-now-btn,
+  header div[class*="hidden"][class*="lg:flex"] button.join-now-btn {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+  }
+  
+  /* Hide desktop nav items */
+  header nav.hidden.lg\\:flex button {
+    display: none !important;
+  }
+  
+  /* Additional rule: Hide any JOIN NOW button in header that's in a flex container with space-x-5 (desktop controls pattern) */
+  header > div > div[class*="space-x-5"] button.join-now-btn {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
 }

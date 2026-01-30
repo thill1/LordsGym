@@ -76,16 +76,16 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
         className={`fixed w-full z-50 transition-all duration-300 ${
           isScrolled || isMobileMenuOpen
             ? 'bg-white/70 dark:bg-neutral-900/70 shadow-lg py-3 backdrop-blur-xl border-b border-neutral-200/30 dark:border-neutral-800/30' 
-            : 'bg-transparent dark:bg-transparent py-5 lg:py-6'
+            : 'bg-transparent dark:bg-transparent py-3 sm:py-4 lg:py-6'
         } ${settings.announcementBar.enabled && !isScrolled ? 'top-8' : 'top-0'} ${headerTextColor}`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
-          <div className="cursor-pointer relative z-50 border-0" onClick={() => handleNavClick('/')}>
-            <Logo variant="full" tone={isScrolled || isMobileMenuOpen ? "dark" : "light"} />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 flex items-center justify-between h-full gap-2 sm:gap-4 overflow-hidden">
+          <div className="cursor-pointer relative z-50 border-0 flex-shrink-0 min-w-0" onClick={() => handleNavClick('/')}>
+            <Logo variant="full" tone={isScrolled || isMobileMenuOpen ? "dark" : "light"} className="h-10 sm:h-12 lg:h-14 w-auto max-w-[120px] sm:max-w-[160px] lg:max-w-none" />
           </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center space-x-8 -mt-3">
+          {/* Desktop Nav - Hidden on mobile */}
+          <nav className="hidden lg:flex items-center space-x-8 -mt-3 flex-1 justify-center">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.path}
@@ -105,7 +105,8 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center space-x-5">
+          {/* Desktop Right Side Controls - Completely hidden on mobile */}
+          <div className="desktop-header-controls hidden lg:flex items-center space-x-5 flex-shrink-0">
             <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
               <ThemeToggle />
             </div>
@@ -127,7 +128,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
             <button
               ref={joinNowBtnRef}
               onClick={() => handleNavClick('/membership')}
-              className="join-now-btn inline-flex items-center justify-center font-bold tracking-wider uppercase text-xs px-4 py-2 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95"
+              className="join-now-btn desktop-join-now-btn hidden lg:inline-flex items-center justify-center font-bold tracking-wider uppercase text-xs px-4 py-2 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 whitespace-nowrap"
               style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#1a1a1a';
@@ -142,34 +143,34 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
             </button>
           </div>
 
-          {/* Mobile Menu Controls */}
-          <div className="lg:hidden flex items-center gap-4 relative z-50">
+          {/* Mobile Menu Controls - Only visible on mobile */}
+          <div className="lg:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
              <button 
-                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1 py-0.5 sm:px-1.5 sm:py-0.5 text-[10px] sm:text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
                   {cartCount}
                 </span>
               )}
             </button>
-            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'} flex-shrink-0`}>
               <ThemeToggle />
             </div>
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-current focus:outline-none"
+              className="p-1.5 sm:p-2 text-current focus:outline-none touch-manipulation flex-shrink-0"
               aria-label="Toggle Menu"
             >
-              <div className="w-6 h-6 flex flex-col justify-center gap-1.5">
-                  <span className={`block h-0.5 w-6 bg-current transform transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                  <span className={`block h-0.5 w-6 bg-current transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-                  <span className={`block h-0.5 w-6 bg-current transform transition-transform duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 flex flex-col justify-center gap-1.5">
+                  <span className={`block h-0.5 w-full bg-current transform transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                  <span className={`block h-0.5 w-full bg-current transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+                  <span className={`block h-0.5 w-full bg-current transform transition-transform duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
               </div>
             </button>
           </div>
@@ -186,21 +187,31 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
       {/* Mobile Menu Drawer */}
       <div
-        className={`lg:hidden fixed inset-x-0 top-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800 transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed inset-x-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800 transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full pointer-events-none'
         }`}
-        style={{ marginTop: '73px' }}
+        style={{ 
+          top: settings.announcementBar.enabled && !isScrolled 
+            ? 'calc(73px + 2rem)' 
+            : isScrolled 
+              ? '73px' 
+              : '73px',
+          maxHeight: settings.announcementBar.enabled && !isScrolled
+            ? 'calc(100vh - 73px - 2rem)'
+            : 'calc(100vh - 73px)',
+          overflowY: 'auto'
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <nav className="space-y-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <nav className="space-y-2 sm:space-y-3">
               {NAV_ITEMS.map((item) => (
                 <button
                   key={item.path}
                   onClick={() => handleNavClick(item.path)}
-                  className={`block w-full text-left py-3 px-4 text-lg font-graffiti transition-colors ${
+                  className={`block w-full text-left py-3 px-4 text-base sm:text-lg font-graffiti transition-colors touch-manipulation min-h-[44px] ${
                     currentPath === item.path
-                      ? 'text-brand-red border-l-4 border-brand-red'
-                      : 'text-brand-charcoal dark:text-white hover:text-brand-red'
+                      ? 'text-brand-red border-l-4 border-brand-red bg-red-50/50 dark:bg-red-950/20'
+                      : 'text-brand-charcoal dark:text-white hover:text-brand-red hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                   }`}
                 >
                   {item.label}
@@ -208,7 +219,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
               ))}
               <button
                 onClick={() => handleNavClick('/membership')}
-                className="join-now-btn w-full mt-4 inline-flex items-center justify-center font-bold tracking-wider uppercase text-sm px-6 py-3 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95"
+                className="join-now-btn w-full mt-3 sm:mt-4 inline-flex items-center justify-center font-bold tracking-wider uppercase text-sm px-6 py-3.5 sm:py-4 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 touch-manipulation min-h-[48px]"
                 style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#1a1a1a';
@@ -233,7 +244,13 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
       <PopupModalManager currentPath={currentPath} onNavigate={handleNavClick} />
 
       {/* Main */}
-      <main className={`flex-1 ${isScrolled || settings.announcementBar.enabled ? 'pt-[73px]' : 'pt-0'}`}>{children}</main>
+      <main className={`flex-1 ${
+        settings.announcementBar.enabled 
+          ? 'pt-[calc(73px+2rem)]' 
+          : isScrolled 
+            ? 'pt-[73px]' 
+            : 'pt-[73px] sm:pt-20 lg:pt-24'
+      }`}>{children}</main>
 
       {/* Footer */}
       <footer className="bg-brand-charcoal text-white border-t border-white/10">
