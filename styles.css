@@ -172,7 +172,20 @@ html.dark body {
     left: -9999px !important;
   }
   
-  /* Hide desktop JOIN NOW button directly - target by multiple methods */
+  /* Hide desktop JOIN NOW button - target buttons that don't have w-full class (mobile menu buttons have w-full) */
+  header button.join-now-btn:not([class*="w-full"]) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+  }
+  
+  /* Also target by class names for extra specificity */
   header .desktop-join-now-btn,
   header button.desktop-join-now-btn,
   header > div > div.hidden.lg\\:flex button.join-now-btn,
@@ -192,12 +205,5 @@ html.dark body {
   /* Hide desktop nav items */
   header nav.hidden.lg\\:flex button {
     display: none !important;
-  }
-  
-  /* Additional rule: Hide any JOIN NOW button in header that's in a flex container with space-x-5 (desktop controls pattern) */
-  header > div > div[class*="space-x-5"] button.join-now-btn {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
   }
 }
