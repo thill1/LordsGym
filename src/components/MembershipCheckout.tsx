@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+// Membership Checkout - Redirects to Mindbody CRM
+// Lords Gym uses Mindbody for membership management
+
+const MINDBODY_URL = 'https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1';
 
 interface MembershipOption {
   id: string;
@@ -60,53 +62,9 @@ const membershipOptions: MembershipOption[] = [
 ];
 
 export default function MembershipCheckout() {
-  const [isLoading, setIsLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleCheckout = async (membershipId: string) => {
-    setIsLoading(membershipId);
-    setError(null);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        setError('Please sign in to purchase a membership');
-        setIsLoading(null);
-        return;
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            membership_type: membershipId,
-            customer_email: session.user.email,
-            user_id: session.user.id,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Checkout failed');
-      }
-
-      const { url } = await response.json();
-      
-      // Redirect to Stripe Checkout
-      window.location.href = url;
-
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-      setIsLoading(null);
-    }
+  const handleJoin = () => {
+    // Redirect to Mindbody CRM for membership management
+    window.open(MINDBODY_URL, '_blank');
   };
 
   return (
@@ -120,12 +78,6 @@ export default function MembershipCheckout() {
             Join the community built on faith and forged in iron.
           </p>
         </div>
-
-        {error && (
-          <div className="max-w-2xl mx-auto mb-8 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {membershipOptions.map((option) => (
@@ -175,25 +127,14 @@ export default function MembershipCheckout() {
 
               <div className="p-6 pt-0">
                 <button
-                  onClick={() => handleCheckout(option.id)}
-                  disabled={isLoading === option.id}
+                  onClick={handleJoin}
                   className={`w-full py-3 px-4 rounded-md font-semibold text-white transition-colors ${
                     option.popular
-                      ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
-                      : 'bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400'
-                  } disabled:cursor-not-allowed`}
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-gray-900 hover:bg-gray-800'
+                  }`}
                 >
-                  {isLoading === option.id ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    'Join Now'
-                  )}
+                  Join Now
                 </button>
               </div>
             </div>
@@ -246,7 +187,7 @@ export default function MembershipCheckout() {
         </div>
 
         <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Secure payments powered by Stripe</p>
+          <p>Memberships managed through Mindbody</p>
         </div>
       </div>
     </div>

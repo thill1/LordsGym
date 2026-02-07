@@ -3,8 +3,9 @@ import React from 'react';
 import Section from '../components/Section';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import { useStore } from '../context/StoreContext';
-import { Product } from '../types';
+
+// Mindbody CRM URL for membership management
+const MINDBODY_URL = 'https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1';
 
 // Hero placeholder (public folder)
 const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
@@ -25,48 +26,10 @@ const IMAGES = {
   fullFacility: getFacilityImage('gym-multi-station.png.png')
 };
 
-const MEMBERSHIP_PLANS: Record<string, Product> = {
-  regular: {
-    id: 'mem-regular',
-    title: 'Regular Monthly Membership',
-    price: 39.00,
-    category: 'Membership',
-    image: IMAGES.cardioArea
-  },
-  student: {
-    id: 'mem-student',
-    title: 'Student Monthly Membership',
-    price: 29.00,
-    category: 'Membership',
-    image: IMAGES.freeWeights
-  },
-  annual: {
-    id: 'mem-annual',
-    title: '1 Year Paid In Full',
-    price: 360.00,
-    category: 'Membership',
-    image: IMAGES.fullFacility
-  }
-};
-
-const SETUP_FEE: Product = {
-  id: 'fee-setup',
-  title: 'Initiation / Setup Fee',
-  price: 39.00,
-  category: 'Fee',
-  image: 'https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=800&q=80'
-};
-
 const Membership: React.FC = () => {
-  const { addToCart, clearCart } = useStore();
-
-  const handleJoin = (planId: string) => {
-    clearCart(); // Clear cart for direct checkout flow to ensure only membership is being purchased
-    addToCart(MEMBERSHIP_PLANS[planId], 'N/A');
-    if (planId !== 'annual') {
-      addToCart(SETUP_FEE, 'N/A');
-    }
-    window.location.hash = '/checkout';
+  const handleJoin = () => {
+    // Redirect to Mindbody CRM for membership management
+    window.open(MINDBODY_URL, '_blank');
   };
 
   return (
@@ -91,7 +54,7 @@ const Membership: React.FC = () => {
             <div className="absolute -top-2 -right-2 bg-brand-red text-white text-xs font-bold px-3 py-1 uppercase tracking-widest rotate-12 z-10 shadow-lg">Most Popular</div>
             {/* Header Image */}
             <div className="h-40 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.regular.image} alt="Gym Facility" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
+               <img src={IMAGES.cardioArea} alt="Gym Facility" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">REGULAR<br/>MONTHLY</h3>
@@ -108,7 +71,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('regular')}>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
             </div>
           </Card>
 
@@ -116,7 +79,7 @@ const Membership: React.FC = () => {
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl relative z-10 transition-transform hover:scale-105">
             {/* Header Image */}
             <div className="h-40 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.student.image} alt="Gym Weights" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
+               <img src={IMAGES.freeWeights} alt="Gym Weights" className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">STUDENT</h3>
@@ -133,7 +96,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('student')}>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
             </div>
           </Card>
 
@@ -141,7 +104,7 @@ const Membership: React.FC = () => {
           <Card className="p-0 overflow-hidden flex flex-col shadow-2xl scale-100 md:scale-95 transition-transform hover:scale-100">
             {/* Header Image */}
             <div className="h-40 relative overflow-hidden">
-               <img src={MEMBERSHIP_PLANS.annual.image} alt="Full Facility" className="w-full h-full object-cover object-[center_30%] transition-transform duration-500 hover:scale-110" />
+               <img src={IMAGES.fullFacility} alt="Full Facility" className="w-full h-full object-cover object-[center_30%] transition-transform duration-500 hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                <div className="absolute bottom-4 left-4 text-white">
                  <h3 className="text-2xl font-bold leading-tight uppercase tracking-tighter">1 YEAR PAID IN<br/>FULL</h3>
@@ -158,7 +121,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">1 Year</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">No setup fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={() => handleJoin('annual')}>Join Now</Button>
+              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
             </div>
           </Card>
         </div>
