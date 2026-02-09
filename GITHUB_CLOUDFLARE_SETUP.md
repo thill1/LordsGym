@@ -47,11 +47,11 @@ This runs the setup script to verify prerequisites and build.
 
 ## 4. Create Cloudflare Pages Project (if needed)
 
-If the project `lords-gym-auburn` doesn't exist:
+If the project `lords-gym` doesn't exist:
 
 1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages**
 2. **Connect to Git** (optional) or **Direct Upload**
-3. Project name: `lords-gym-auburn`
+3. Project name: `lords-gym`
 
 Or skip: the first deploy via workflow may create it.
 
@@ -119,5 +119,5 @@ Then add the custom domain in Cloudflare Pages → Custom domains.
 | "Configuration file for Pages projects does not support 'build'" | Remove custom deploy command from Cloudflare dashboard. Use Build command + Output directory only. Cloudflare deploys automatically. |
 | Build fails | Check `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in secrets |
 | Deploy fails: 403 | Verify `CLOUDFLARE_API_TOKEN` has Pages:Edit permission |
-| Deploy fails: project not found | Create project `lords-gym-auburn` in Cloudflare Pages first |
+| Deploy fails: project not found | Create project `lords-gym` in Cloudflare Pages first |
 | Assets 404 | Ensure `VITE_BASE_PATH=/` in build (workflow sets this) |

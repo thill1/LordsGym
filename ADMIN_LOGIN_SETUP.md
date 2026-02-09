@@ -2,12 +2,14 @@
 
 ## Hardcoded fallback (current)
 
-You can log in **right now** with:
+You can log in **right now** at **[https://lordsgymoutreach.com/#/admin](https://lordsgymoutreach.com/#/admin)** with:
 
 - **Email:** `lordsgymoutreach@gmail.com`
 - **Password:** `admin2026`
 
 This is in code in `lib/auth.ts` (`FALLBACK_ADMIN_EMAIL` / `FALLBACK_ADMIN_PASSWORD`). Change or remove it when you switch to Supabase.
+
+**If that URL shows an old or different site:** lordsgymoutreach.com must serve the LordsGym React app (e.g. from Cloudflare Pages). If you use Cloudflare, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to [GitHub Secrets](https://github.com/thill1/LordsGym/settings/secrets/actions) so the "Deploy to Cloudflare Pages" workflow succeeds and the domain gets the latest build.
 
 ---
 

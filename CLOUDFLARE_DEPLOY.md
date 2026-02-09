@@ -78,7 +78,7 @@ npm install -g wrangler
 VITE_BASE_PATH=/ npm run build
 
 # Deploy
-npx wrangler pages deploy dist --project-name=lords-gym-auburn
+npx wrangler pages deploy dist --project-name=lords-gym
 ```
 
 ## Step 5: Custom Domain (Optional)

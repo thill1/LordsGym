@@ -70,7 +70,7 @@ To use a custom domain:
 ## Verify Deployment
 
 Your site will be available at:
-- `https://lords-gym-auburn.pages.dev` (default)
+- `https://lords-gym.pages.dev` (default)
 - Or your custom domain once configured
 
 ## Troubleshooting
@@ -86,7 +86,7 @@ Your site will be available at:
 - Ensure token has Page:Edit permissions
 
 **Site not updating?**
-- Check if Cloudflare Pages project name matches: `lords-gym-auburn`
+- Check if Cloudflare Pages project name matches: `lords-gym`
 - Verify dist folder is created in build
 
 ## Support

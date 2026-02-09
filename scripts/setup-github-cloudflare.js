@@ -90,8 +90,8 @@ log('Cloudflare token: Use template "Edit Cloudflare Workers" or custom "Pages:E
 
 section('4. Local Deploy Test (optional)');
 if (process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID) {
-  log('Env vars set. Running: npx wrangler pages deploy dist --project-name=lords-gym-auburn', YELLOW);
-  const deployResult = spawnSync('npx', ['wrangler', 'pages', 'deploy', 'dist', '--project-name=lords-gym-auburn'], {
+  log('Env vars set. Running: npx wrangler pages deploy dist --project-name=lords-gym', YELLOW);
+  const deployResult = spawnSync('npx', ['wrangler', 'pages', 'deploy', 'dist', '--project-name=lords-gym'], {
     cwd: ROOT,
     stdio: 'inherit'
   });

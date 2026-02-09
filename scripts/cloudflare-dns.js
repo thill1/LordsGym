@@ -5,11 +5,11 @@
  *
  * Usage:
  *   node scripts/cloudflare-dns.js <domain> <type> <name> <content> [proxied]
- *   node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym-auburn.pages.dev true
- *   node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym-auburn.pages.dev true
+ *   node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym.pages.dev true
+ *   node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym.pages.dev true
  *
  * Or set CLOUDFLARE_ZONE_ID to skip zone lookup:
- *   CLOUDFLARE_ZONE_ID=xxx node scripts/cloudflare-dns.js CNAME @ lords-gym-auburn.pages.dev true
+ *   CLOUDFLARE_ZONE_ID=xxx node scripts/cloudflare-dns.js CNAME @ lords-gym.pages.dev true
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -94,11 +94,11 @@ async function main() {
     console.log('  node scripts/cloudflare-dns.js <domain> <type> <name> <content> [proxied]');
     console.log('');
     console.log('Example - Point lordsgym.com to Cloudflare Pages:');
-    console.log('  node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym-auburn.pages.dev true');
-    console.log('  node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym-auburn.pages.dev true');
+    console.log('  node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym.pages.dev true');
+    console.log('  node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym.pages.dev true');
     console.log('');
     console.log('Or set CLOUDFLARE_ZONE_ID and run:');
-    console.log('  node scripts/cloudflare-dns.js CNAME @ lords-gym-auburn.pages.dev true');
+    console.log('  node scripts/cloudflare-dns.js CNAME @ lords-gym.pages.dev true');
     process.exit(1);
   }
 
