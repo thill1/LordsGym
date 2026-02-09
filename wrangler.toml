@@ -1,5 +1,5 @@
 # Cloudflare Pages configuration
 # Minimal config - build handled by Cloudflare dashboard
 
-name = "lords-gym-auburn"
+name = "lords-gym"
 pages_build_output_dir = "dist"
