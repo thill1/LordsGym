@@ -13,7 +13,8 @@
     "setup:supabase:ps1": "powershell -ExecutionPolicy Bypass -File scripts/setup-supabase.ps1",
     "setup:cloudflare": "node scripts/setup-github-cloudflare.js",
     "dns:add": "node scripts/cloudflare-dns.js",
-    "setup:contact-form": "node scripts/setup-contact-form-api.js"
+    "setup:contact-form": "node scripts/setup-contact-form-api.js",
+    "create-admin": "node scripts/create-admin-user.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

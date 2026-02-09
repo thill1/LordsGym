@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from './supabase';
 export interface AuthUser {
   id: string;
   email: string;
+  needsPasswordChange?: boolean;
 }
 
 /** Dev-only password: works in local dev (Vite DEV) or when Supabase is not configured */
@@ -45,7 +46,8 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
 
     const user: AuthUser = {
       id: data.user.id,
-      email: data.user.email || ''
+      email: data.user.email || '',
+      needsPasswordChange: !!data.user.user_metadata?.needs_password_change,
     };
 
     return { user, error: null };
@@ -116,7 +118,8 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
 
     return {
       id: user.id,
-      email: user.email || ''
+      email: user.email || '',
+      needsPasswordChange: !!user.user_metadata?.needs_password_change,
     };
   } catch (error) {
     // Silently fail - this is expected when Supabase is not configured
@@ -151,7 +154,7 @@ export const requestPasswordReset = async (email: string): Promise<{ error: Erro
 };
 
 /**
- * Update password
+ * Update password (and clear needs_password_change flag)
  */
 export const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
   if (!isSupabaseConfigured()) {
@@ -160,7 +163,8 @@ export const updatePassword = async (newPassword: string): Promise<{ error: Erro
 
   try {
     const { error } = await supabase.auth.updateUser({
-      password: newPassword
+      password: newPassword,
+      data: { needs_password_change: false },
     });
     return { error };
   } catch (error) {

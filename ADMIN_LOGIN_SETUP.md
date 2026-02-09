@@ -1,0 +1,37 @@
+# Admin Login Setup
+
+The admin page at `/admin` uses Supabase Auth. Create the admin user with:
+
+## Create admin user
+
+**Email:** lordsgymoutreach@gmail.com  
+**Password:** Auto-generated (unique, printed once)
+
+On first login, the user must change their password before accessing the dashboard.
+
+### Run the script
+
+1. Get your **service_role** key from [Supabase Dashboard → Settings → API](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api).
+
+2. Add to `.env.local`:
+   ```
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+   ```
+
+3. Run:
+   ```bash
+   npm run create-admin
+   ```
+
+   Or inline:
+   ```bash
+   SUPABASE_SERVICE_ROLE_KEY=your_key node scripts/create-admin-user.js
+   ```
+
+4. **Save the printed password** – it is shown only once.
+
+5. Log in at [https://lordsgymoutreach.com/admin](https://lordsgymoutreach.com/admin)
+
+## If user already exists
+
+Use Supabase Dashboard → **Authentication** → **Users** → find the user → **Send password reset** or **Edit** to set a new password.

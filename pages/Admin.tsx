@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
+import { updatePassword } from '../lib/auth';
 import Button from '../components/Button';
 import { Product } from '../types';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -28,11 +29,14 @@ const Admin: React.FC = () => {
     deleteProduct
   } = useStore();
 
-  const { isAuthenticated, isLoading, login, logout, user } = useAuth();
+  const { isAuthenticated, isLoading, login, logout, user, refreshUser } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [passwordChangeError, setPasswordChangeError] = useState('');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
@@ -150,6 +154,80 @@ const Admin: React.FC = () => {
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Force password change on first login
+  if (isAuthenticated && user?.needsPasswordChange) {
+    const handleChangePassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPasswordChangeError('');
+      if (newPassword.length < 8) {
+        setPasswordChangeError('Password must be at least 8 characters');
+        return;
+      }
+      if (newPassword !== newPasswordConfirm) {
+        setPasswordChangeError('Passwords do not match');
+        return;
+      }
+      const { error } = await updatePassword(newPassword);
+      if (error) {
+        setPasswordChangeError(error.message || 'Failed to update password');
+        return;
+      }
+      await refreshUser();
+      setNewPassword('');
+      setNewPasswordConfirm('');
+    };
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-charcoal">
+        <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl max-w-md w-full">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-display font-bold text-brand-charcoal dark:text-white mb-2">Change Your Password</h2>
+            <p className="text-neutral-500 dark:text-neutral-400">You must set a new password before accessing the admin dashboard.</p>
+          </div>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold mb-2 dark:text-white">New Password</label>
+              <input
+                type="password"
+                className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-800 dark:text-white"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password..."
+                required
+                minLength={8}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-2 dark:text-white">Confirm New Password</label>
+              <input
+                type="password"
+                className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-800 dark:text-white"
+                value={newPasswordConfirm}
+                onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                placeholder="Confirm new password..."
+                required
+                minLength={8}
+              />
+            </div>
+            {passwordChangeError && <p className="text-red-600 text-sm font-bold">{passwordChangeError}</p>}
+            <Button fullWidth type="submit">
+              Set New Password
+            </Button>
+            <div className="text-center pt-4 border-t border-neutral-100 dark:border-neutral-700 mt-4">
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="text-neutral-500 hover:text-brand-charcoal dark:hover:text-white text-sm font-bold"
+              >
+                Sign out
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     );
