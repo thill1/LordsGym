@@ -280,7 +280,7 @@ const Admin: React.FC = () => {
               </div>
             )}
             {error && <p className="text-red-600 text-sm font-bold">{error}</p>}
-            {(showAnonKeyConfig || (!isSupabaseConfigured() && !import.meta.env.DEV)) && (
+            {showAnonKeyConfig && (
               <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded space-y-2">
                 <p className="text-amber-800 dark:text-amber-200 text-sm font-bold">Add Supabase anon key (one-time)</p>
                 <p className="text-amber-700 dark:text-amber-300 text-xs">Get it from Supabase → Project → Settings → API → anon public</p>
