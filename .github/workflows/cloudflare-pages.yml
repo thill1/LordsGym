@@ -171,7 +171,7 @@ jobs:
           echo "event: ${{ github.event_name }} | ref: ${{ github.ref }} | sha: ${{ github.sha }}"
           echo "CLOUDFLARE_API_TOKEN: $CF_TOKEN_SET"
           echo "CLOUDFLARE_ACCOUNT_ID: $CF_ACCOUNT_SET"
-          echo "command: pages deploy dist --project-name=lords-gym --branch=production"
+          echo "command: pages deploy dist --project-name=lords-gym --branch=main"
           echo "If deploy job shows 'Waiting for approval', go to Settings → Environments → production and Approve or disable Required reviewers."
           echo "::endgroup::"
 
@@ -181,7 +181,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=lords-gym --branch=production
+          command: pages deploy dist --project-name=lords-gym --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify deployment (health check)
