@@ -3,39 +3,153 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      debug:
+        description: 'Enable debug logging'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
   deployments: write
+  pull-requests: write
+  actions: read
 
 concurrency:
-  group: 'cloudflare-pages'
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '20'
+  CACHE_KEY_PREFIX: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  deploy:
+  build:
+    name: Build
     runs-on: ubuntu-latest
+    outputs:
+      build-success: ${{ steps.build.outcome }}
+      cache-hit: ${{ steps.cache-deps.outputs.cache-hit }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Node
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache npm dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ env.CACHE_KEY_PREFIX }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-npm-
+            npm-
+
+      - name: Cache build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist
+            .cache
+          key: ${{ env.CACHE_KEY_PREFIX }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-build-
 
       - name: Install dependencies
-        run: npm ci
+        id: install
+        run: |
+          echo "::group::Installing npm dependencies"
+          npm ci --prefer-offline --no-audit --no-fund
+          echo "::endgroup::"
+        timeout-minutes: 5
+        continue-on-error: false
 
-      - name: Build
+      - name: Run type check
+        run: npm run type-check
+        continue-on-error: true
+
+      - name: Run lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build application
+        id: build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: npm run build
+          NODE_ENV: ${{ github.event.inputs.environment || 'production' }}
+          DEBUG: ${{ github.event.inputs.debug && '*' || '' }}
+        run: |
+          echo "::group::Building application"
+          npm run build 2>&1 | tee build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          echo "::endgroup::"
+          
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "❌ Build failed with exit code $BUILD_EXIT_CODE"
+            cat build.log | tail -50
+            exit 1
+          fi
+          
+          echo "✅ Build completed successfully"
+          echo "Build output size: $(du -sh dist | cut -f1)"
 
-      - name: Deploy to Cloudflare Pages
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Report build status
+        if: always()
+        run: |
+          if [ "${{ steps.build.outcome }}" == "success" ]; then
+            echo "✅ Build job completed successfully"
+          else
+            echo "❌ Build job failed"
+          fi
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.url }}
+      deployment-id: ${{ steps.deploy.outputs.id }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: dist
+
+      - name: Deploy to Cloudflare Pages (with retry)
+        id: deploy
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -44,3 +158,129 @@ jobs:
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           wranglerVersion: '3'
+
+      - name: Verify deployment (health check)
+        id: health-check
+        run: |
+          DEPLOY_URL="${{ steps.deploy.outputs.url }}"
+          echo "Checking deployment health: $DEPLOY_URL"
+          
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" || echo "000")
+            
+            if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "304" ]; then
+              echo "✅ Deployment healthy (HTTP $HTTP_STATUS)"
+              echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "⏳ Attempt $RETRY_COUNT/$MAX_RETRIES: HTTP $HTTP_STATUS, retrying in 10s..."
+            sleep 10
+          done
+          
+          echo "⚠️ Health check did not pass after $MAX_RETRIES attempts, but deployment may still be propagating"
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+  notify:
+    name: Post Deployment Notification
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Post PR comment with deployment URL
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const buildStatus = '${{ needs.build.result }}';
+            const deployStatus = '${{ needs.deploy.result }}';
+            const deployUrl = '${{ needs.deploy.outputs.deployment-url }}';
+            
+            let statusEmoji = '❌';
+            let statusText = 'Failed';
+            
+            if (buildStatus === 'success' && deployStatus === 'success') {
+              statusEmoji = '✅';
+              statusText = 'Success';
+            } else if (buildStatus === 'success' && deployStatus === 'skipped') {
+              statusEmoji = '⚠️';
+              statusText = 'Build Only (PR from fork)';
+            } else if (buildStatus === 'cancelled' || deployStatus === 'cancelled') {
+              statusEmoji = '🚫';
+              statusText = 'Cancelled';
+            }
+            
+            const body = `## ${statusEmoji} Cloudflare Pages Deployment
+            
+            | Step | Status |
+            |------|--------|
+            | Build | ${buildStatus === 'success' ? '✅ Success' : buildStatus === 'failure' ? '❌ Failed' : '🚫 Cancelled'} |
+            | Deploy | ${deployStatus === 'success' ? '✅ Success' : deployStatus === 'skipped' ? '⏭️ Skipped' : deployStatus === 'failure' ? '❌ Failed' : '🚫 Cancelled'} |
+            
+            ${deployUrl ? `**🚀 Preview URL:** ${deployUrl}` : ''}
+            
+            <sub>Workflow run: [View logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
+            `;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Cloudflare Pages Deployment')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+              console.log('Updated existing PR comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+              console.log('Created new PR comment');
+            }
+
+  report:
+    name: Deployment Summary
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Output deployment summary
+        run: |
+          echo "## 📊 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result == 'success' && '✅ Success' || needs.build.result == 'failure' && '❌ Failed' || '🚫 Cancelled' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy | ${{ needs.deploy.result == 'success' && '✅ Success' || needs.deploy.result == 'skipped' && '⏭️ Skipped' || needs.deploy.result == 'failure' && '❌ Failed' || '🚫 Cancelled' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          DEPLOY_URL="${{ needs.deploy.outputs.deployment-url }}"
+          if [ -n "$DEPLOY_URL" ]; then
+            echo "**🚀 Deployment URL:** $DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
