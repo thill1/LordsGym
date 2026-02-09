@@ -7,6 +7,10 @@ export interface AuthUser {
   needsPasswordChange?: boolean;
 }
 
+/** Hardcoded fallback admin (temporary – replace with Supabase when ready) */
+const FALLBACK_ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
+const FALLBACK_ADMIN_PASSWORD = 'admin2026';
+
 /** Dev-only password: works in local dev (Vite DEV) or when Supabase is not configured */
 const DEV_PASSWORDS = ['dev', 'admin123'];
 const isDevMode = () => typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
@@ -15,6 +19,15 @@ const isDevMode = () => typeof import.meta !== 'undefined' && !!import.meta.env?
  * Sign in with email and password
  */
 export const signIn = async (email: string, password: string): Promise<{ user: AuthUser | null; error: Error | null }> => {
+  // Hardcoded fallback: always works until you switch to Supabase
+  const e = (email || '').trim().toLowerCase();
+  if (e === FALLBACK_ADMIN_EMAIL.toLowerCase() && password === FALLBACK_ADMIN_PASSWORD) {
+    const fallbackUser: AuthUser = { id: 'fallback-admin', email: FALLBACK_ADMIN_EMAIL };
+    localStorage.setItem('admin_auth', 'true');
+    localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
+    return { user: fallbackUser, error: null };
+  }
+
   // Dev bypass: when running locally (npm run dev), any email + password "dev" or "admin123" logs in
   if (isDevMode() && DEV_PASSWORDS.includes(password)) {
     const fallbackUser: AuthUser = {
@@ -80,49 +93,30 @@ export const signOut = async (): Promise<{ error: Error | null }> => {
  * Get current authenticated user
  */
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
-  // Dev session: when running locally, respect localStorage dev login so refresh keeps you in
-  if (isDevMode()) {
-    const auth = localStorage.getItem('admin_auth');
-    const userStr = localStorage.getItem('admin_user');
-    if (auth === 'true' && userStr) {
-      try {
-        return JSON.parse(userStr) as AuthUser;
-      } catch {
-        return null;
-      }
+  // LocalStorage session (hardcoded fallback or dev bypass) – check first so refresh keeps you in
+  const auth = localStorage.getItem('admin_auth');
+  const userStr = localStorage.getItem('admin_user');
+  if (auth === 'true' && userStr) {
+    try {
+      return JSON.parse(userStr) as AuthUser;
+    } catch {
+      return null;
     }
-    if (!isSupabaseConfigured()) return null;
   }
 
   if (!isSupabaseConfigured()) {
-    const auth = localStorage.getItem('admin_auth');
-    const userStr = localStorage.getItem('admin_user');
-    if (auth === 'true' && userStr) {
-      return JSON.parse(userStr) as AuthUser;
-    }
     return null;
   }
 
   try {
-    // Only try to get user if Supabase is actually configured
-    // The placeholder client will fail, so we need to check first
-    if (!isSupabaseConfigured()) {
-      return null;
-    }
-    
     const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
-      return null;
-    }
-
+    if (error || !user) return null;
     return {
       id: user.id,
       email: user.email || '',
       needsPasswordChange: !!user.user_metadata?.needs_password_change,
     };
   } catch (error) {
-    // Silently fail - this is expected when Supabase is not configured
     console.warn('Error getting current user (non-critical):', error);
     return null;
   }

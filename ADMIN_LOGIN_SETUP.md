@@ -1,6 +1,19 @@
 # Admin Login Setup
 
-The admin page at `/admin` uses Supabase Auth. Create the admin user with:
+## Hardcoded fallback (current)
+
+You can log in **right now** with:
+
+- **Email:** `lordsgymoutreach@gmail.com`
+- **Password:** `admin2026`
+
+This is in code in `lib/auth.ts` (`FALLBACK_ADMIN_EMAIL` / `FALLBACK_ADMIN_PASSWORD`). Change or remove it when you switch to Supabase.
+
+---
+
+## Supabase auth (optional later)
+
+The admin page can use Supabase Auth. Create the admin user with:
 
 ## Create admin user
 
