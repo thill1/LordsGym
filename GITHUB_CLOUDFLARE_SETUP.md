@@ -31,7 +31,7 @@ This runs the setup script to verify prerequisites and build.
 ## 3. GitHub Secrets (required for deploy)
 
 1. Repo: **Settings** → **Secrets and variables** → **Actions**
-2. **New repository secret** for each (all 5 required):
+2. Add **Repository secrets** (not only environment-specific): **New repository secret** for each (all 5 required):
 
 | Secret | Value | Used for |
 |--------|-------|----------|
@@ -41,7 +41,9 @@ This runs the setup script to verify prerequisites and build.
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key from [API settings](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api) | Build (admin auth) |
 | `GITHUB_TOKEN` | *(auto-provided)* | Deploy status |
 
-**If deploy fails:** Check all 5 secrets exist. Redeploy after adding.
+**Token permissions:** The Cloudflare API token must have **Account** → **Cloudflare Pages** → **Edit**. If deploy fails with 403, create a new token with that permission.
+
+**If deploy fails:** Check all 5 secrets exist under **Actions** (repository secrets). Redeploy after adding.
 
 ---
 
@@ -120,4 +122,5 @@ Then add the custom domain in Cloudflare Pages → Custom domains.
 | Build fails | Check `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in secrets |
 | Deploy fails: 403 | Verify `CLOUDFLARE_API_TOKEN` has Pages:Edit permission |
 | Deploy fails: project not found | Create project `lords-gym` in Cloudflare Pages first |
+| No new deploy on Cloudflare | See [DEBUG_DEPLOY.md](DEBUG_DEPLOY.md). 1) [Actions](https://github.com/thill1/LordsGym/actions) → open latest run → check **Deploy diagnostics** (secrets set?). 2) If deploy job shows **Waiting for approval**, go to **Settings → Environments → production** → Approve, or disable "Required reviewers". 3) Workflow uses `--branch=production` so deploy goes to Production. |
 | Assets 404 | Ensure `VITE_BASE_PATH=/` in build (workflow sets this) |

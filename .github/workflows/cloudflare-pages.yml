@@ -131,6 +131,7 @@ jobs:
             echo "❌ Build job failed"
           fi
 
+  # Uses GitHub environment "production". If that env has Required reviewers, this job will wait for approval (see DEBUG_DEPLOY.md).
   deploy:
     name: Deploy to Cloudflare Pages
     needs: build
@@ -148,13 +149,39 @@ jobs:
           name: build-output
           path: dist
 
+      - name: Require Cloudflare secrets
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in Settings → Secrets and variables → Actions (repository secrets). Token needs Account + Cloudflare Pages Edit."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID is not set. Add it in Settings → Secrets and variables → Actions (repository secrets)."
+            exit 1
+          fi
+          echo "Cloudflare secrets are set."
+
+      # Debug: print why deploy might not reach Cloudflare (no secret values logged)
+      - name: Deploy diagnostics
+        env:
+          CF_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && 'set' || 'NOT SET' }}
+          CF_ACCOUNT_SET: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' && 'set' || 'NOT SET' }}
+        run: |
+          echo "::group::Deploy diagnostics"
+          echo "event: ${{ github.event_name }} | ref: ${{ github.ref }} | sha: ${{ github.sha }}"
+          echo "CLOUDFLARE_API_TOKEN: $CF_TOKEN_SET"
+          echo "CLOUDFLARE_ACCOUNT_ID: $CF_ACCOUNT_SET"
+          echo "command: pages deploy dist --project-name=lords-gym --branch=production"
+          echo "If deploy job shows 'Waiting for approval', go to Settings → Environments → production and Approve or disable Required reviewers."
+          echo "::endgroup::"
+
       - name: Deploy to Cloudflare Pages
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=lords-gym
+          command: pages deploy dist --project-name=lords-gym --branch=production
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify deployment (health check)
