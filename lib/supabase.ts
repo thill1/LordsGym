@@ -21,7 +21,9 @@ if (isSupabaseConfigured()) {
     }
   });
 } else {
-  console.warn('Supabase environment variables are not set. Using localStorage fallback.');
+  if (import.meta.env.DEV) {
+    console.warn('Supabase environment variables are not set. Using localStorage fallback.');
+  }
   // Create a mock client that implements the SupabaseClient interface
   // but doesn't actually make any API calls
   supabase = {

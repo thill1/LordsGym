@@ -28,12 +28,15 @@ Use these settings:
 
 Add these in Cloudflare Pages → Settings → Environment variables:
 
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
+| Variable | Value | Required |
+|----------|-------|----------|
+| `VITE_BASE_PATH` | `/` | **Yes** – Cloudflare serves at root |
+| `VITE_SUPABASE_URL` | `https://your-project.supabase.co` | Yes |
+| `VITE_SUPABASE_ANON_KEY` | `your-anon-key` | Yes |
 
 (Production values - don't use test keys for production!)
+
+> **Important:** `VITE_BASE_PATH` must be `/` for Cloudflare Pages. Without it, assets will 404.
 
 ## Step 4: Deploy
 
@@ -41,6 +44,42 @@ Click **Save and Deploy** - Cloudflare will:
 1. Clone your repo
 2. Run `npm install && npm run build`
 3. Deploy to `lords-gym.pages.dev`
+
+### Alternative A: Automated via GitHub Actions
+
+A workflow deploys to Cloudflare Pages on every push to `main`.
+
+**Setup (one-time):**
+
+1. **Get Cloudflare API token**
+   - Cloudflare Dashboard → My Profile → API Tokens → Create Token
+   - Use template **Edit Cloudflare Workers** (or custom: Pages:Edit permission)
+   - Copy the token
+
+2. **Get Account ID**
+   - Cloudflare Dashboard → any page, right sidebar under **Account ID**
+
+3. **Add GitHub Secrets**
+   - Repo → Settings → Secrets and variables → Actions
+   - Add: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+   - Also add if not already present: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+
+4. **Push to `main`** – the workflow runs automatically
+
+You can also trigger manually: Actions → **Deploy to Cloudflare Pages** → Run workflow.
+
+### Alternative B: Direct deploy with Wrangler (local)
+
+```bash
+# Install wrangler (if not already)
+npm install -g wrangler
+
+# Build with Cloudflare base path
+VITE_BASE_PATH=/ npm run build
+
+# Deploy
+npx wrangler pages deploy dist --project-name=lords-gym-auburn
+```
 
 ## Step 5: Custom Domain (Optional)
 
@@ -82,8 +121,15 @@ In Stripe Dashboard → Webhooks:
 3. Use Stripe test card: `4242 4242 4242 4242`
 4. Verify webhook is receiving events
 
+## Project Configuration (Already Set Up)
+
+- **`public/_redirects`** – SPA routing: all routes serve `index.html` (required for hash routing)
+- **`wrangler.toml`** – Cloudflare Pages config for direct deploy
+- **Vite base path** – Uses `VITE_BASE_PATH` env var (set to `/` for Cloudflare)
+
 ## Go Live Checklist
 
+- [ ] `VITE_BASE_PATH=/` set in Cloudflare environment variables
 - [ ] All code committed and pushed to main
 - [ ] Cloudflare Pages site deployed successfully
 - [ ] Custom domain configured (if using)
