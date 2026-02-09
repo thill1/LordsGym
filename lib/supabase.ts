@@ -59,6 +59,9 @@ if (isSupabaseConfigured()) {
       order: function() { return this; },
       single: function() { return Promise.resolve({ data: null, error: null }); },
     }) as any,
+    functions: {
+      invoke: async () => ({ data: null, error: { message: 'Supabase not configured' } as any }),
+    } as any,
   } as any as SupabaseClient;
 }
 

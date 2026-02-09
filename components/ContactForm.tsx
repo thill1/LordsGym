@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import Button from './Button';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const INQUIRY_TYPES = [
   'Gym Tour',
@@ -20,39 +21,45 @@ const ContactForm: React.FC = () => {
     message: ''
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
+    setErrorMessage('');
 
-    // Create email subject with inquiry type
-    const subject = encodeURIComponent(formData.inquiryType || 'Contact Form Inquiry');
-    
-    // Create email body with contact info and message
-    const body = encodeURIComponent(
-      `Contact Information:\n` +
-      `Name: ${formData.firstName} ${formData.lastName}\n` +
-      `Email: ${formData.email}\n` +
-      `Phone: ${formData.phone || 'Not provided'}\n\n` +
-      `Message:\n${formData.message}`
-    );
+    if (!isSupabaseConfigured()) {
+      setStatus('error');
+      setErrorMessage('Contact form is not configured. Please try again later.');
+      return;
+    }
 
-    // Create mailto link
-    const mailtoLink = `mailto:lordsgymoutreach@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
-    
-    // Show success message after a brief delay
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke('contact-form', {
+        body: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          inquiryType: formData.inquiryType,
+          message: formData.message,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       setStatus('success');
       setFormData({ firstName: '', lastName: '', email: '', phone: '', inquiryType: '', message: '' });
-    }, 500);
+    } catch (err) {
+      setStatus('error');
+      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    }
   };
 
   return (
@@ -61,14 +68,25 @@ const ContactForm: React.FC = () => {
       
       {status === 'success' ? (
         <div className="text-center py-12 fade-in">
-          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Email Client Opened!</h4>
-          <p className="text-neutral-500 mb-6">Your email client should have opened with the message pre-filled. Please review and send the email to complete your inquiry.</p>
+          <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Message Sent!</h4>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-6">Thank you for reaching out. We&apos;ll get back to you soon.</p>
           <Button onClick={() => setStatus('idle')} variant="outline" size="sm">Send Another</Button>
+        </div>
+      ) : status === 'error' ? (
+        <div className="text-center py-12 fade-in">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Something went wrong</h4>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-6">{errorMessage}</p>
+          <Button onClick={() => setStatus('idle')} variant="outline" size="sm">Try Again</Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">

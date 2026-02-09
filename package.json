@@ -11,7 +11,8 @@
     "deploy:cloudflare": "VITE_BASE_PATH=/ npm run build && npx wrangler pages deploy dist --project-name=lords-gym-auburn",
     "setup:supabase": "node scripts/setup-supabase.js",
     "setup:supabase:ps1": "powershell -ExecutionPolicy Bypass -File scripts/setup-supabase.ps1",
-    "setup:cloudflare": "node scripts/setup-github-cloudflare.js"
+    "setup:cloudflare": "node scripts/setup-github-cloudflare.js",
+    "dns:add": "node scripts/cloudflare-dns.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

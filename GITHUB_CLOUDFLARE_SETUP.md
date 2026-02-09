@@ -91,10 +91,29 @@ After deploy, visit: `https://lords-gym-auburn.pages.dev` (or your custom domain
 
 ---
 
+. ## 8. DNS (Custom Domain)
+
+Add DNS records via API—no browser needed. Token needs **Zone → DNS → Edit**.
+
+```bash
+# Add CLOUDFLARE_API_TOKEN to .env.local first
+
+# Point root (lordsgym.com) to Cloudflare Pages
+node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym-auburn.pages.dev true
+
+# Point www to Cloudflare Pages
+node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym-auburn.pages.dev true
+```
+
+Then add the custom domain in Cloudflare Pages → Custom domains.
+
+---
+
 ## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
+| "Configuration file for Pages projects does not support 'build'" | Remove custom deploy command from Cloudflare dashboard. Use Build command + Output directory only. Cloudflare deploys automatically. |
 | Build fails | Check `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in secrets |
 | Deploy fails: 403 | Verify `CLOUDFLARE_API_TOKEN` has Pages:Edit permission |
 | Deploy fails: project not found | Create project `lords-gym-auburn` in Cloudflare Pages first |

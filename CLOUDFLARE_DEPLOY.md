@@ -124,8 +124,15 @@ In Stripe Dashboard → Webhooks:
 ## Project Configuration (Already Set Up)
 
 - **`public/_redirects`** – SPA routing: all routes serve `index.html` (required for hash routing)
-- **`wrangler.toml`** – Cloudflare Pages config for direct deploy
 - **Vite base path** – Uses `VITE_BASE_PATH` env var (set to `/` for Cloudflare)
+
+## Cloudflare Git: Use Build + Output, Not Deploy Command
+
+For **Git integration**, use only:
+- **Build command:** `npm run build`
+- **Build output directory:** `dist`
+
+Leave the **Deploy command** blank. Cloudflare deploys the build output automatically. A custom deploy command that runs `wrangler` can fail with "Configuration file for Pages projects does not support 'build'".
 
 ## Go Live Checklist
 

@@ -41,9 +41,11 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
-[functions]
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.contact-form]
 verify_jwt = false
 
 [realtime]
 enabled = true
-max_connections = 200
