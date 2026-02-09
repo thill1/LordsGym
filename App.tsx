@@ -20,16 +20,30 @@ import Outreach from './pages/Outreach';
 
 const App: React.FC = () => {
   // Simple Hash Router Implementation
-  const [currentPath, setCurrentPath] = useState(window.location.hash.slice(1) || '/');
+  // Support both /#/admin (hash) and /admin (pathname) for admin access
+  const getPath = () => {
+    const hash = window.location.hash.slice(1);
+    if (hash) return hash;
+    return window.location.pathname === '/admin' ? '/admin' : '/';
+  };
+  const [currentPath, setCurrentPath] = useState(getPath());
 
   useEffect(() => {
-    const handleHashChange = () => {
-      const path = window.location.hash.slice(1) || '/';
-      setCurrentPath(path);
-    };
-
+    const handleHashChange = () => setCurrentPath(getPath());
+    const handlePopState = () => setCurrentPath(getPath());
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  // When visiting /admin via pathname, fix URL to /#/admin for consistency
+  useEffect(() => {
+    if (window.location.pathname === '/admin' && !window.location.hash) {
+      window.history.replaceState(null, '', '/#/admin');
+    }
   }, []);
 
   // Ensure page scrolls to top on route change

@@ -30,7 +30,8 @@ function loadEnv() {
 }
 
 function generatePassword(length = 16) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  // Avoid $ and chars that can cause shell/copy issues
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
   const bytes = randomBytes(length);
   let pwd = '';
   for (let i = 0; i < length; i++) {
@@ -82,11 +83,48 @@ async function main() {
     console.log('\n⚠️  SAVE THIS PASSWORD – it will not be shown again.');
     console.log('   Login at: https://lordsgymoutreach.com/admin (or /#/admin)\n');
   } else if (data.msg?.includes('already been registered') || data.message?.includes('already exists')) {
-    console.log('\n⚠️  User already exists.');
-    console.log('   To set a new password, use Supabase Dashboard → Authentication → Users');
-    console.log('   Or run: SUPABASE_SERVICE_ROLE_KEY=xxx node scripts/create-admin-user.js --reset-password');
-    console.log('   (--reset-password not implemented – use Dashboard for now)\n');
-    process.exit(1);
+    console.log('\n⚠️  User already exists. Resetting password...');
+
+    const listRes = await fetch(`${supabaseUrl}/auth/v1/admin/users?per_page=1000`, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    });
+    const listData = await listRes.json();
+    const user = listData.users?.find((u) => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    const userId = user?.id;
+
+    if (!userId) {
+      console.error('   Could not find user.');
+      process.exit(1);
+    }
+
+    const newPassword = generatePassword(16);
+    const updateRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        password: newPassword,
+        user_metadata: { role: 'admin', needs_password_change: true },
+      }),
+    });
+
+    if (!updateRes.ok) {
+      const err = await updateRes.json();
+      console.error('❌ Update failed:', err.msg || err.message);
+      process.exit(1);
+    }
+
+    console.log('\n✅ Password reset successfully!\n');
+    console.log('   Email:   ', ADMIN_EMAIL);
+    console.log('   Password:', newPassword);
+    console.log('\n⚠️  SAVE THIS PASSWORD – it will not be shown again.');
+    console.log('   Login at: https://lordsgymoutreach.com/admin (or /#/admin)\n');
   } else {
     console.error('\n❌ Failed:', data.msg || data.message || data.error || res.statusText);
     console.error('   Response:', JSON.stringify(data, null, 2), '\n');

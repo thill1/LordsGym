@@ -28,17 +28,20 @@ This runs the setup script to verify prerequisites and build.
 
 ---
 
-## 3. GitHub Secrets
+## 3. GitHub Secrets (required for deploy)
 
 1. Repo: **Settings** → **Secrets and variables** → **Actions**
-2. **New repository secret** for each:
+2. **New repository secret** for each (all 5 required):
 
-| Secret | Value |
-|-------|-------|
-| `CLOUDFLARE_API_TOKEN` | Token from step 1 |
-| `CLOUDFLARE_ACCOUNT_ID` | Account ID from step 2 |
-| `VITE_SUPABASE_URL` | `https://your-project.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+| Secret | Value | Used for |
+|--------|-------|----------|
+| `CLOUDFLARE_API_TOKEN` | Token from step 1 | Deploy to Cloudflare Pages |
+| `CLOUDFLARE_ACCOUNT_ID` | Account ID from step 2 | Deploy to Cloudflare Pages |
+| `VITE_SUPABASE_URL` | `https://mrptukahxloqpdqiaxkb.supabase.co` | Build (admin auth) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key from [API settings](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api) | Build (admin auth) |
+| `GITHUB_TOKEN` | *(auto-provided)* | Deploy status |
+
+**If deploy fails:** Check all 5 secrets exist. Redeploy after adding.
 
 ---
 

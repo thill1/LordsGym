@@ -14,7 +14,10 @@
     "setup:cloudflare": "node scripts/setup-github-cloudflare.js",
     "dns:add": "node scripts/cloudflare-dns.js",
     "setup:contact-form": "node scripts/setup-contact-form-api.js",
-    "create-admin": "node scripts/create-admin-user.js"
+    "create-admin": "node scripts/create-admin-user.js",
+    "push:github": "node --env-file=.env.local scripts/push-via-github-api.js",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'No linter configured'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

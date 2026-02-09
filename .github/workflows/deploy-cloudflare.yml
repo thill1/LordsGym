@@ -4,9 +4,7 @@
 name: Deploy to Cloudflare Pages
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual only; cloudflare-pages.yml handles push deploys
 
 permissions:
   contents: read
@@ -44,7 +42,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: lords-gym
+          projectName: lords-gym-auburn
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           wranglerVersion: '3'

@@ -38,12 +38,15 @@ Use Supabase Dashboard → **Authentication** → **Users** → find the user �
 
 ## Login still says "Invalid email or password"
 
-1. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
+1. **GitHub secrets (most common)** – The production build must have Supabase env vars. In [GitHub → Settings → Secrets → Actions](https://github.com/thill1/LordsGym/settings/secrets/actions), ensure:
+   - `VITE_SUPABASE_URL` = `https://mrptukahxloqpdqiaxkb.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY` = your Supabase anon (public) key from [Supabase API settings](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api).  
+   After adding/updating secrets, **redeploy** (push a commit or run the workflow manually).
+
+2. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
    - **Site URL**: `https://lordsgymoutreach.com`
    - **Redirect URLs**: add `https://lordsgymoutreach.com/**`
 
-2. **GitHub secrets** – Ensure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set. Redeploy after adding.
+3. **Use the correct URL** – `https://lordsgymoutreach.com/admin` or `https://lordsgymoutreach.com/#/admin` (both work)
 
-3. **Use the correct URL** – `https://lordsgymoutreach.com/#/admin` (hash routing)
-
-4. **Reset password** – Run `npm run create-admin` (or the Management API script) to set a new password.
+4. **Reset password** – Run `npm run create-admin` (with `SUPABASE_SERVICE_ROLE_KEY`) to set a new password.

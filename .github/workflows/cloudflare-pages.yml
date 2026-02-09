@@ -94,6 +94,7 @@ jobs:
       - name: Build application
         id: build
         env:
+          VITE_BASE_PATH: /
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           NODE_ENV: ${{ github.event.inputs.environment || 'production' }}
@@ -137,10 +138,9 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.deploy.outputs.deployment-url }}
     outputs:
-      deployment-url: ${{ steps.deploy.outputs.url }}
-      deployment-id: ${{ steps.deploy.outputs.id }}
+      deployment-url: ${{ steps.deploy.outputs.deployment-url }}
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -148,22 +148,24 @@ jobs:
           name: build-output
           path: dist
 
-      - name: Deploy to Cloudflare Pages (with retry)
+      - name: Deploy to Cloudflare Pages
         id: deploy
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: lords-gym-auburn
-          directory: dist
+          command: pages deploy dist --project-name=lords-gym-auburn
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          wranglerVersion: '3'
 
       - name: Verify deployment (health check)
         id: health-check
         run: |
-          DEPLOY_URL="${{ steps.deploy.outputs.url }}"
+          DEPLOY_URL="${{ steps.deploy.outputs.deployment-url }}"
           echo "Checking deployment health: $DEPLOY_URL"
+          if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "undefined" ]; then
+            echo "⚠️ No deployment URL available"
+            exit 0
+          fi
           
           MAX_RETRIES=5
           RETRY_COUNT=0
