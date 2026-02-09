@@ -38,14 +38,16 @@ Use Supabase Dashboard → **Authentication** → **Users** → find the user �
 
 ## Login still says "Invalid email or password"
 
-1. **"Admin login not configured"** – Add `VITE_SUPABASE_ANON_KEY` to [GitHub Secrets](https://github.com/thill1/LordsGym/settings/secrets/actions). Get the anon key from [Supabase → Settings → API](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api). Redeploy after adding.
+1. **Quick fix (no redeploy)** – On the admin login page, use **"Add Supabase anon key"**: paste your [Supabase anon key](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api) (anon public), click **Save & retry**, then sign in again. The key is stored in your browser only.
 
-2. **Wrong email or password** – Run `npm run create-admin` (with `SUPABASE_SERVICE_ROLE_KEY` in .env.local) to reset the password.
+2. **Or add to GitHub** – Add `VITE_SUPABASE_ANON_KEY` to [GitHub Secrets](https://github.com/thill1/LordsGym/settings/secrets/actions) and redeploy so the key is in the build.
 
-3. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
+3. **Wrong password** – Run `npm run create-admin` (with `SUPABASE_SERVICE_ROLE_KEY` in .env.local) to reset the password.
+
+4. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
    - **Site URL**: `https://thill1.github.io` (or your deployment URL)
    - **Redirect URLs**: add `https://thill1.github.io/**`, `https://lordsgymoutreach.com/**`
 
-4. **Use the correct admin URL**:
+5. **Use the correct admin URL**:
    - GitHub Pages: `https://thill1.github.io/LordsGym/#/admin`
    - Cloudflare/custom: `https://yoursite.com/admin` or `/#/admin`
