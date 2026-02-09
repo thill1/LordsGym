@@ -22,11 +22,14 @@ const ContactForm: React.FC = () => {
   });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [usedMailto, setUsedMailto] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  const CONTACT_EMAIL = 'lordsgymoutreach@gmail.com';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +37,24 @@ const ContactForm: React.FC = () => {
     setErrorMessage('');
 
     if (!isSupabaseConfigured()) {
-      setStatus('error');
-      setErrorMessage('Contact form is not configured. Please try again later.');
+      // Fallback: open mailto so the form always works
+      const subject = encodeURIComponent(`Contact: ${formData.inquiryType || 'General'}`);
+      const body = encodeURIComponent(
+        [
+          `Name: ${formData.firstName} ${formData.lastName}`,
+          `Email: ${formData.email}`,
+          formData.phone ? `Phone: ${formData.phone}` : '',
+          `Inquiry: ${formData.inquiryType || 'General'}`,
+          '',
+          formData.message,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      );
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+      setUsedMailto(true);
+      setStatus('success');
+      setFormData({ firstName: '', lastName: '', email: '', phone: '', inquiryType: '', message: '' });
       return;
     }
 
@@ -74,8 +93,12 @@ const ContactForm: React.FC = () => {
             </svg>
           </div>
           <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Message Sent!</h4>
-          <p className="text-neutral-500 dark:text-neutral-400 mb-6">Your message has been sent successfully. We&apos;ll respond as soon as we can.</p>
-          <Button onClick={() => setStatus('idle')} variant="outline" size="sm">Send Another</Button>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-6">
+            {usedMailto
+              ? "Your email app should open with the message. Send it to contact us. We'll respond as soon as we can."
+              : "Your message has been sent successfully. We'll respond as soon as we can."}
+          </p>
+          <Button onClick={() => { setStatus('idle'); setUsedMailto(false); }} variant="outline" size="sm">Send Another</Button>
         </div>
       ) : status === 'error' ? (
         <div className="text-center py-12 fade-in">
