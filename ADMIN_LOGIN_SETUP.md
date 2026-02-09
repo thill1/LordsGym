@@ -35,3 +35,15 @@ On first login, the user must change their password before accessing the dashboa
 ## If user already exists
 
 Use Supabase Dashboard → **Authentication** → **Users** → find the user → **Send password reset** or **Edit** to set a new password.
+
+## Login still says "Invalid email or password"
+
+1. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
+   - **Site URL**: `https://lordsgymoutreach.com`
+   - **Redirect URLs**: add `https://lordsgymoutreach.com/**`
+
+2. **GitHub secrets** – Ensure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set. Redeploy after adding.
+
+3. **Use the correct URL** – `https://lordsgymoutreach.com/#/admin` (hash routing)
+
+4. **Reset password** – Run `npm run create-admin` (or the Management API script) to set a new password.
