@@ -137,70 +137,9 @@ html.dark body {
   }
 }
 
-/* Join Now Button - Force Red Background */
-@layer utilities {
-  button.join-now-btn,
-  .join-now-btn {
-    background-color: #dc2626 !important;
-    border-color: #dc2626 !important;
-    color: #ffffff !important;
-  }
-
-  button.join-now-btn:hover,
-  .join-now-btn:hover {
-    background-color: #1a1a1a !important;
-    border-color: #1a1a1a !important;
-    color: #ffffff !important;
-  }
-}
-
-/* Ensure desktop navigation elements are completely hidden on mobile/tablet */
-@media (max-width: 1023px) {
-  /* Hide desktop nav container and desktop controls - MOST AGGRESSIVE RULE */
-  header nav.hidden.lg\\:flex,
-  header > div > div.hidden.lg\\:flex,
-  .desktop-header-controls,
-  header div[class*="hidden"][class*="lg:flex"],
-  header div.desktop-header-controls {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-    clip: rect(0, 0, 0, 0) !important;
-  }
-  
-  /* Hide desktop JOIN NOW button - target ALL join-now-btn buttons that don't have w-full class */
-  header button.join-now-btn:not([class*="w-full"]),
-  header button.join-now-btn.desktop-join-now-btn,
-  header .desktop-header-controls button,
-  header > div > div[class*="space-x-5"] button.join-now-btn {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    left: -9999px !important;
-    pointer-events: none !important;
-    clip: rect(0, 0, 0, 0) !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-  }
-  
-  /* Hide desktop nav items */
-  header nav.hidden.lg\\:flex button {
-    display: none !important;
-  }
-  
-  /* Nuclear option: Hide any element containing "Join Now" text in header that's not in mobile menu */
-  header > div > div:has(button.join-now-btn:not([class*="w-full"])) {
+/* Force hide desktop header controls below xl (1280px) */
+@media (max-width: 1279px) {
+  .desktop-header-controls {
     display: none !important;
   }
 }

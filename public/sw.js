@@ -1,30 +1,23 @@
 // Service Worker for Lord's Gym - Offline Support
 // Increment version number when deploying to force cache invalidation
-const CACHE_VERSION = 'lords-gym-v3';
+const CACHE_VERSION = 'lords-gym-v4';
 const CACHE_NAME = CACHE_VERSION;
 // Get base path from scope (e.g., '/LordsGym/' or '/')
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '') || '/';
 
 // Install event - skip waiting to activate immediately
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing with cache:', CACHE_NAME);
-  // Skip waiting so new service worker activates immediately
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
 // Activate event - clean up ALL old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating, clearing old caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      // Delete ALL old caches (not just ones that don't match current name)
       return Promise.all(
         cacheNames
           .filter((name) => name.startsWith('lords-gym-'))
-          .map((name) => {
-            console.log('Deleting old cache:', name);
-            return caches.delete(name);
-          })
+          .map((name) => caches.delete(name))
       );
     }).then(() => {
       // Claim all clients immediately

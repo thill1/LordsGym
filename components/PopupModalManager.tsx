@@ -55,16 +55,6 @@ const PopupModalManager: React.FC<PopupModalManagerProps> = ({ currentPath, onNa
   const { settings } = useStore();
   const popups = settings?.popupModals ?? [];
   const active = selectActivePopup(popups, currentPath);
-  
-  // Debug logging (remove in production if needed)
-  useEffect(() => {
-    if (popups.length > 0) {
-      console.log('[PopupModalManager] Popups:', popups);
-      console.log('[PopupModalManager] Current path:', currentPath);
-      console.log('[PopupModalManager] Active popup:', active);
-    }
-  }, [popups, currentPath, active]);
-
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

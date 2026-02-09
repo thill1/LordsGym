@@ -1,0 +1,101 @@
+# GitHub → Cloudflare Pages Setup & Test
+
+Step-by-step guide to configure and test automated deployment from GitHub to Cloudflare.
+
+## Quick start
+
+```bash
+npm run setup:cloudflare
+```
+
+This runs the setup script to verify prerequisites and build.
+
+---
+
+## 1. Cloudflare API Token
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. **My Profile** (top right) → **API Tokens**
+3. **Create Token** → **Edit Cloudflare Workers** (or custom: add **Account** → **Cloudflare Pages** → **Edit**)
+4. Copy the token (you won't see it again)
+
+---
+
+## 2. Cloudflare Account ID
+
+1. In Cloudflare Dashboard, open any page
+2. Right sidebar → **Account ID** (copy it)
+
+---
+
+## 3. GitHub Secrets
+
+1. Repo: **Settings** → **Secrets and variables** → **Actions**
+2. **New repository secret** for each:
+
+| Secret | Value |
+|-------|-------|
+| `CLOUDFLARE_API_TOKEN` | Token from step 1 |
+| `CLOUDFLARE_ACCOUNT_ID` | Account ID from step 2 |
+| `VITE_SUPABASE_URL` | `https://your-project.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+
+---
+
+## 4. Create Cloudflare Pages Project (if needed)
+
+If the project `lords-gym-auburn` doesn't exist:
+
+1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages**
+2. **Connect to Git** (optional) or **Direct Upload**
+3. Project name: `lords-gym-auburn`
+
+Or skip: the first deploy via workflow may create it.
+
+---
+
+## 5. Test locally (optional)
+
+```bash
+CLOUDFLARE_API_TOKEN=your_token CLOUDFLARE_ACCOUNT_ID=your_id npm run deploy:cloudflare
+```
+
+Or add to `.env.local` (gitignored) and run:
+
+```bash
+source .env.local && npm run deploy:cloudflare
+```
+
+---
+
+## 6. Deploy via GitHub
+
+**Option A: Push to main**
+
+```bash
+git add -A
+git commit -m "Deploy to Cloudflare"
+git push origin main
+```
+
+**Option B: Manual workflow run**
+
+1. **Actions** → **Deploy to Cloudflare Pages**
+2. **Run workflow** → **Run workflow**
+
+---
+
+## 7. Verify
+
+After deploy, visit: `https://lords-gym-auburn.pages.dev` (or your custom domain)
+
+---
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Build fails | Check `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in secrets |
+| Deploy fails: 403 | Verify `CLOUDFLARE_API_TOKEN` has Pages:Edit permission |
+| Deploy fails: project not found | Create project `lords-gym-auburn` in Cloudflare Pages first |
+| Assets 404 | Ensure `VITE_BASE_PATH=/` in build (workflow sets this) |

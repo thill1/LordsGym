@@ -1,8 +1,7 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useStore } from "../context/StoreContext";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
-import Button from "./Button";
 import CartDrawer from "./CartDrawer";
 import PopupModalManager from "./PopupModalManager";
 import { NAV_ITEMS } from "../constants";
@@ -21,52 +20,6 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
   };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  // Initialize isMobile based on window width (check if window is available for SSR)
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024;
-    }
-    return false;
-  });
-  const joinNowBtnRef = React.useRef<HTMLButtonElement>(null);
-  const joinNowMobileBtnRef = React.useRef<HTMLButtonElement>(null);
-
-  // Force red background on mount and whenever component updates
-  useEffect(() => {
-    if (joinNowBtnRef.current) {
-      joinNowBtnRef.current.style.backgroundColor = '#dc2626';
-      joinNowBtnRef.current.style.borderColor = '#dc2626';
-      joinNowBtnRef.current.style.color = '#ffffff';
-    }
-    if (joinNowMobileBtnRef.current) {
-      joinNowMobileBtnRef.current.style.backgroundColor = '#dc2626';
-      joinNowMobileBtnRef.current.style.borderColor = '#dc2626';
-      joinNowMobileBtnRef.current.style.color = '#ffffff';
-    }
-  });
-
-  // Detect mobile viewport and hide desktop JOIN NOW button
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (joinNowBtnRef.current) {
-        if (window.innerWidth < 1024) {
-          joinNowBtnRef.current.style.display = 'none';
-          joinNowBtnRef.current.style.visibility = 'hidden';
-          joinNowBtnRef.current.style.opacity = '0';
-          joinNowBtnRef.current.style.width = '0';
-          joinNowBtnRef.current.style.height = '0';
-          joinNowBtnRef.current.style.overflow = 'hidden';
-          joinNowBtnRef.current.style.position = 'absolute';
-          joinNowBtnRef.current.style.left = '-9999px';
-        }
-      }
-    };
-    
-    checkMobile(); // Check on mount
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Scroll detection
   useEffect(() => {
@@ -87,35 +40,26 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
     onNavigate(path);
   };
 
-  const announceEnabled = !!settings?.announcementBar?.enabled;
-  const announceMessage = settings?.announcementBar?.message || "";
+  // Announcement bar removed from header to prevent mobile layout collision.
+  // The "Join Now" CTA is in the hero section, mobile menu drawer, and CTA section.
 
   return (
     <div className="min-h-screen flex flex-col bg-white dark:bg-neutral-950">
-      {/* Announcement Bar - Admin Controlled */}
-      {announceEnabled && announceMessage.trim() && (
-        <div className="w-full bg-brand-red text-white" style={{ backgroundColor: '#dc2626' }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center justify-center">
-            {announceMessage}
-          </div>
-        </div>
-      )}
-
       {/* Sticky Header */}
       <header 
-        className={`fixed w-full z-50 transition-all duration-300 ${
+        className={`fixed w-full z-50 top-0 transition-all duration-300 ${
           isScrolled || isMobileMenuOpen
             ? 'bg-white/70 dark:bg-neutral-900/70 shadow-lg py-3 backdrop-blur-xl border-b border-neutral-200/30 dark:border-neutral-800/30' 
             : 'bg-transparent dark:bg-transparent py-3 sm:py-4 lg:py-6'
-        } ${settings.announcementBar.enabled && !isScrolled ? 'top-8' : 'top-0'} ${headerTextColor}`}
+        } ${headerTextColor}`}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 flex items-center justify-between h-full gap-2 sm:gap-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 flex items-center justify-between h-full gap-2 sm:gap-4 overflow-hidden min-w-0">
           <div className="cursor-pointer relative z-50 border-0 flex-shrink-0 min-w-0" onClick={() => handleNavClick('/')}>
             <Logo variant="full" tone={isScrolled || isMobileMenuOpen ? "dark" : "light"} className="h-10 sm:h-12 lg:h-14 w-auto max-w-[120px] sm:max-w-[160px] lg:max-w-none" />
           </div>
 
-          {/* Desktop Nav - Hidden on mobile */}
-          <nav className="hidden lg:flex items-center space-x-8 -mt-3 flex-1 justify-center">
+          {/* Desktop Nav - Hidden below xl (1280px) to prevent header collision on resize */}
+          <nav className="hidden xl:flex items-center space-x-8 -mt-3 flex-1 justify-center min-w-0 shrink">
             {NAV_ITEMS.map((item) => (
               <button
                 key={item.path}
@@ -135,48 +79,29 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
             ))}
           </nav>
 
-          {/* Desktop Right Side Controls - Completely hidden on mobile */}
-          {!isMobile && (
-            <div className="desktop-header-controls hidden lg:flex items-center space-x-5 flex-shrink-0">
-              <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
-                <ThemeToggle />
-              </div>
-              {/* Cart Icon */}
-              <button 
-                  className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
-                  aria-label="Cart" 
-                  onClick={openCart}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-              <button
-                ref={joinNowBtnRef}
-                onClick={() => handleNavClick('/membership')}
-                className="join-now-btn desktop-join-now-btn hidden lg:inline-flex items-center justify-center font-bold tracking-wider uppercase text-xs px-4 py-2 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 whitespace-nowrap"
-                style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1a1a1a';
-                  e.currentTarget.style.borderColor = '#1a1a1a';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc2626';
-                  e.currentTarget.style.borderColor = '#dc2626';
-                }}
-              >
-                Join Now
-              </button>
+          {/* Desktop Right Side Controls - only visible at xl+ via CSS */}
+          <div className="desktop-header-controls hidden xl:flex items-center gap-4 flex-shrink-0">
+            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+              <ThemeToggle />
             </div>
-          )}
+            <button 
+                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                aria-label="Cart" 
+                onClick={openCart}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-brand-red rounded-full">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
 
-          {/* Mobile Menu Controls - Only visible on mobile */}
-          <div className="lg:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
+          {/* Mobile Menu Controls - Visible below xl (1280px) */}
+          <div className="xl:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
              <button 
                 className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
                 aria-label="Cart" 
@@ -212,30 +137,23 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
       {/* Mobile Menu Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="xl:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Mobile Menu Drawer */}
-      <div
-        className={`lg:hidden fixed inset-x-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800 transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full pointer-events-none'
-        }`}
-        style={{ 
-          top: settings.announcementBar.enabled && !isScrolled 
-            ? 'calc(73px + 2rem)' 
-            : isScrolled 
-              ? '73px' 
-              : '73px',
-          maxHeight: settings.announcementBar.enabled && !isScrolled
-            ? 'calc(100vh - 73px - 2rem)'
-            : 'calc(100vh - 73px)',
-          overflowY: 'auto'
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <nav className="space-y-2 sm:space-y-3">
+      {/* Mobile Menu Drawer - only rendered when open */}
+      {isMobileMenuOpen && (
+        <div
+          className="xl:hidden fixed inset-x-0 z-40 bg-white dark:bg-neutral-900 shadow-lg border-b border-neutral-200 dark:border-neutral-800"
+          style={{ 
+            top: '73px',
+            maxHeight: 'calc(100vh - 73px)',
+            overflowY: 'auto'
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <nav className="space-y-2 sm:space-y-3">
               {NAV_ITEMS.map((item) => (
                 <button
                   key={item.path}
@@ -251,23 +169,14 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
               ))}
               <button
                 onClick={() => handleNavClick('/membership')}
-                className="join-now-btn w-full mt-3 sm:mt-4 inline-flex items-center justify-center font-bold tracking-wider uppercase text-sm px-6 py-3.5 sm:py-4 border shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red active:scale-95 touch-manipulation min-h-[48px]"
-                style={{ backgroundColor: '#dc2626', borderColor: '#dc2626', color: '#ffffff' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1a1a1a';
-                  e.currentTarget.style.borderColor = '#1a1a1a';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#dc2626';
-                  e.currentTarget.style.borderColor = '#dc2626';
-                }}
-                ref={joinNowMobileBtnRef}
+                className="w-full mt-3 sm:mt-4 inline-flex items-center justify-center font-bold tracking-wider uppercase text-sm px-6 py-3.5 sm:py-4 rounded bg-brand-red text-white border border-brand-red shadow-lg hover:bg-brand-charcoal hover:border-brand-charcoal active:scale-95 touch-manipulation min-h-[48px]"
               >
                 Join Now
               </button>
             </nav>
           </div>
         </div>
+      )}
 
       {/* Cart Drawer */}
       <CartDrawer onCheckout={handleCheckout} />
@@ -277,11 +186,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
       {/* Main */}
       <main className={`flex-1 ${
-        settings.announcementBar.enabled 
-          ? 'pt-[calc(73px+2rem)]' 
-          : isScrolled 
-            ? 'pt-[73px]' 
-            : 'pt-[73px] sm:pt-20 lg:pt-24'
+        isScrolled ? 'pt-[73px]' : 'pt-[73px] sm:pt-20 lg:pt-24'
       }`}>{children}</main>
 
       {/* Footer */}

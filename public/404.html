@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lord's Gym — Auburn, CA</title>
   <script>
-    // GitHub Pages 404 redirect - redirect to index.html with hash
-    const path = window.location.pathname;
-    const base = '/LordsGym/';
-    const hash = path.replace(base, '').replace(/^\//, '') || '';
-    window.location.replace(base + (hash ? '#' + hash : ''));
+    // SPA fallback: redirect to root so hash router can load
+    // Works for both Cloudflare Pages (base /) and GitHub Pages (base /LordsGym/)
+    const base = window.location.pathname.includes('/LordsGym') ? '/LordsGym/' : '/';
+    window.location.replace(base + (window.location.hash || ''));
   </script>
 </head>
 <body>
