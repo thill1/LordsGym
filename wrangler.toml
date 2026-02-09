@@ -1,14 +1,5 @@
 # Cloudflare Pages configuration
-# Used for: npx wrangler pages deploy dist
-# Or connect via Git in Cloudflare dashboard (no wrangler needed)
+# Minimal config - build handled by Cloudflare dashboard
 
 name = "lords-gym-auburn"
-compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
-
-# Build command for Cloudflare Pages
-[build]
-command = "npm run build"
-
-# No deploy command needed - GitHub Actions handles deployment
-# Using: cloudflare/pages-action@v1 in GitHub Actions
