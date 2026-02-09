@@ -74,7 +74,7 @@ const ContactForm: React.FC = () => {
             </svg>
           </div>
           <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Message Sent!</h4>
-          <p className="text-neutral-500 dark:text-neutral-400 mb-6">Thank you for reaching out. We&apos;ll get back to you soon.</p>
+          <p className="text-neutral-500 dark:text-neutral-400 mb-6">Your message has been sent successfully. We&apos;ll respond as soon as we can.</p>
           <Button onClick={() => setStatus('idle')} variant="outline" size="sm">Send Another</Button>
         </div>
       ) : status === 'error' ? (

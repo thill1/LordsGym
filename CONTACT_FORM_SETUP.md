@@ -2,7 +2,26 @@
 
 The contact form saves submissions to Supabase and sends email notifications to lordsgymoutreach@gmail.com.
 
-## Quick setup (after `supabase login`)
+## Setup via Supabase Management API
+
+Uses `scripts/setup-contact-form-api.js` to run migration and set the Resend secret via API (no browser).
+
+**You need:**
+1. **SUPABASE_ACCESS_TOKEN** – Personal Access Token from [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens)
+2. **RESEND_API_KEY** – From [resend.com](https://resend.com) (free tier: 100 emails/day)
+
+```bash
+export SUPABASE_ACCESS_TOKEN=sbp_xxx
+export RESEND_API_KEY=re_xxx
+node scripts/setup-contact-form-api.js
+```
+
+Then deploy the Edge Function (requires Supabase CLI + `supabase login`):
+```bash
+npx supabase functions deploy contact-form --project-ref mrptukahxloqpdqiaxkb
+```
+
+## Quick setup (Supabase CLI, after `supabase login`)
 
 ```bash
 # 1. Run migration
@@ -78,3 +97,11 @@ supabase secrets set RESEND_API_KEY=re_your_key_here
 ## Viewing submissions
 
 Admins can query the table in Supabase, or you can add a Contact Submissions view in the Admin dashboard later.
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Submissions not appearing in Supabase | Ensure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in **GitHub repo secrets** (Settings → Secrets → Actions) so the production build can reach Supabase. Redeploy after adding. |
+| Form shows "not configured" | Same as above – Supabase env vars must be in the build. |
+| Check Edge Function logs | [Supabase Dashboard](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/functions) → contact-form → Logs |

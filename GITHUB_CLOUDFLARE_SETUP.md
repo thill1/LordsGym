@@ -87,7 +87,7 @@ git push origin main
 
 ## 7. Verify
 
-After deploy, visit: `https://lords-gym-auburn.pages.dev` (or your custom domain)
+After deploy, visit: [https://lordsgymoutreach.com](https://lordsgymoutreach.com/) (production) or `lords-gym.pages.dev` (preview)
 
 ---
 
@@ -98,11 +98,11 @@ Add DNS records via API—no browser needed. Token needs **Zone → DNS → Edit
 ```bash
 # Add CLOUDFLARE_API_TOKEN to .env.local first
 
-# Point root (lordsgym.com) to Cloudflare Pages
-node scripts/cloudflare-dns.js lordsgym.com CNAME @ lords-gym-auburn.pages.dev true
+# Point root (lordsgymoutreach.com) to Cloudflare Pages
+node scripts/cloudflare-dns.js lordsgymoutreach.com CNAME @ lords-gym.pages.dev true
 
 # Point www to Cloudflare Pages
-node scripts/cloudflare-dns.js lordsgym.com CNAME www lords-gym-auburn.pages.dev true
+node scripts/cloudflare-dns.js lordsgymoutreach.com CNAME www lords-gym.pages.dev true
 ```
 
 Then add the custom domain in Cloudflare Pages → Custom domains.
