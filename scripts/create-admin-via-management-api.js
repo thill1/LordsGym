@@ -29,8 +29,9 @@ function loadEnv() {
   return env;
 }
 
-function generatePassword(length = 16) {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+function generatePassword(length = 14) {
+  // Avoid % and chars that can cause copy/paste or encoding issues
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
   const bytes = randomBytes(length);
   let pwd = '';
   for (let i = 0; i < length; i++) {
@@ -111,17 +112,15 @@ async function main() {
     console.log('   Login at: https://lordsgymoutreach.com/admin\n');
   } else if (data.msg?.includes('already been registered') || data.message?.includes('already exists')) {
     console.log('\n⚠️  User already exists. Updating password...');
-    const listRes = await fetch(
-      `${SUPABASE_URL}/auth/v1/admin/users?filter=email.eq.${encodeURIComponent(ADMIN_EMAIL)}`,
-      {
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-      }
-    );
+    const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+      },
+    });
     const listData = await listRes.json();
-    const userId = listData.users?.[0]?.id;
+    const user = listData.users?.find((u) => u.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    const userId = user?.id;
     if (!userId) {
       console.error('   Could not find user.');
       process.exit(1);
