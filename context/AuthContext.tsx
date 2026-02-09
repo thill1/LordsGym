@@ -5,7 +5,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -34,23 +34,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     try {
       const { user: authUser, error } = await signIn(email, password);
       if (error || !authUser) {
         setUser(null);
         setIsLoading(false);
-        return false;
+        const msg = error?.message || '';
+        if (msg.includes('not configured') || msg.includes('Supabase not configured')) {
+          return { success: false, error: 'Admin login not configured. Add VITE_SUPABASE_ANON_KEY to GitHub Secrets.' };
+        }
+        if (msg.includes('Invalid API key')) {
+          return { success: false, error: 'Invalid Supabase config. Add VITE_SUPABASE_ANON_KEY to GitHub Secrets and redeploy.' };
+        }
+        return { success: false, error: 'Invalid email or password' };
       }
       setUser(authUser);
       setIsLoading(false);
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       setUser(null);
       setIsLoading(false);
-      return false;
+      return { success: false, error: 'Invalid email or password' };
     }
   };
 

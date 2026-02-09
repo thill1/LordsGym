@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+// Supabase project URL (not secret). Anon key must come from env (GitHub secrets / .env.local).
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Helper function to check if Supabase is configured

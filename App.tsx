@@ -24,7 +24,10 @@ const App: React.FC = () => {
   const getPath = () => {
     const hash = window.location.hash.slice(1);
     if (hash) return hash;
-    return window.location.pathname === '/admin' ? '/admin' : '/';
+    // Support /admin and /LordsGym/admin (GitHub Pages base path)
+    const p = window.location.pathname;
+    if (p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) return '/admin';
+    return '/';
   };
   const [currentPath, setCurrentPath] = useState(getPath());
 
@@ -41,8 +44,10 @@ const App: React.FC = () => {
 
   // When visiting /admin via pathname, fix URL to /#/admin for consistency
   useEffect(() => {
-    if (window.location.pathname === '/admin' && !window.location.hash) {
-      window.history.replaceState(null, '', '/#/admin');
+    const p = window.location.pathname;
+    if ((p === '/admin' || p.endsWith('/admin')) && !window.location.hash) {
+      const base = import.meta.env.BASE_URL || '/';
+      window.history.replaceState(null, '', base + '#/admin');
     }
   }, []);
 

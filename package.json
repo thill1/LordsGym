@@ -17,7 +17,9 @@
     "create-admin": "node scripts/create-admin-user.js",
     "push:github": "node --env-file=.env.local scripts/push-via-github-api.js",
     "type-check": "tsc --noEmit",
-    "lint": "echo 'No linter configured'"
+    "lint": "echo 'No linter configured'",
+    "test:admin": "node --env-file=.env.local scripts/test-admin-password.js",
+    "diagnose:admin": "node scripts/diagnose-admin-login.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

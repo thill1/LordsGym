@@ -38,15 +38,14 @@ Use Supabase Dashboard → **Authentication** → **Users** → find the user �
 
 ## Login still says "Invalid email or password"
 
-1. **GitHub secrets (most common)** – The production build must have Supabase env vars. In [GitHub → Settings → Secrets → Actions](https://github.com/thill1/LordsGym/settings/secrets/actions), ensure:
-   - `VITE_SUPABASE_URL` = `https://mrptukahxloqpdqiaxkb.supabase.co`
-   - `VITE_SUPABASE_ANON_KEY` = your Supabase anon (public) key from [Supabase API settings](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api).  
-   After adding/updating secrets, **redeploy** (push a commit or run the workflow manually).
+1. **"Admin login not configured"** – Add `VITE_SUPABASE_ANON_KEY` to [GitHub Secrets](https://github.com/thill1/LordsGym/settings/secrets/actions). Get the anon key from [Supabase → Settings → API](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api). Redeploy after adding.
 
-2. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
-   - **Site URL**: `https://lordsgymoutreach.com`
-   - **Redirect URLs**: add `https://lordsgymoutreach.com/**`
+2. **Wrong email or password** – Run `npm run create-admin` (with `SUPABASE_SERVICE_ROLE_KEY` in .env.local) to reset the password.
 
-3. **Use the correct URL** – `https://lordsgymoutreach.com/admin` or `https://lordsgymoutreach.com/#/admin` (both work)
+3. **Supabase URL Configuration** – [Authentication → URL Configuration](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/url-configuration):
+   - **Site URL**: `https://thill1.github.io` (or your deployment URL)
+   - **Redirect URLs**: add `https://thill1.github.io/**`, `https://lordsgymoutreach.com/**`
 
-4. **Reset password** – Run `npm run create-admin` (with `SUPABASE_SERVICE_ROLE_KEY`) to set a new password.
+4. **Use the correct admin URL**:
+   - GitHub Pages: `https://thill1.github.io/LordsGym/#/admin`
+   - Cloudflare/custom: `https://yoursite.com/admin` or `/#/admin`

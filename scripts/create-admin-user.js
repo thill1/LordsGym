@@ -30,8 +30,8 @@ function loadEnv() {
 }
 
 function generatePassword(length = 16) {
-  // Avoid $ and chars that can cause shell/copy issues
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  // Avoid $ # and chars that can cause shell/URL/copy issues
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@';
   const bytes = randomBytes(length);
   let pwd = '';
   for (let i = 0; i < length; i++) {
