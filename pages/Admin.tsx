@@ -11,6 +11,7 @@ import PageEditor from '../components/admin/PageEditor';
 import MediaLibrary from '../components/admin/MediaLibrary';
 import UserManagement from '../components/admin/UserManagement';
 import CalendarManager from '../components/admin/CalendarManager';
+import RecurringEventsManager from '../components/admin/RecurringEventsManager';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ProductBulkOperations from '../components/admin/ProductBulkOperations';
 import ActivityLogs from '../components/admin/ActivityLogs';
@@ -42,6 +43,7 @@ const Admin: React.FC = () => {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [passwordChangeError, setPasswordChangeError] = useState('');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
+  const [calendarSubTab, setCalendarSubTab] = useState<'events' | 'recurring'>('events');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
 
@@ -346,7 +348,34 @@ const Admin: React.FC = () => {
         {activeTab === 'home' && <HomeContentEditor />}
         {activeTab === 'pages' && <PageEditor />}
         {activeTab === 'testimonials' && <TestimonialsManager />}
-        {activeTab === 'calendar' && <CalendarManager />}
+        {activeTab === 'calendar' && (
+          <div className="space-y-6">
+            <div className="flex gap-2 border-b border-neutral-200 dark:border-neutral-700">
+              <button
+                onClick={() => setCalendarSubTab('events')}
+                className={`px-4 py-2 font-bold text-sm border-b-2 transition-colors ${
+                  calendarSubTab === 'events'
+                    ? 'border-brand-red text-brand-red dark:text-brand-red'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                }`}
+              >
+                Events
+              </button>
+              <button
+                onClick={() => setCalendarSubTab('recurring')}
+                className={`px-4 py-2 font-bold text-sm border-b-2 transition-colors ${
+                  calendarSubTab === 'recurring'
+                    ? 'border-brand-red text-brand-red dark:text-brand-red'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                }`}
+              >
+                Recurring Events
+              </button>
+            </div>
+            {calendarSubTab === 'events' && <CalendarManager />}
+            {calendarSubTab === 'recurring' && <RecurringEventsManager />}
+          </div>
+        )}
         {activeTab === 'media' && <MediaLibrary />}
         {activeTab === 'users' && <UserManagement />}
         {activeTab === 'popups' && <PopupModalsManager />}
