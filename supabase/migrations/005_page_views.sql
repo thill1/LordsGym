@@ -2,7 +2,7 @@
 -- Tracks page views like Google Analytics (path, referrer, session, timestamp)
 
 CREATE TABLE IF NOT EXISTS page_views (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   path TEXT NOT NULL,
   referrer TEXT,
   session_id TEXT NOT NULL,
