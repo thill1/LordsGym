@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
 import { useToast } from '../../context/ToastContext';
+import { logActivity } from '../../lib/activity-logger';
 import SchemaMarkupEditor from './SchemaMarkupEditor';
 import { generateSitemap, getDefaultSitemapUrls } from '../../lib/sitemap';
 
@@ -21,6 +22,7 @@ const SEOManager: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    logActivity({ action_type: 'export', entity_type: 'settings', description: 'Exported sitemap.xml' });
     showSuccess('Sitemap generated and downloaded!');
   };
 

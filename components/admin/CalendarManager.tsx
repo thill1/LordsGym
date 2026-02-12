@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
 import { CalendarEvent } from '../../lib/calendar-utils';
+import { logEventAction } from '../../lib/activity-logger';
 import ConfirmDialog from '../ConfirmDialog';
 
 const CalendarManager: React.FC = () => {
@@ -56,7 +57,7 @@ const CalendarManager: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -72,9 +73,12 @@ const CalendarManager: React.FC = () => {
 
       if (editingEvent) {
         updateEvent(editingEvent.id, eventData);
+        await logEventAction('update', editingEvent.id, formData.title);
         showSuccess('Event updated successfully!');
       } else {
+        const newId = `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         addEvent(eventData);
+        await logEventAction('create', newId, formData.title);
         showSuccess('Event added successfully!');
       }
 
@@ -85,7 +89,7 @@ const CalendarManager: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const event = events.find(e => e.id === id);
     if (event && event.class_type === 'holiday') {
       showError('Holidays are automatically generated and cannot be deleted.');
@@ -95,6 +99,7 @@ const CalendarManager: React.FC = () => {
 
     try {
       deleteEvent(id);
+      if (event) await logEventAction('delete', id, event.title);
       showSuccess('Event deleted successfully!');
       setDeleteConfirm({ isOpen: false, eventId: null });
     } catch (error) {

@@ -5,6 +5,7 @@ import { CalendarProvider } from './context/CalendarContext';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
+import { usePageViewTracker } from './lib/page-view-tracker';
 import Home from './pages/Home';
 import Membership from './pages/Membership';
 import Shop from './pages/Shop';
@@ -30,6 +31,9 @@ const App: React.FC = () => {
     return '/';
   };
   const [currentPath, setCurrentPath] = useState(getPath());
+
+  // Track page views for analytics (excludes /admin)
+  usePageViewTracker(currentPath);
 
   useEffect(() => {
     const handleHashChange = () => setCurrentPath(getPath());

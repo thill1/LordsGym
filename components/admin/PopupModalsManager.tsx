@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import type { PopupModalConfig, PopupTargetPage } from '../../types';
 import { normalizePopupPath } from '../../utils/popupPaths';
+import { logActivity } from '../../lib/activity-logger';
 
 const TARGET_PAGE_OPTIONS: { value: PopupTargetPage; label: string }[] = [
   { value: 'all', label: 'All pages (site-wide)' },
@@ -63,20 +64,34 @@ const PopupModalsManager: React.FC = () => {
       id: form.id || nextId(list),
       ctaLink: form.ctaLink?.trim() ? normalizePopupPath(form.ctaLink) : undefined
     };
-    if (editingId === 'new' || idx < 0) {
+    const isCreate = editingId === 'new' || idx < 0;
+    if (isCreate) {
       list.push(item);
     } else {
       list[idx] = item;
     }
     updateSettings({ ...settings, popupModals: list });
+    logActivity({
+      action_type: isCreate ? 'create' : 'update',
+      entity_type: 'settings',
+      entity_id: item.id,
+      description: `${isCreate ? 'create' : 'update'} popup: ${item.title || '(Untitled)'}`
+    });
     setEditingId(null);
   };
 
   const handleDelete = (id: string) => {
     if (!window.confirm('Remove this popup? This cannot be undone.')) return;
+    const popup = popups.find((p) => p.id === id);
     updateSettings({
       ...settings,
       popupModals: popups.filter((p) => p.id !== id)
+    });
+    logActivity({
+      action_type: 'delete',
+      entity_type: 'settings',
+      entity_id: id,
+      description: `delete popup: ${popup?.title || id}`
     });
     if (editingId === id) setEditingId(null);
   };

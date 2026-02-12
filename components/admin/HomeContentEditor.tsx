@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { HomePageContent } from '../../types';
 import { useToast } from '../../context/ToastContext';
+import { logActivity } from '../../lib/activity-logger';
 import Button from '../Button';
 
 const HomeContentEditor: React.FC = () => {
@@ -37,6 +38,12 @@ const HomeContentEditor: React.FC = () => {
     setIsSaving(true);
     try {
       await updateHomeContent(formData);
+      await logActivity({
+        action_type: 'update',
+        entity_type: 'settings',
+        entity_id: 'home_content',
+        description: 'Updated home page content (hero & values)'
+      });
       showSuccess('Home page content updated successfully');
     } catch (error) {
       showError('Failed to update home page content');

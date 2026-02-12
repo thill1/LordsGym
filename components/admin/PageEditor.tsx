@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { logPageAction } from '../../lib/activity-logger';
 import { useToast } from '../../context/ToastContext';
 import { safeGet, safeSet } from '../../lib/localStorage';
 import RichTextEditor from './RichTextEditor';
@@ -136,6 +137,7 @@ const PageEditor: React.FC = () => {
           .update({ ...updatedPage, updated_at: new Date().toISOString() })
           .eq('id', selectedPage.id);
         if (error) throw error;
+        await logPageAction('update', selectedPage.id, selectedPage.title);
       }
 
       setIsEditing(false);

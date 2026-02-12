@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Testimonial } from '../../types';
 import { useToast } from '../../context/ToastContext';
+import { logTestimonialAction } from '../../lib/activity-logger';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
 
@@ -44,6 +45,7 @@ const TestimonialsManager: React.FC = () => {
     try {
       if (editingTestimonial) {
         await updateTestimonial(editingTestimonial.id, formData);
+        await logTestimonialAction('update', editingTestimonial.id, formData.name);
         showSuccess('Testimonial updated successfully');
       } else {
         const newTestimonial: Testimonial = {
@@ -53,6 +55,7 @@ const TestimonialsManager: React.FC = () => {
           quote: formData.quote
         };
         await addTestimonial(newTestimonial);
+        await logTestimonialAction('create', newTestimonial.id, formData.name);
         showSuccess('Testimonial added successfully');
       }
       closeModal();
@@ -63,8 +66,10 @@ const TestimonialsManager: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
+    const testimonial = testimonials.find(t => t.id === id);
     try {
       await deleteTestimonial(id);
+      if (testimonial) await logTestimonialAction('delete', id, testimonial.name);
       showSuccess('Testimonial deleted successfully');
       setConfirmDialog({ isOpen: false, id: null });
     } catch (error) {

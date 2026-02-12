@@ -49,22 +49,10 @@ const ActivityLogs: React.FC = () => {
       if (error) throw error;
 
       if (data) {
-        // Get user emails for display
-        const userIds = [...new Set(data.map(log => log.user_id).filter(Boolean))];
-        const userEmails = new Map<string, string>();
-
-        if (userIds.length > 0) {
-          const { data: users } = await supabase.auth.admin.listUsers();
-          if (users) {
-            users.users.forEach(user => {
-              userEmails.set(user.id, user.email || 'Unknown');
-            });
-          }
-        }
-
+        // Use metadata.user_email (stored at insert) - auth.admin requires service_role
         setLogs(data.map(log => ({
           ...log,
-          user_email: log.user_id ? userEmails.get(log.user_id) : 'System'
+          user_email: log.metadata?.user_email ?? (log.user_id ? 'Unknown' : 'System')
         })));
       }
     } catch (error) {
@@ -163,7 +151,7 @@ const ActivityLogs: React.FC = () => {
                     </div>
                     <p className="text-sm font-bold dark:text-white mb-1">{log.description}</p>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {log.user_email} • {new Date(log.created_at).toLocaleString()}
+                      {log.user_email} • {new Date(log.created_at).toISOString()}
                     </p>
                   </div>
                 </div>

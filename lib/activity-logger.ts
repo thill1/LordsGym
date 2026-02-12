@@ -22,7 +22,8 @@ export const logActivity = async (log: ActivityLog): Promise<void> => {
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    
+    const userEmail = user?.email ?? null;
+
     await supabase
       .from('activity_logs')
       .insert({
@@ -31,7 +32,10 @@ export const logActivity = async (log: ActivityLog): Promise<void> => {
         entity_type: log.entity_type,
         entity_id: log.entity_id || null,
         description: log.description,
-        metadata: log.metadata || null
+        metadata: {
+          ...(log.metadata || {}),
+          user_email: userEmail
+        }
       });
   } catch (error) {
     console.error('Error logging activity:', error);
@@ -73,5 +77,31 @@ export const logUserAction = (action: ActionType, userId: string, userEmail: str
     entity_type: 'user',
     entity_id: userId,
     description: `${action} user: ${userEmail}`
+  });
+};
+
+export const logTestimonialAction = (action: ActionType, testimonialId: string | number, testimonialName: string) => {
+  logActivity({
+    action_type: action,
+    entity_type: 'testimonial',
+    entity_id: String(testimonialId),
+    description: `${action} testimonial: ${testimonialName}`
+  });
+};
+
+export const logSettingsAction = (action: ActionType, description: string) => {
+  logActivity({
+    action_type: action,
+    entity_type: 'settings',
+    description
+  });
+};
+
+export const logMediaAction = (action: ActionType, mediaId: string, filename: string) => {
+  logActivity({
+    action_type: action,
+    entity_type: 'media',
+    entity_id: mediaId,
+    description: `${action} media: ${filename}`
   });
 };

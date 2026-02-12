@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { logMediaAction } from '../../lib/activity-logger';
 import { safeGet, safeSet } from '../../lib/localStorage';
 import ConfirmDialog from '../ConfirmDialog';
 import { replaceImageUrl } from '../../lib/image-url-replacer';
@@ -105,7 +106,7 @@ const MediaLibrary: React.FC = () => {
       const { error: uploadError } = await supabase.storage.from('media').upload(filePath, file);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(filePath);
-      const { error: dbError } = await supabase.from('media').insert({
+      const { data: inserted, error: dbError } = await supabase.from('media').insert({
         filename: file.name,
         url: publicUrl,
         file_type: file.type,
@@ -113,8 +114,9 @@ const MediaLibrary: React.FC = () => {
         folder: null,
         tags: null,
         alt_text: null
-      });
+      }).select('id').single();
       if (dbError) throw dbError;
+      if (inserted) await logMediaAction('create', inserted.id, file.name);
       await loadMedia();
       showSuccess('File uploaded successfully!');
     } catch (error) {
@@ -127,6 +129,7 @@ const MediaLibrary: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const item = media.find((m) => m.id === id);
     if (!isSupabaseConfigured()) {
       setMedia((prev) => {
         const next = prev.filter((m) => m.id !== id);
@@ -140,6 +143,7 @@ const MediaLibrary: React.FC = () => {
     try {
       const { error } = await supabase.from('media').delete().eq('id', id);
       if (error) throw error;
+      if (item) await logMediaAction('delete', id, item.filename);
       await loadMedia();
       showSuccess('Media item deleted successfully!');
       setDeleteConfirm({ isOpen: false, itemId: null });

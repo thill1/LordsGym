@@ -144,11 +144,14 @@ const Admin: React.FC = () => {
     };
 
     try {
+      const { logProductAction } = await import('../lib/activity-logger');
       if (editingProduct) {
         await updateProduct(newProduct);
+        await logProductAction('update', newProduct.id, newProduct.title);
         showSuccess('Product updated successfully');
       } else {
         await addProduct(newProduct);
+        await logProductAction('create', newProduct.id, newProduct.title);
         showSuccess('Product added successfully');
       }
       setIsProductModalOpen(false);
@@ -324,7 +327,15 @@ const Admin: React.FC = () => {
       <AdminSidebar
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as typeof activeTab)}
-        onLogout={() => logout()}
+        onLogout={async () => {
+          const { logActivity } = await import('../lib/activity-logger');
+          await logActivity({
+            action_type: 'logout',
+            entity_type: 'user',
+            description: `User logged out: ${user?.email ?? 'Unknown'}`
+          });
+          await logout();
+        }}
         onBackToSite={handleBackToSite}
         userEmail={user?.email}
       />
@@ -356,15 +367,20 @@ const Admin: React.FC = () => {
               selectedProducts={selectedProducts}
               onSelectionChange={setSelectedProducts}
               onBulkDelete={async (ids: string[]) => {
+                const { logProductAction } = await import('../lib/activity-logger');
                 for (const id of ids) {
+                  const product = products.find(p => p.id === id);
                   await deleteProduct(id);
+                  if (product) await logProductAction('delete', id, product.title);
                 }
               }}
               onBulkUpdate={async (ids: string[], updates: Partial<Product>) => {
+                const { logProductAction } = await import('../lib/activity-logger');
                 for (const id of ids) {
                   const product = products.find(p => p.id === id);
                   if (product) {
                     await updateProduct({ ...product, ...updates } as Product);
+                    await logProductAction('update', id, product.title);
                   }
                 }
               }}
@@ -447,7 +463,9 @@ const Admin: React.FC = () => {
                                   message: `Are you sure you want to delete "${product.title}"? This action cannot be undone.`,
                                   onConfirm: async () => {
                                     try {
+                                      const { logProductAction } = await import('../lib/activity-logger');
                                       await deleteProduct(product.id);
+                                      await logProductAction('delete', product.id, product.title);
                                       showSuccess('Product deleted successfully');
                                       setConfirmDialog(null);
                                     } catch (error) {
