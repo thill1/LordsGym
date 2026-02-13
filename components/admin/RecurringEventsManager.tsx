@@ -31,7 +31,10 @@ const RecurringEventsManager: React.FC = () => {
   }, []);
 
   const loadPatterns = async () => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) {
+      setPatterns([]);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -48,7 +51,16 @@ const RecurringEventsManager: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) {
+      showError('Supabase is not configured. Please configure your database connection in Settings.');
+      return;
+    }
+
+    // For weekly patterns, require at least one day
+    if (formData.pattern_type === 'weekly' && formData.days_of_week.length === 0) {
+      showError('Please select at least one day of the week for weekly patterns.');
+      return;
+    }
 
     try {
       const patternData = {
@@ -77,14 +89,20 @@ const RecurringEventsManager: React.FC = () => {
 
       setIsModalOpen(false);
       await loadPatterns();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving pattern:', error);
-      showError('Failed to save recurring pattern.');
+      const message = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message: string }).message)
+        : 'Failed to save recurring pattern.';
+      showError(message);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!isSupabaseConfigured()) return;
+    if (!isSupabaseConfigured()) {
+      showError('Supabase is not configured. Please configure your database connection in Settings.');
+      return;
+    }
 
     try {
       const { error } = await supabase

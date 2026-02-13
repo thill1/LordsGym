@@ -1,21 +1,10 @@
 # Admin Login Setup
 
-## Hardcoded fallback (current)
+## Supabase auth (required for full admin features)
 
-You can log in **right now** at **[https://lordsgymoutreach.com/#/admin](https://lordsgymoutreach.com/#/admin)** with:
+The admin uses **Supabase Auth** when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured (e.g. in `.env.local`). This is required for features that use Supabase RLS (e.g. **recurring calendar patterns**, media library, activity logs).
 
-- **Email:** `lordsgymoutreach@gmail.com`
-- **Password:** `admin2026`
-
-This is in code in `lib/auth.ts` (`FALLBACK_ADMIN_EMAIL` / `FALLBACK_ADMIN_PASSWORD`). Change or remove it when you switch to Supabase.
-
-**If that URL shows an old or different site:** lordsgymoutreach.com must serve the LordsGym React app (e.g. from Cloudflare Pages). If you use Cloudflare, add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to [GitHub Secrets](https://github.com/thill1/LordsGym/settings/secrets/actions) so the "Deploy to Cloudflare Pages" workflow succeeds and the domain gets the latest build.
-
----
-
-## Supabase auth (optional later)
-
-The admin page can use Supabase Auth. Create the admin user with:
+Create or reset the admin user:
 
 ## Create admin user
 
