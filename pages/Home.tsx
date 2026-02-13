@@ -15,7 +15,7 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const { homeContent, testimonials } = useStore();
 
-  const heroHeadline = homeContent?.hero?.headline || "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.";
+  const heroHeadline = homeContent?.hero?.headline || "Train with Purpose.\nLive with Faith.";
   const heroSubheadline = homeContent?.hero?.subheadline || "Our mission is to bring strength and healing to our community through fitness, Christ and service.";
   const heroCtaText = homeContent?.hero?.ctaText || "Join Now";
   const heroBgImage = homeContent?.hero?.backgroundImage || "https://images.unsplash.com/photo-1521804906057-1df8fdb718b7?auto=format&fit=crop&w=1920&q=80";

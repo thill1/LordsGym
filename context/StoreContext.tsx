@@ -35,7 +35,7 @@ const getHeroImage = (filename: string) => {
 
 const DEFAULT_HOME_CONTENT: HomePageContent = {
   hero: {
-    headline: "TRAIN WITH PURPOSE.\nLIVE WITH FAITH.",
+    headline: "Train with Purpose.\nLive with Faith.",
     subheadline: "Our mission is to bring strength and healing to our community through fitness, Christ and service.",
     ctaText: "Join Now",
     backgroundImage: getHeroImage('hero-background.jpg.jpg')

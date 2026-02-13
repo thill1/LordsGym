@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useCalendar } from '../context/CalendarContext';
-import { formatTime, formatDate, getClassTypeColor } from '../lib/calendar-utils';
+import { formatTime, formatDate, getClassTypeColor, formatClassType } from '../lib/calendar-utils';
 import Button from './Button';
 import { useToast } from '../context/ToastContext';
 
@@ -148,7 +148,7 @@ const BookingHistory: React.FC = () => {
                       {formatTime(booking.event.start_time)} - {formatTime(booking.event.end_time)}
                     </p>
                     <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(booking.event.class_type)}`}>
-                      {booking.event.class_type}
+                      {formatClassType(booking.event.class_type)}
                     </span>
                   </div>
                   <Button

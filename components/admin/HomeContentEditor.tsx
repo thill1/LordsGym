@@ -76,7 +76,7 @@ const HomeContentEditor: React.FC = () => {
                 ...formData,
                 hero: { ...formData.hero, headline: e.target.value }
               })}
-              placeholder="TRAIN WITH PURPOSE.\nLIVE WITH FAITH."
+              placeholder="Train with Purpose.\nLive with Faith."
             />
             <p className="text-xs text-neutral-500 mt-1">Use \n for line breaks</p>
           </div>

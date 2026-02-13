@@ -17,6 +17,14 @@
 3. Use Chrome DevTools methods for interaction (click, fill, etc.)
 4. Never attempt to use Cursor's built-in browser for authenticated sessions
 
+## Home Page Hero H1
+
+**DO NOT change the hero headline to anything other than:**
+- `Train with Purpose.\nLive with Faith.`
+- Two lines, title case, period between phrases. **No** `./` or slash between.
+
+Default locations: `pages/Home.tsx`, `context/StoreContext.tsx`, `components/admin/HomeContentEditor.tsx` placeholder.
+
 ## MCP Server Priority
 
 When multiple browser MCP servers are available:

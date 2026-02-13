@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
-import { CalendarEvent } from '../../lib/calendar-utils';
+import { CalendarEvent, formatClassType } from '../../lib/calendar-utils';
 import { logEventAction } from '../../lib/activity-logger';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import ConfirmDialog from '../ConfirmDialog';
@@ -21,7 +21,7 @@ const CalendarManager: React.FC = () => {
     description: '',
     start_time: '',
     end_time: '',
-    class_type: 'community' as 'community' | 'outreach',
+    class_type: 'community' as 'community' | 'outreach' | 'fundraisers' | 'self_help',
     capacity: '',
     isRecurring: false,
     pattern_type: 'weekly' as 'daily' | 'weekly' | 'monthly',
@@ -47,7 +47,7 @@ const CalendarManager: React.FC = () => {
         description: event.description || '',
         start_time: event.start_time.slice(0, 16),
         end_time: event.end_time.slice(0, 16),
-        class_type: event.class_type as 'community' | 'outreach',
+        class_type: event.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help',
         capacity: event.capacity?.toString() || '',
         isRecurring: !!event.recurring_pattern_id,
         pattern_type: (event.recurring_pattern?.pattern_type as 'daily' | 'weekly' | 'monthly') || 'weekly',
@@ -184,10 +184,12 @@ const CalendarManager: React.FC = () => {
 
   const classTypes = [
     { value: 'community', label: 'Community' },
-    { value: 'outreach', label: 'Outreach' }
+    { value: 'outreach', label: 'Outreach' },
+    { value: 'fundraisers', label: 'Fundraisers' },
+    { value: 'self_help', label: 'Self Help' }
   ];
 
-  const allowedTypes = ['community', 'outreach', 'holiday'];
+  const allowedTypes = ['community', 'outreach', 'fundraisers', 'self_help', 'holiday'];
   const tableEvents = baseEvents.length > 0 ? baseEvents : events.filter(e => !e.id.match(/-\d{4}-\d{2}-\d{2}$/));
   const filteredEvents = tableEvents
     .filter(event => allowedTypes.includes(event.class_type?.toLowerCase()))
@@ -213,7 +215,7 @@ const CalendarManager: React.FC = () => {
 
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
         <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>Note:</strong> US Federal Holidays are automatically generated and displayed. You can only add and edit Community and Outreach events.
+          <strong>Note:</strong> US Federal Holidays are automatically generated and displayed. You can add and edit Community, Outreach, Fundraisers, and Self Help events.
         </p>
       </div>
 
@@ -234,6 +236,8 @@ const CalendarManager: React.FC = () => {
           <option value="all">All Types</option>
           <option value="community">Community</option>
           <option value="outreach">Outreach</option>
+          <option value="fundraisers">Fundraisers</option>
+          <option value="self_help">Self Help</option>
           <option value="holiday">Holiday</option>
         </select>
       </div>
@@ -278,7 +282,7 @@ const CalendarManager: React.FC = () => {
                         </td>
                         <td className="p-4">
                           <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
-                            {event.class_type}
+                            {formatClassType(event.class_type)}
                           </span>
                         </td>
                         <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
@@ -375,7 +379,7 @@ const CalendarManager: React.FC = () => {
                   <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
                   <select
                     value={formData.class_type}
-                    onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' })}
+                    onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' | 'fundraisers' | 'self_help' })}
                     className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   >
                     {classTypes.map(type => (

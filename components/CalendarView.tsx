@@ -7,6 +7,7 @@ import {
   isSameDay,
   getClassTypeColor,
   getEventTypeIcon,
+  formatClassType,
   sortEventsByTime,
   CalendarView as ViewType
 } from '../lib/calendar-utils';
@@ -171,7 +172,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                       <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
                       <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
                       <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
-                        {event.class_type}
+                        {formatClassType(event.class_type)}
                       </span>
                     </div>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
@@ -316,8 +317,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     </p>
                   )}
                   <div className="mt-3 flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
-                      {event.class_type}
+<span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
+                        {formatClassType(event.class_type)}
                     </span>
                     {event.capacity && (
                       <span className="text-xs text-neutral-500 dark:text-neutral-400">

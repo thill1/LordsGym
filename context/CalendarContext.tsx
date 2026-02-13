@@ -67,7 +67,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const { data: eventsData, error: eventsErr } = await supabase
           .from('calendar_events')
           .select('id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id')
-          .in('class_type', ['community', 'outreach']);
+          .in('class_type', ['community', 'outreach', 'fundraisers', 'self_help']);
 
         if (eventsErr) throw eventsErr;
 
