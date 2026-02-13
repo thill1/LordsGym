@@ -59,7 +59,14 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const rangeStart = new Date(currentYear, 0, 1);
     const rangeEnd = new Date(currentYear + 1, 11, 31);
 
-    try {
+    const applyFallback = () => {
+      const fallback = [...customEvents, ...holidays];
+      fallback.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      setEvents(fallback);
+      setBaseEvents(customEvents);
+    };
+
+    const doLoad = async () => {
       let dbEvents: CalendarEvent[] = [];
       const exceptionDatesByPattern = new Map<string, Set<string>>();
 
@@ -119,13 +126,19 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const base = isSupabaseConfigured() ? dbEvents : customEvents;
       base.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
       setBaseEvents(base);
+    };
+
+    const timeoutMs = 12000;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Calendar load timeout')), timeoutMs);
+    });
+
+    try {
+      await Promise.race([doLoad(), timeoutPromise]);
     } catch (err) {
       console.error('Error loading calendar events:', err);
-      setError('Failed to load calendar events');
-      const fallback = [...customEvents, ...holidays];
-      fallback.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-      setEvents(fallback);
-      setBaseEvents(customEvents);
+      setError(err instanceof Error && err.message === 'Calendar load timeout' ? 'Calendar took too long to load' : 'Failed to load calendar events');
+      applyFallback();
     } finally {
       setIsLoading(false);
     }
