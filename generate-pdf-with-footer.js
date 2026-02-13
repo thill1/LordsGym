@@ -2,9 +2,8 @@ import { mdToPdf } from 'md-to-pdf';
 import fs from 'fs';
 import path from 'path';
 
-const pdfOptions = {
-  displayHeaderFooter: true,
-  footerTemplate: '<div style="font-size:10px;text-align:center;width:100%;color:#666;padding-top:10px;"><span>Sentient Partners and all rights reserved</span></div>',
+// Base PDF options for all documents
+const basePdfOptions = {
   format: 'A4',
   margin: {
     top: '20mm',
@@ -12,19 +11,83 @@ const pdfOptions = {
     bottom: '30mm',
     left: '15mm'
   },
-  printBackground: true
+  printBackground: true,
+  displayHeaderFooter: true,
+  pdf_options: {
+    displayHeaderFooter: true
+  }
+};
+
+// Specific options for UAT Plan
+const uatPdfOptions = {
+  ...basePdfOptions,
+  footerTemplate: '<div style="font-size:9px;text-align:center;width:100%;color:#999;padding-top:10px;opacity:0.6;"><span>Lord\'s Gym - Phase 1 Project Report | Confidential</span></div>',
+  headerTemplate: '<div style="font-size:8px;text-align:center;width:100%;color:#666;padding-bottom:8px;"><strong>Troy Hill</strong> | Sentient Partners | Phone: 415-504-2757 | Email: troyhill@sentientparters.ai</div>',
+  css: `
+    @page {
+      size: A4;
+      margin: 20mm 15mm 30mm 15mm;
+    }
+    
+    body {
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+    
+    h2 {
+      page-break-after: avoid;
+      page-break-inside: avoid;
+      margin-top: 20px;
+      margin-bottom: 12px;
+    }
+    
+    h3 {
+      page-break-after: avoid;
+      margin-top: 15px;
+      margin-bottom: 8px;
+    }
+    
+    .test-item {
+      page-break-inside: avoid;
+      margin: 12px 0;
+    }
+    
+    .section {
+      page-break-inside: avoid;
+    }
+    
+    .sign-off {
+      page-break-before: always;
+      page-break-inside: avoid;
+    }
+    
+    ul {
+      page-break-inside: avoid;
+    }
+    
+    .form-field {
+      page-break-inside: avoid;
+    }
+  `
+};
+
+// Options for Phase 1 Report
+const reportPdfOptions = {
+  ...basePdfOptions,
+  footerTemplate: '<div style="font-size:9px;text-align:center;width:100%;color:#999;padding-top:10px;opacity:0.6;"><span>Lord\'s Gym - Phase 1 Project Report | Confidential</span></div>',
+  headerTemplate: '<div style="font-size:8px;text-align:center;width:100%;color:#666;padding-bottom:8px;"><strong>Troy Hill</strong> | Sentient Partners | Phone: 415-504-2757 | Email: troyhill@sentientparters.ai</div>'
 };
 
 async function generatePDFs() {
   const files = [
-    'PHASE_1_FINAL_STEPS.md',
-    'UAT_TEST_PLAN.md'
+    { file: 'PHASE_1_PROJECT_REPORT.md', options: reportPdfOptions },
+    { file: 'CLIENT_UAT_PLAN.md', options: uatPdfOptions }
   ];
 
-  for (const file of files) {
+  for (const { file, options } of files) {
     try {
       console.log(`Generating PDF from ${file}...`);
-      const pdf = await mdToPdf({ path: file }, pdfOptions);
+      const pdf = await mdToPdf({ path: file }, options);
       
       if (pdf) {
         const outputFile = file.replace('.md', '.pdf');

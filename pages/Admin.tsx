@@ -369,7 +369,7 @@ const Admin: React.FC = () => {
                     : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
                 }`}
               >
-                Recurring Events
+                Manage Exceptions
               </button>
             </div>
             {calendarSubTab === 'events' && <CalendarManager />}

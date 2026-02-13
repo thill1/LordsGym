@@ -3,11 +3,14 @@ import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
 import { CalendarEvent } from '../../lib/calendar-utils';
 import { logEventAction } from '../../lib/activity-logger';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import ConfirmDialog from '../ConfirmDialog';
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const CalendarManager: React.FC = () => {
   const { showSuccess, showError } = useToast();
-  const { events, isLoading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendar();
+  const { events, baseEvents, isLoading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendar();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; eventId: string | null }>({ isOpen: false, eventId: null });
@@ -19,7 +22,12 @@ const CalendarManager: React.FC = () => {
     start_time: '',
     end_time: '',
     class_type: 'community' as 'community' | 'outreach',
-    capacity: ''
+    capacity: '',
+    isRecurring: false,
+    pattern_type: 'weekly' as 'daily' | 'weekly' | 'monthly',
+    interval: 1,
+    days_of_week: [] as number[],
+    end_date: ''
   });
 
   useEffect(() => {
@@ -27,7 +35,6 @@ const CalendarManager: React.FC = () => {
   }, [refreshEvents]);
 
   const openModal = (event?: CalendarEvent) => {
-    // Only allow editing Community and Outreach events (not holidays)
     if (event && event.class_type === 'holiday') {
       showError('Holidays are automatically generated and cannot be edited.');
       return;
@@ -38,10 +45,15 @@ const CalendarManager: React.FC = () => {
       setFormData({
         title: event.title,
         description: event.description || '',
-        start_time: event.start_time.slice(0, 16), // Format for datetime-local input
+        start_time: event.start_time.slice(0, 16),
         end_time: event.end_time.slice(0, 16),
         class_type: event.class_type as 'community' | 'outreach',
-        capacity: event.capacity?.toString() || ''
+        capacity: event.capacity?.toString() || '',
+        isRecurring: !!event.recurring_pattern_id,
+        pattern_type: (event.recurring_pattern?.pattern_type as 'daily' | 'weekly' | 'monthly') || 'weekly',
+        interval: event.recurring_pattern?.interval || 1,
+        days_of_week: event.recurring_pattern?.days_of_week || [],
+        end_date: event.recurring_pattern?.end_date?.slice(0, 10) || ''
       });
     } else {
       setEditingEvent(null);
@@ -51,14 +63,33 @@ const CalendarManager: React.FC = () => {
         start_time: '',
         end_time: '',
         class_type: 'community',
-        capacity: ''
+        capacity: '',
+        isRecurring: false,
+        pattern_type: 'weekly',
+        interval: 1,
+        days_of_week: [],
+        end_date: ''
       });
     }
     setIsModalOpen(true);
   };
 
+  const toggleDayOfWeek = (day: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      days_of_week: prev.days_of_week.includes(day)
+        ? prev.days_of_week.filter((d) => d !== day)
+        : [...prev.days_of_week, day]
+    }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.isRecurring && formData.pattern_type === 'weekly' && formData.days_of_week.length === 0) {
+      showError('Please select at least one day of the week for weekly recurrence.');
+      return;
+    }
 
     try {
       const eventData: Omit<CalendarEvent, 'id'> = {
@@ -71,14 +102,56 @@ const CalendarManager: React.FC = () => {
         capacity: formData.capacity ? parseInt(formData.capacity) : null
       };
 
+      const baseId = editingEvent?.id?.includes('-') && editingEvent.id.split('-').length >= 8
+        ? editingEvent.id.split('-').slice(0, 5).join('-')
+        : editingEvent?.id;
+
+      if (formData.isRecurring && isSupabaseConfigured()) {
+        const patternData = {
+          pattern_type: formData.pattern_type,
+          interval: formData.interval,
+          days_of_week: formData.pattern_type === 'weekly' ? formData.days_of_week : null,
+          end_date: formData.end_date || null
+        };
+
+        if (editingEvent?.recurring_pattern_id) {
+          await supabase.from('calendar_recurring_patterns').update(patternData).eq('id', editingEvent.recurring_pattern_id);
+          await supabase.from('calendar_events').update({
+            title: eventData.title,
+            description: eventData.description,
+            start_time: eventData.start_time,
+            end_time: eventData.end_time,
+            class_type: eventData.class_type,
+            capacity: eventData.capacity
+          }).eq('id', baseId);
+          await logEventAction('update', baseId!, formData.title);
+          showSuccess('Recurring event updated successfully!');
+        } else {
+          const { data: pattern, error: patternErr } = await supabase
+            .from('calendar_recurring_patterns')
+            .insert(patternData)
+            .select('id')
+            .single();
+          if (patternErr) throw patternErr;
+          await supabase.from('calendar_events').insert({
+            ...eventData,
+            recurring_pattern_id: pattern.id
+          });
+          await logEventAction('create', pattern.id, formData.title);
+          showSuccess('Recurring event created successfully!');
+        }
+        await refreshEvents();
+        setIsModalOpen(false);
+        return;
+      }
+
       if (editingEvent) {
-        updateEvent(editingEvent.id, eventData);
-        await logEventAction('update', editingEvent.id, formData.title);
+        await updateEvent(baseId || editingEvent.id, eventData);
+        await logEventAction('update', baseId || editingEvent.id, formData.title);
         showSuccess('Event updated successfully!');
       } else {
-        const newId = `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        addEvent(eventData);
-        await logEventAction('create', newId, formData.title);
+        await addEvent(eventData);
+        await logEventAction('create', `event-${Date.now()}`, formData.title);
         showSuccess('Event added successfully!');
       }
 
@@ -90,7 +163,7 @@ const CalendarManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const event = events.find(e => e.id === id);
+    const event = baseEvents.find(e => e.id === id) || events.find(e => e.id === id);
     if (event && event.class_type === 'holiday') {
       showError('Holidays are automatically generated and cannot be deleted.');
       setDeleteConfirm({ isOpen: false, eventId: null });
@@ -114,9 +187,9 @@ const CalendarManager: React.FC = () => {
     { value: 'outreach', label: 'Outreach' }
   ];
 
-  // Filter to only show Community, Outreach, and Holiday events
   const allowedTypes = ['community', 'outreach', 'holiday'];
-  const filteredEvents = events
+  const tableEvents = baseEvents.length > 0 ? baseEvents : events.filter(e => !e.id.match(/-\d{4}-\d{2}-\d{2}$/));
+  const filteredEvents = tableEvents
     .filter(event => allowedTypes.includes(event.class_type?.toLowerCase()))
     .filter(event => {
       const matchesClassType = filterClassType === 'all' || event.class_type === filterClassType;
@@ -188,7 +261,7 @@ const CalendarManager: React.FC = () => {
                 {filteredEvents.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-neutral-500">
-                      {events.length === 0 
+                      {tableEvents.length === 0 
                         ? 'No events found. Create your first event to get started.'
                         : 'No events match your filters.'}
                     </td>
@@ -201,6 +274,7 @@ const CalendarManager: React.FC = () => {
                         <td className="p-4 font-bold text-sm dark:text-white">
                           {event.title}
                           {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto-generated)</span>}
+                          {event.recurring_pattern_id && <span className="ml-2 text-xs font-normal text-brand-red">(Recurring)</span>}
                         </td>
                         <td className="p-4">
                           <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
@@ -320,6 +394,80 @@ const CalendarManager: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {isSupabaseConfigured() && (
+                <div className="space-y-3 pt-4 border-t dark:border-neutral-700">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isRecurring}
+                      onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                      className="rounded border-neutral-300"
+                    />
+                    <span className="text-sm font-bold dark:text-neutral-300">Recurring event</span>
+                  </label>
+                  {formData.isRecurring && (
+                    <div className="space-y-3 pl-6 border-l-2 border-brand-red/30">
+                      <div>
+                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Repeats</label>
+                        <select
+                          value={formData.pattern_type}
+                          onChange={(e) => setFormData({ ...formData, pattern_type: e.target.value as 'daily' | 'weekly' | 'monthly' })}
+                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Every</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={formData.interval}
+                          onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value) || 1 })}
+                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                        />
+                        <p className="text-xs text-neutral-500 mt-1">
+                          {formData.interval} {formData.pattern_type === 'daily' ? 'day(s)' : formData.pattern_type === 'weekly' ? 'week(s)' : 'month(s)'}
+                        </p>
+                      </div>
+                      {formData.pattern_type === 'weekly' && (
+                        <div>
+                          <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Days</label>
+                          <div className="flex flex-wrap gap-2">
+                            {DAYS.map((day, i) => (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => toggleDayOfWeek(i)}
+                                className={`px-2 py-1 rounded text-sm font-bold ${
+                                  formData.days_of_week.includes(i)
+                                    ? 'bg-brand-red text-white'
+                                    : 'bg-neutral-200 dark:bg-neutral-700 dark:text-white'
+                                }`}
+                              >
+                                {day.slice(0, 3)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End date (optional)</label>
+                        <input
+                          type="date"
+                          value={formData.end_date}
+                          onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">
                 <button
                   type="button"

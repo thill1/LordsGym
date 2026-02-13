@@ -1,6 +1,14 @@
 // Calendar utility functions
 import React from 'react';
 
+export interface RecurringPattern {
+  id: string;
+  pattern_type: 'daily' | 'weekly' | 'monthly';
+  interval: number;
+  days_of_week: number[] | null;
+  end_date: string | null;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -11,6 +19,133 @@ export interface CalendarEvent {
   class_type: string;
   capacity: number | null;
   booked_count?: number;
+  recurring_pattern_id?: string | null;
+  /** Inline pattern when loaded from Supabase with join */
+  recurring_pattern?: RecurringPattern | null;
+}
+
+/**
+ * Expand recurring events into individual occurrences for a date range.
+ * Pattern days_of_week: 0=Sun, 1=Mon, ... 6=Sat (JS getDay()).
+ * @param getExceptions - optional function to get exception dates per event (by pattern id)
+ */
+export function expandRecurringEvents(
+  events: CalendarEvent[],
+  startDate: Date,
+  endDate: Date,
+  getExceptions: Set<string> | ((event: CalendarEvent) => Set<string>) = new Set()
+): CalendarEvent[] {
+  const getEx = (e: CalendarEvent) => (typeof getExceptions === 'function' ? getExceptions(e) : getExceptions);
+  const result: CalendarEvent[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  for (const event of events) {
+    if (!event.recurring_pattern_id || !event.recurring_pattern) {
+      result.push(event);
+      continue;
+    }
+    const pattern = event.recurring_pattern;
+    const templateStart = new Date(event.start_time);
+    const templateEnd = new Date(event.end_time);
+    const baseDate = new Date(templateStart);
+    baseDate.setHours(0, 0, 0, 0);
+    const patternEnd = pattern.end_date ? new Date(pattern.end_date) : null;
+    const interval = pattern.interval || 1;
+    const exceptionDates = getEx(event);
+
+    if (pattern.pattern_type === 'daily') {
+      let d = new Date(Math.max(baseDate.getTime(), start.getTime()));
+      const dayMs = 24 * 60 * 60 * 1000;
+      let dayOffset = Math.floor((d.getTime() - baseDate.getTime()) / dayMs);
+      if (dayOffset % interval !== 0) {
+        dayOffset = dayOffset + (interval - (dayOffset % interval));
+        d = new Date(baseDate.getTime() + dayOffset * dayMs);
+      }
+      while (d <= end) {
+        if ((patternEnd && d > patternEnd) || d < baseDate) {
+          d.setDate(d.getDate() + interval);
+          continue;
+        }
+        const dateStr = d.toISOString().split('T')[0];
+        if (!exceptionDates.has(dateStr)) {
+          const occStart = new Date(d);
+          occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
+          const occEnd = new Date(d);
+          occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+          result.push({
+            ...event,
+            id: `${event.id}-${dateStr}`,
+            start_time: occStart.toISOString(),
+            end_time: occEnd.toISOString(),
+          });
+        }
+        d.setDate(d.getDate() + interval);
+      }
+    } else if (pattern.pattern_type === 'weekly') {
+      const days = pattern.days_of_week || [];
+      if (days.length === 0) {
+        result.push(event);
+        continue;
+      }
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (d < baseDate || (patternEnd && d > patternEnd)) continue;
+        if (!days.includes(d.getDay())) continue;
+        const weeksSince = Math.floor((d.getTime() - baseDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+        if (weeksSince % interval !== 0) continue;
+        const dateStr = d.toISOString().split('T')[0];
+        if (exceptionDates.has(dateStr)) continue;
+        const occStart = new Date(d);
+        occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
+        const occEnd = new Date(d);
+        occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+        result.push({
+          ...event,
+          id: `${event.id}-${dateStr}`,
+          start_time: occStart.toISOString(),
+          end_time: occEnd.toISOString(),
+        });
+      }
+    } else if (pattern.pattern_type === 'monthly') {
+      const dayOfMonth = baseDate.getDate();
+      let y = start.getFullYear();
+      let m = start.getMonth();
+      const endY = end.getFullYear();
+      const endM = end.getMonth();
+      while (y < endY || (y === endY && m <= endM)) {
+        const lastDay = new Date(y, m + 1, 0).getDate();
+        const d = new Date(y, m, Math.min(dayOfMonth, lastDay));
+        if (d >= baseDate && d >= start && d <= end && (!patternEnd || d <= patternEnd)) {
+          const monthsSince = (y - baseDate.getFullYear()) * 12 + (m - baseDate.getMonth());
+          if (monthsSince % interval === 0) {
+            const dateStr = d.toISOString().split('T')[0];
+            if (!exceptionDates.has(dateStr)) {
+              const occStart = new Date(d);
+              occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
+              const occEnd = new Date(d);
+              occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+              result.push({
+                ...event,
+                id: `${event.id}-${dateStr}`,
+                start_time: occStart.toISOString(),
+                end_time: occEnd.toISOString(),
+              });
+            }
+          }
+        }
+        m++;
+        if (m > 11) {
+          m = 0;
+          y++;
+        }
+      }
+    } else {
+      result.push(event);
+    }
+  }
+  return result.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 }
 
 export type CalendarView = 'month' | 'week' | 'day' | 'list';

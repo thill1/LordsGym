@@ -36,10 +36,19 @@ function categorizeReferrer(referrer: string | null): string {
   }
 }
 
+function formatSessionDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
 const AnalyticsDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pageViews, setPageViews] = useState(0);
   const [uniqueVisitors, setUniqueVisitors] = useState(0);
+  const [bounceRate, setBounceRate] = useState<number | null>(null);
+  const [avgSessionSeconds, setAvgSessionSeconds] = useState<number | null>(null);
   const [topPages, setTopPages] = useState<{ path: string; title: string; views: number }[]>([]);
   const [trafficSources, setTrafficSources] = useState<{ source: string; count: number; percentage: number }[]>([]);
 
@@ -66,6 +75,8 @@ const AnalyticsDashboard: React.FC = () => {
         if (!views || views.length === 0) {
           setPageViews(0);
           setUniqueVisitors(0);
+          setBounceRate(null);
+          setAvgSessionSeconds(null);
           setTopPages([]);
           setTrafficSources([]);
           setIsLoading(false);
@@ -82,6 +93,30 @@ const AnalyticsDashboard: React.FC = () => {
           acc[src] = (acc[src] || 0) + 1;
           return acc;
         }, {});
+
+        // Bounce rate: sessions with exactly 1 page view
+        const viewsPerSession = views.reduce<Record<string, number>>((acc, v) => {
+          acc[v.session_id] = (acc[v.session_id] || 0) + 1;
+          return acc;
+        }, {});
+        const totalSessions = Object.keys(viewsPerSession).length;
+        const bouncedSessions = Object.values(viewsPerSession).filter((c) => c === 1).length;
+        const br = totalSessions > 0 ? Math.round((bouncedSessions / totalSessions) * 100) : 0;
+        setBounceRate(br);
+
+        // Avg session duration: avg of (max - min created_at) per session
+        const bySession = views.reduce<Record<string, { min: number; max: number }>>((acc, v) => {
+          const t = new Date(v.created_at).getTime();
+          if (!acc[v.session_id]) acc[v.session_id] = { min: t, max: t };
+          else {
+            acc[v.session_id].min = Math.min(acc[v.session_id].min, t);
+            acc[v.session_id].max = Math.max(acc[v.session_id].max, t);
+          }
+          return acc;
+        }, {});
+        const durations = Object.values(bySession).map(({ min, max }) => (max - min) / 1000);
+        const avgSec = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+        setAvgSessionSeconds(avgSec);
 
         setPageViews(views.length);
         setUniqueVisitors(uniqueSessions.size);
@@ -104,6 +139,8 @@ const AnalyticsDashboard: React.FC = () => {
         console.error('Error loading analytics:', error);
         setPageViews(0);
         setUniqueVisitors(0);
+        setBounceRate(null);
+        setAvgSessionSeconds(null);
         setTopPages([]);
         setTrafficSources([]);
       } finally {
@@ -150,15 +187,23 @@ const AnalyticsDashboard: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-amber-500">
-          <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Top Pages</h3>
-          <p className="text-4xl font-bold mt-2 dark:text-white">{topPages.length}</p>
-          <p className="text-xs text-neutral-400 mt-1">Pages with traffic</p>
+          <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Bounce Rate</h3>
+          <p className="text-4xl font-bold mt-2 dark:text-white">
+            {bounceRate !== null ? `${bounceRate}%` : '—'}
+          </p>
+          <p className="text-xs text-neutral-400 mt-1">
+            Sessions with 1 page only
+          </p>
         </div>
 
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-purple-500">
-          <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Sources</h3>
-          <p className="text-4xl font-bold mt-2 dark:text-white">{trafficSources.length}</p>
-          <p className="text-xs text-neutral-400 mt-1">Traffic sources</p>
+          <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Avg. Session</h3>
+          <p className="text-4xl font-bold mt-2 dark:text-white">
+            {avgSessionSeconds !== null ? formatSessionDuration(avgSessionSeconds) : '—'}
+          </p>
+          <p className="text-xs text-neutral-400 mt-1">
+            Time between first & last view
+          </p>
         </div>
       </div>
 
@@ -215,8 +260,9 @@ const AnalyticsDashboard: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-blue-700 dark:text-blue-300 text-sm">
-        <p><strong>Real traffic data.</strong> Page views are captured as visitors browse the site. Run the migration <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">005_page_views.sql</code> if the table does not exist.</p>
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-blue-700 dark:text-blue-300 text-sm space-y-2">
+        <p><strong>Real traffic data.</strong> All metrics are stored in the <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">page_views</code> table and computed from database records. Run the migration <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">005_page_views.sql</code> if the table does not exist.</p>
+        <p><strong>Phase 2 coming soon:</strong> Charts, member analytics, revenue tracking, attendance analytics, custom reports, export (CSV/PDF/Excel).</p>
       </div>
     </div>
   );

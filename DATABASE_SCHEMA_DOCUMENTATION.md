@@ -256,12 +256,30 @@ Admin action audit log.
 | entity_type | TEXT | 'product', 'page', 'event', 'user', etc. |
 | entity_id | TEXT | ID of affected entity |
 | description | TEXT | Human-readable description |
-| metadata | JSONB | Additional context |
+| metadata | JSONB | Additional context (includes user_email at insert) |
 | created_at | TIMESTAMPTZ | Creation timestamp |
 
 **Indexes**: `user_id`, `created_at`, `entity_type`
 
 **RLS**: Authenticated read/write
+
+---
+
+#### `page_views`
+Website traffic analytics (self-hosted, like Google Analytics).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| path | TEXT | Page path (e.g. `/`, `/membership`) |
+| referrer | TEXT | HTTP referrer (traffic source) |
+| session_id | TEXT | Visitor session identifier |
+| user_agent | TEXT | Browser user agent |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+
+**Indexes**: `created_at`, `path`, `session_id`
+
+**RLS**: Public insert (anyone can record views), authenticated read (admins view analytics)
 
 ---
 
@@ -317,6 +335,7 @@ auth.users (1) ──< (many) calendar_bookings
 pages (1) ──< (many) page_versions
 auth.users (1) ──< (many) page_versions
 auth.users (1) ──< (many) activity_logs
+page_views (standalone; traffic analytics)
 ```
 
 ## Indexes

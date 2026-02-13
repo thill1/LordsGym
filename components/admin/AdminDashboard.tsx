@@ -70,13 +70,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-brand-red">
           <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Total Members</h3>
           <p className="text-4xl font-bold mt-2 dark:text-white">—</p>
-          <p className="text-xs text-neutral-400 mt-1">Coming soon</p>
+          <p className="text-xs text-neutral-400 mt-1">Coming soon (Phase 2)</p>
         </div>
 
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
           <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Leads (This Week)</h3>
           <p className="text-4xl font-bold mt-2 dark:text-white">—</p>
-          <p className="text-xs text-neutral-400 mt-1">Coming soon</p>
+          <p className="text-xs text-neutral-400 mt-1">Coming soon (Phase 2)</p>
         </div>
 
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-emerald-500">
@@ -87,8 +87,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {
 
         <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border-l-4 border-amber-500">
           <h3 className="text-neutral-500 text-sm font-bold uppercase tracking-wider">Total Revenue</h3>
-          <p className="text-4xl font-bold mt-2 dark:text-white">$0</p>
-          <p className="text-xs text-neutral-400 mt-1">No orders table yet</p>
+          <p className="text-4xl font-bold mt-2 dark:text-white">—</p>
+          <p className="text-xs text-neutral-400 mt-1">Coming soon (Phase 2)</p>
         </div>
       </div>
 

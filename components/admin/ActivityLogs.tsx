@@ -87,7 +87,10 @@ const ActivityLogs: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold dark:text-white">Activity Logs</h1>
+        <div>
+          <h1 className="text-3xl font-bold dark:text-white">Activity Logs</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Export (CSV/PDF) — Coming soon (Phase 2)</p>
+        </div>
       </div>
 
       {/* Filters */}
