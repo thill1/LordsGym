@@ -32,7 +32,8 @@ const CalendarManager: React.FC = () => {
 
   useEffect(() => {
     refreshEvents();
-  }, [refreshEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh once on mount; refreshEvents changes every render and would cause infinite reload loop
+  }, []);
 
   const openModal = (event?: CalendarEvent) => {
     if (event && event.class_type === 'holiday') {
