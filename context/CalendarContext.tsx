@@ -51,11 +51,15 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [error, setError] = useState<string | null>(null);
 
   const loadEvents = async () => {
+    setIsLoading(true);
+    setError(null);
+    const currentYear = new Date().getFullYear();
+    const holidays = getHolidaysForRange(currentYear, currentYear + 1);
+    const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
+    const rangeStart = new Date(currentYear, 0, 1);
+    const rangeEnd = new Date(currentYear + 1, 11, 31);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      const currentYear = new Date().getFullYear();
-      const holidays = getHolidaysForRange(currentYear, currentYear + 1);
       let dbEvents: CalendarEvent[] = [];
       const exceptionDatesByPattern = new Map<string, Set<string>>();
 
@@ -101,9 +105,6 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
-      const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
-      const rangeStart = new Date(currentYear, 0, 1);
-      const rangeEnd = new Date(currentYear + 1, 11, 31);
       const expanded = expandRecurringEvents(
         dbEvents,
         rangeStart,
@@ -121,8 +122,10 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (err) {
       console.error('Error loading calendar events:', err);
       setError('Failed to load calendar events');
-      setEvents([]);
-      setBaseEvents([]);
+      const fallback = [...customEvents, ...holidays];
+      fallback.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      setEvents(fallback);
+      setBaseEvents(customEvents);
     } finally {
       setIsLoading(false);
     }
