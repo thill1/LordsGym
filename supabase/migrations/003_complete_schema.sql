@@ -423,3 +423,90 @@ VALUES (
   'Lord''s Gym - Train with Purpose, Live with Faith',
   'Our mission is to bring strength and healing to our community through fitness, Christ and service.'
 ) ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================================
+-- CALENDAR RECURRENCE MATERIALIZATION COMPATIBILITY
+-- ============================================================================
+
+ALTER TABLE calendar_recurring_patterns
+  ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT 'Recurring Event',
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS class_type TEXT NOT NULL DEFAULT 'community',
+  ADD COLUMN IF NOT EXISTS instructor_id UUID REFERENCES instructors(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS capacity INTEGER,
+  ADD COLUMN IF NOT EXISTS starts_on DATE NOT NULL DEFAULT CURRENT_DATE,
+  ADD COLUMN IF NOT EXISTS start_time_local TIME NOT NULL DEFAULT TIME '09:00:00',
+  ADD COLUMN IF NOT EXISTS end_time_local TIME NOT NULL DEFAULT TIME '10:00:00',
+  ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'America/Los_Angeles',
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS generation_horizon_days INTEGER NOT NULL DEFAULT 180,
+  ADD COLUMN IF NOT EXISTS last_materialized_at TIMESTAMPTZ;
+
+ALTER TABLE calendar_recurring_patterns
+  DROP CONSTRAINT IF EXISTS calendar_recurring_patterns_pattern_type_check;
+ALTER TABLE calendar_recurring_patterns
+  ADD CONSTRAINT calendar_recurring_patterns_pattern_type_check
+    CHECK (pattern_type IN ('daily', 'weekly', 'monthly'));
+
+ALTER TABLE calendar_recurring_patterns
+  DROP CONSTRAINT IF EXISTS calendar_recurring_patterns_interval_check;
+ALTER TABLE calendar_recurring_patterns
+  ADD CONSTRAINT calendar_recurring_patterns_interval_check
+    CHECK (interval >= 1);
+
+ALTER TABLE calendar_recurring_patterns
+  DROP CONSTRAINT IF EXISTS calendar_recurring_patterns_generation_horizon_days_check;
+ALTER TABLE calendar_recurring_patterns
+  ADD CONSTRAINT calendar_recurring_patterns_generation_horizon_days_check
+    CHECK (generation_horizon_days >= 1);
+
+ALTER TABLE calendar_recurring_patterns
+  DROP CONSTRAINT IF EXISTS calendar_recurring_patterns_time_window_check;
+ALTER TABLE calendar_recurring_patterns
+  ADD CONSTRAINT calendar_recurring_patterns_time_window_check
+    CHECK (end_time_local > start_time_local);
+
+ALTER TABLE calendar_events
+  ADD COLUMN IF NOT EXISTS occurrence_date DATE,
+  ADD COLUMN IF NOT EXISTS is_recurring_generated BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_recurring_preserved BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS recurring_series_id UUID;
+
+UPDATE calendar_events
+SET
+  occurrence_date = COALESCE(occurrence_date, (start_time AT TIME ZONE 'UTC')::DATE),
+  is_recurring_generated = CASE WHEN recurring_pattern_id IS NOT NULL THEN true ELSE is_recurring_generated END,
+  recurring_series_id = COALESCE(recurring_series_id, recurring_pattern_id)
+WHERE occurrence_date IS NULL
+   OR recurring_pattern_id IS NOT NULL
+   OR recurring_series_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_recurring_patterns_active ON calendar_recurring_patterns(is_active);
+CREATE INDEX IF NOT EXISTS idx_recurring_patterns_starts_on ON calendar_recurring_patterns(starts_on);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_occurrence_date ON calendar_events(occurrence_date);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_recurring_pattern_id_start_time ON calendar_events(recurring_pattern_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_recurring_series_id ON calendar_events(recurring_series_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_recurring_generated ON calendar_events(is_recurring_generated);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_calendar_events_generated_occurrence
+  ON calendar_events(recurring_pattern_id, occurrence_date)
+  WHERE recurring_pattern_id IS NOT NULL AND is_recurring_generated = true;
+
+-- Calendar bookings policy: user self-service + admin oversight.
+DROP POLICY IF EXISTS "Users can view their own bookings" ON calendar_bookings;
+CREATE POLICY "Users can view their own bookings" ON calendar_bookings
+FOR SELECT
+USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);
+
+DROP POLICY IF EXISTS "Users can update their own bookings" ON calendar_bookings;
+CREATE POLICY "Users can update their own bookings" ON calendar_bookings
+FOR UPDATE
+USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);

@@ -91,3 +91,22 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_recurring_generated ON calendar_e
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_calendar_events_generated_occurrence
   ON calendar_events(recurring_pattern_id, occurrence_date)
   WHERE recurring_pattern_id IS NOT NULL AND is_recurring_generated = true;
+
+-- Enable admin booking oversight while preserving member self-service.
+DROP POLICY IF EXISTS "Users can view their own bookings" ON calendar_bookings;
+CREATE POLICY "Users can view their own bookings" ON calendar_bookings
+FOR SELECT
+USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);
+
+DROP POLICY IF EXISTS "Users can update their own bookings" ON calendar_bookings;
+CREATE POLICY "Users can update their own bookings" ON calendar_bookings
+FOR UPDATE
+USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);

@@ -187,10 +187,18 @@ CREATE POLICY "Calendar events are editable by authenticated users" ON calendar_
 CREATE POLICY "Recurring patterns are viewable by authenticated users" ON calendar_recurring_patterns FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Recurring patterns are editable by authenticated users" ON calendar_recurring_patterns FOR ALL USING (auth.role() = 'authenticated');
 
--- Calendar bookings: Users can see their own, authenticated can create
-CREATE POLICY "Users can view their own bookings" ON calendar_bookings FOR SELECT USING (auth.uid() = user_id);
+-- Calendar bookings: Users can see their own, admins can oversee all
+CREATE POLICY "Users can view their own bookings" ON calendar_bookings FOR SELECT USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);
 CREATE POLICY "Authenticated users can create bookings" ON calendar_bookings FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Users can update their own bookings" ON calendar_bookings FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own bookings" ON calendar_bookings FOR UPDATE USING (
+  auth.uid() = user_id
+  OR auth.role() = 'service_role'
+  OR COALESCE(auth.jwt() -> 'user_metadata' ->> 'role', '') = 'admin'
+);
 CREATE POLICY "Users can delete their own bookings" ON calendar_bookings FOR DELETE USING (auth.uid() = user_id);
 
 -- Function to update updated_at timestamp
@@ -232,3 +240,27 @@ VALUES (
   '{"headline": "TRAIN WITH PURPOSE.\\nLIVE WITH FAITH.", "subheadline": "Our mission is to bring strength and healing to our community through fitness, Christ and service.", "ctaText": "Join Now", "backgroundImage": ""}'::jsonb,
   '{"stat1": "24/7", "label1": "Access", "stat2": "100%", "label2": "Commitment", "stat3": "1", "label3": "Community"}'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
+
+-- Recurrence materialization compatibility fields
+ALTER TABLE calendar_recurring_patterns
+  ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT 'Recurring Event',
+  ADD COLUMN IF NOT EXISTS description TEXT,
+  ADD COLUMN IF NOT EXISTS class_type TEXT NOT NULL DEFAULT 'community',
+  ADD COLUMN IF NOT EXISTS instructor_id UUID REFERENCES instructors(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS capacity INTEGER,
+  ADD COLUMN IF NOT EXISTS starts_on DATE NOT NULL DEFAULT CURRENT_DATE,
+  ADD COLUMN IF NOT EXISTS start_time_local TIME NOT NULL DEFAULT TIME '09:00:00',
+  ADD COLUMN IF NOT EXISTS end_time_local TIME NOT NULL DEFAULT TIME '10:00:00',
+  ADD COLUMN IF NOT EXISTS timezone TEXT NOT NULL DEFAULT 'America/Los_Angeles',
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS generation_horizon_days INTEGER NOT NULL DEFAULT 180,
+  ADD COLUMN IF NOT EXISTS last_materialized_at TIMESTAMPTZ;
+
+ALTER TABLE calendar_events
+  ADD COLUMN IF NOT EXISTS occurrence_date DATE,
+  ADD COLUMN IF NOT EXISTS is_recurring_generated BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_recurring_preserved BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS recurring_series_id UUID;
+
+CREATE INDEX IF NOT EXISTS idx_calendar_events_occurrence_date ON calendar_events(occurrence_date);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_recurring_pattern_id_start_time ON calendar_events(recurring_pattern_id, start_time);

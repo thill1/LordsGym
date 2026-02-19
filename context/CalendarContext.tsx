@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { CalendarEvent } from '../lib/calendar-utils';
+import { CalendarEvent, RecurringPattern } from '../lib/calendar-utils';
 import { getHolidaysForRange } from '../lib/us-holidays';
 import { safeGet, safeSet } from '../lib/localStorage';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -27,22 +27,68 @@ const sortByStartTime = (items: CalendarEvent[]): CalendarEvent[] => {
   });
 };
 
-function toCalendarEvent(row: Record<string, unknown>): CalendarEvent {
+interface RecurringPatternJoinRow {
+  id: string;
+  pattern_type: string;
+  interval: number;
+  days_of_week: number[] | null;
+  end_date: string | null;
+}
+
+interface CalendarEventJoinRow {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  instructor_id: string | null;
+  class_type: string;
+  capacity: number | null;
+  recurring_pattern_id: string | null;
+  occurrence_date: string | null;
+  is_recurring_generated: boolean;
+  is_recurring_preserved: boolean;
+  recurring_series_id: string | null;
+  recurring_pattern?: RecurringPatternJoinRow | RecurringPatternJoinRow[] | null;
+}
+
+const toRecurringPattern = (
+  row: RecurringPatternJoinRow | RecurringPatternJoinRow[] | null | undefined
+): RecurringPattern | null => {
+  const patternRow = Array.isArray(row) ? row[0] : row;
+  if (!patternRow) return null;
+
+  const patternType = patternRow.pattern_type;
+  if (patternType !== 'daily' && patternType !== 'weekly' && patternType !== 'monthly') {
+    return null;
+  }
+
   return {
-    id: row.id as string,
-    title: row.title as string,
-    description: (row.description as string) || null,
-    start_time: row.start_time as string,
-    end_time: row.end_time as string,
-    instructor_id: (row.instructor_id as string) || null,
-    class_type: row.class_type as string,
-    capacity: (row.capacity as number) ?? null,
-    booked_count: (row.booked_count as number | undefined) ?? 0,
-    recurring_pattern_id: (row.recurring_pattern_id as string) || null,
-    occurrence_date: (row.occurrence_date as string) || null,
-    is_recurring_generated: (row.is_recurring_generated as boolean) || false,
-    is_recurring_preserved: (row.is_recurring_preserved as boolean) || false,
-    recurring_series_id: (row.recurring_series_id as string) || null,
+    id: patternRow.id,
+    pattern_type: patternType,
+    interval: patternRow.interval,
+    days_of_week: patternRow.days_of_week,
+    end_date: patternRow.end_date
+  };
+};
+
+function toCalendarEvent(row: CalendarEventJoinRow): CalendarEvent {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description || null,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    instructor_id: row.instructor_id || null,
+    class_type: row.class_type,
+    capacity: row.capacity ?? null,
+    booked_count: 0,
+    recurring_pattern_id: row.recurring_pattern_id || null,
+    occurrence_date: row.occurrence_date || null,
+    is_recurring_generated: row.is_recurring_generated || false,
+    is_recurring_preserved: row.is_recurring_preserved || false,
+    recurring_series_id: row.recurring_series_id || null,
+    recurring_pattern: toRecurringPattern(row.recurring_pattern)
   };
 }
 
@@ -63,13 +109,12 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const loadSupabaseEvents = useCallback(async (): Promise<CalendarEvent[]> => {
     const { data: eventRows, error: eventsError } = await supabase
       .from('calendar_events')
-      .select('id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id, occurrence_date, is_recurring_generated, is_recurring_preserved, recurring_series_id')
-      .in('class_type', ['community', 'outreach', 'fundraisers', 'self_help'])
+      .select('id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id, occurrence_date, is_recurring_generated, is_recurring_preserved, recurring_series_id, recurring_pattern:calendar_recurring_patterns(id, pattern_type, interval, days_of_week, end_date)')
       .order('start_time', { ascending: true });
 
     if (eventsError) throw eventsError;
 
-    const eventsFromDb = (eventRows ?? []).map((row) => toCalendarEvent(row as unknown as Record<string, unknown>));
+    const eventsFromDb = (eventRows ?? []).map((row) => toCalendarEvent(row as CalendarEventJoinRow));
     if (eventsFromDb.length === 0) return [];
 
     const eventIds = eventsFromDb.map((event) => event.id);

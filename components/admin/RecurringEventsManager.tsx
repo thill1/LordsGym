@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { deleteRecurringPatternSafely, syncRecurringPattern } from '../../lib/recurring-events';
 import RecurringExceptionsManager from './RecurringExceptionsManager';
 
 interface RecurringPatternWithTitle {
@@ -9,10 +10,20 @@ interface RecurringPatternWithTitle {
   interval: number;
   days_of_week: number[] | null;
   end_date: string | null;
+  title: string;
+  class_type: string;
+  is_active: boolean;
+  starts_on: string;
+  start_time_local: string;
+  end_time_local: string;
   event_title?: string;
 }
 
-const RecurringEventsManager: React.FC = () => {
+interface RecurringEventsManagerProps {
+  onPatternsChanged?: () => Promise<void> | void;
+}
+
+const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatternsChanged }) => {
   const { showSuccess, showError } = useToast();
   const [patterns, setPatterns] = useState<RecurringPatternWithTitle[]>([]);
   const [expandedPatternId, setExpandedPatternId] = useState<string | null>(null);
@@ -30,7 +41,7 @@ const RecurringEventsManager: React.FC = () => {
     try {
       const { data: patternsData, error: patternsErr } = await supabase
         .from('calendar_recurring_patterns')
-        .select('*')
+        .select('id, pattern_type, interval, days_of_week, end_date, title, class_type, is_active, starts_on, start_time_local, end_time_local')
         .order('created_at', { ascending: false });
 
       if (patternsErr) throw patternsErr;
@@ -47,7 +58,7 @@ const RecurringEventsManager: React.FC = () => {
 
       const combined = (patternsData || []).map((p) => ({
         ...p,
-        event_title: titleByPattern.get(p.id) || '(No linked event)'
+        event_title: p.title || titleByPattern.get(p.id) || '(No linked event)'
       }));
       setPatterns(combined);
     } catch (error) {
@@ -62,17 +73,50 @@ const RecurringEventsManager: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('calendar_recurring_patterns')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      showSuccess('Recurring pattern deleted successfully!');
+      const result = await deleteRecurringPatternSafely(id);
+      showSuccess(
+        `Recurring pattern deleted. Removed ${result.deletedUnbookedCount} unbooked occurrences and preserved ${result.preservedBookedCount} booked occurrences.`
+      );
       await loadPatterns();
+      if (onPatternsChanged) await onPatternsChanged();
     } catch (error) {
       console.error('Error deleting pattern:', error);
       showError('Failed to delete recurring pattern.');
+    }
+  };
+
+  const handleToggleActive = async (pattern: RecurringPatternWithTitle) => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      const { error } = await supabase
+        .from('calendar_recurring_patterns')
+        .update({ is_active: !pattern.is_active })
+        .eq('id', pattern.id);
+
+      if (error) throw error;
+
+      const syncResult = await syncRecurringPattern(pattern.id);
+      showSuccess(
+        `${!pattern.is_active ? 'Activated' : 'Paused'} recurring series. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
+      );
+      await loadPatterns();
+      if (onPatternsChanged) await onPatternsChanged();
+    } catch (error) {
+      console.error('Error toggling recurring pattern:', error);
+      showError('Failed to update recurring pattern status.');
+    }
+  };
+
+  const handleResync = async (patternId: string) => {
+    try {
+      const result = await syncRecurringPattern(patternId);
+      showSuccess(`Re-synced pattern: ${result.generatedCount} generated, ${result.deletedUnbookedCount} replaced, ${result.preservedBookedCount} preserved.`);
+      await loadPatterns();
+      if (onPatternsChanged) await onPatternsChanged();
+    } catch (error) {
+      console.error('Error syncing recurring pattern:', error);
+      showError('Failed to sync recurring pattern.');
     }
   };
 
@@ -83,7 +127,7 @@ const RecurringEventsManager: React.FC = () => {
       <div>
         <h3 className="text-lg font-bold dark:text-white">Manage Recurring Event Exceptions</h3>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-          Skip specific dates for recurring events. Create recurring events in the Events tab.
+          Pause, re-sync, delete, or add exception dates for recurring series. Create recurring events in the Events tab.
         </p>
       </div>
 
@@ -108,8 +152,24 @@ const RecurringEventsManager: React.FC = () => {
                       <span> — Days: {pattern.days_of_week.map((d) => DAYS[d]).join(', ')}</span>
                     )}
                   </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    Starts: {pattern.starts_on} at {pattern.start_time_local} • {pattern.class_type}
+                    {!pattern.is_active && <span className="ml-2 text-amber-600 dark:text-amber-400 font-bold">(Paused)</span>}
+                  </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap justify-end">
+                  <button
+                    onClick={() => handleToggleActive(pattern)}
+                    className="text-xs font-bold text-amber-600 hover:text-amber-700"
+                  >
+                    {pattern.is_active ? 'Pause' : 'Activate'}
+                  </button>
+                  <button
+                    onClick={() => handleResync(pattern.id)}
+                    className="text-xs font-bold text-brand-charcoal dark:text-white hover:text-brand-red"
+                  >
+                    Re-sync
+                  </button>
                   <button
                     onClick={() => setExpandedPatternId(expandedPatternId === pattern.id ? null : pattern.id)}
                     className="text-brand-red hover:text-red-700 text-xs font-bold"
@@ -129,6 +189,10 @@ const RecurringEventsManager: React.FC = () => {
                   <RecurringExceptionsManager
                     patternId={pattern.id}
                     patternName={pattern.event_title || `${pattern.pattern_type} (every ${pattern.interval})`}
+                    onChanged={async () => {
+                      await loadPatterns();
+                      if (onPatternsChanged) await onPatternsChanged();
+                    }}
                   />
                 </div>
               )}

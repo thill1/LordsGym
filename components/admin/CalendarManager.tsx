@@ -1,78 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
 import { CalendarEvent, formatClassType } from '../../lib/calendar-utils';
 import { logEventAction } from '../../lib/activity-logger';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { syncRecurringPattern } from '../../lib/recurring-events';
 import ConfirmDialog from '../ConfirmDialog';
+import RecurringEventsManager from './RecurringEventsManager';
+import InstructorsManager from './InstructorsManager';
+import BookingOversightManager from './BookingOversightManager';
+
+type CalendarTab = 'events' | 'recurring' | 'instructors' | 'bookings';
+
+interface Instructor {
+  id: string;
+  name: string;
+}
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const emptyForm = {
+  title: '',
+  description: '',
+  start_time: '',
+  end_time: '',
+  class_type: 'community' as 'community' | 'outreach' | 'fundraisers' | 'self_help',
+  capacity: '',
+  instructor_id: '',
+  isRecurring: false,
+  pattern_type: 'weekly' as 'daily' | 'weekly' | 'monthly',
+  interval: 1,
+  days_of_week: [] as number[],
+  end_date: ''
+};
 
 const CalendarManager: React.FC = () => {
   const { showSuccess, showError } = useToast();
   const { events, baseEvents, isLoading, addEvent, updateEvent, deleteEvent, refreshEvents } = useCalendar();
+
+  const [activeTab, setActiveTab] = useState<CalendarTab>('events');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; eventId: string | null }>({ isOpen: false, eventId: null });
   const [filterClassType, setFilterClassType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    start_time: '',
-    end_time: '',
-    class_type: 'community' as 'community' | 'outreach' | 'fundraisers' | 'self_help',
-    capacity: '',
-    isRecurring: false,
-    pattern_type: 'weekly' as 'daily' | 'weekly' | 'monthly',
-    interval: 1,
-    days_of_week: [] as number[],
-    end_date: ''
-  });
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
     refreshEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh once on mount; refreshEvents changes every render and would cause infinite reload loop
+    loadInstructors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
   }, []);
 
-  const openModal = (event?: CalendarEvent) => {
-    if (event && event.class_type === 'holiday') {
-      showError('Holidays are automatically generated and cannot be edited.');
+  const loadInstructors = async () => {
+    if (!isSupabaseConfigured()) {
+      setInstructors([]);
       return;
     }
 
-    if (event) {
-      setEditingEvent(event);
-      setFormData({
-        title: event.title,
-        description: event.description || '',
-        start_time: event.start_time.slice(0, 16),
-        end_time: event.end_time.slice(0, 16),
-        class_type: event.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help',
-        capacity: event.capacity?.toString() || '',
-        isRecurring: !!event.recurring_pattern_id,
-        pattern_type: (event.recurring_pattern?.pattern_type as 'daily' | 'weekly' | 'monthly') || 'weekly',
-        interval: event.recurring_pattern?.interval || 1,
-        days_of_week: event.recurring_pattern?.days_of_week || [],
-        end_date: event.recurring_pattern?.end_date?.slice(0, 10) || ''
-      });
-    } else {
-      setEditingEvent(null);
-      setFormData({
-        title: '',
-        description: '',
-        start_time: '',
-        end_time: '',
-        class_type: 'community',
-        capacity: '',
-        isRecurring: false,
-        pattern_type: 'weekly',
-        interval: 1,
-        days_of_week: [],
-        end_date: ''
-      });
+    try {
+      const { data, error } = await supabase
+        .from('instructors')
+        .select('id, name')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      setInstructors(data || []);
+    } catch (error) {
+      console.error('Error loading instructors:', error);
     }
-    setIsModalOpen(true);
+  };
+
+  const normalizeTimePart = (dateTime: string): string => {
+    const part = dateTime.split('T')[1] || '00:00';
+    return part.length === 5 ? `${part}:00` : part;
   };
 
   const toggleDayOfWeek = (day: number) => {
@@ -84,6 +85,92 @@ const CalendarManager: React.FC = () => {
     }));
   };
 
+  const openModal = async (event?: CalendarEvent) => {
+    if (event && event.class_type === 'holiday') {
+      showError('Holidays are automatically generated and cannot be edited.');
+      return;
+    }
+
+    if (!event) {
+      setEditingEvent(null);
+      setFormData(emptyForm);
+      setIsModalOpen(true);
+      return;
+    }
+
+    setEditingEvent(event);
+    setFormData({
+      title: event.title,
+      description: event.description || '',
+      start_time: event.start_time.slice(0, 16),
+      end_time: event.end_time.slice(0, 16),
+      class_type: event.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help',
+      capacity: event.capacity?.toString() || '',
+      instructor_id: event.instructor_id || '',
+      isRecurring: !!event.recurring_pattern_id,
+      pattern_type: 'weekly',
+      interval: 1,
+      days_of_week: [],
+      end_date: ''
+    });
+    setIsModalOpen(true);
+
+    if (!event.recurring_pattern_id || !isSupabaseConfigured()) {
+      return;
+    }
+
+    try {
+      const { data: pattern, error } = await supabase
+        .from('calendar_recurring_patterns')
+        .select('pattern_type, interval, days_of_week, end_date')
+        .eq('id', event.recurring_pattern_id)
+        .single();
+      if (error) throw error;
+
+      setFormData((prev) => ({
+        ...prev,
+        isRecurring: true,
+        pattern_type: (pattern.pattern_type as 'daily' | 'weekly' | 'monthly') || 'weekly',
+        interval: pattern.interval || 1,
+        days_of_week: pattern.days_of_week || [],
+        end_date: pattern.end_date ? pattern.end_date.slice(0, 10) : ''
+      }));
+    } catch (error) {
+      console.error('Error loading recurring pattern details:', error);
+    }
+  };
+
+  const getBookedCount = async (eventId: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from('calendar_bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .in('status', ['confirmed', 'waitlist']);
+
+    if (error) throw error;
+    return count || 0;
+  };
+
+  const removeGeneratedOccurrence = async (patternId: string, occurrenceDate: string) => {
+    const { data, error } = await supabase
+      .from('calendar_events')
+      .select('id')
+      .eq('recurring_pattern_id', patternId)
+      .eq('occurrence_date', occurrenceDate)
+      .eq('is_recurring_generated', true);
+
+    if (error) throw error;
+    const ids = (data || []).map((row) => row.id);
+    if (ids.length === 0) return;
+
+    const { error: delError } = await supabase
+      .from('calendar_events')
+      .delete()
+      .in('id', ids);
+
+    if (delError) throw delError;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -92,63 +179,110 @@ const CalendarManager: React.FC = () => {
       return;
     }
 
+    if (!formData.start_time || !formData.end_time) {
+      showError('Start time and end time are required.');
+      return;
+    }
+
+    const startDate = new Date(formData.start_time);
+    const endDate = new Date(formData.end_time);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+      showError('End time must be after start time.');
+      return;
+    }
+
+    if (editingEvent?.recurring_pattern_id && !formData.isRecurring) {
+      showError('To remove recurrence, use the Recurring tab to pause or delete the series.');
+      return;
+    }
+
     try {
       const eventData: Omit<CalendarEvent, 'id'> = {
-        title: formData.title,
-        description: formData.description || null,
-        start_time: new Date(formData.start_time).toISOString(),
-        end_time: new Date(formData.end_time).toISOString(),
-        instructor_id: null,
+        title: formData.title.trim(),
+        description: formData.description.trim() || null,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        instructor_id: formData.instructor_id || null,
         class_type: formData.class_type,
-        capacity: formData.capacity ? parseInt(formData.capacity) : null
+        capacity: formData.capacity ? parseInt(formData.capacity, 10) : null
       };
 
-      const baseId = editingEvent?.id?.includes('-') && editingEvent.id.split('-').length >= 8
-        ? editingEvent.id.split('-').slice(0, 5).join('-')
-        : editingEvent?.id;
-
       if (formData.isRecurring && isSupabaseConfigured()) {
-        const patternData = {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles';
+        const startsOn = formData.start_time.split('T')[0];
+        const patternPayload = {
           pattern_type: formData.pattern_type,
-          interval: formData.interval,
+          interval: Math.max(1, formData.interval || 1),
           days_of_week: formData.pattern_type === 'weekly' ? formData.days_of_week : null,
-          end_date: formData.end_date || null
+          end_date: formData.end_date ? `${formData.end_date}T23:59:59.000Z` : null,
+          title: eventData.title,
+          description: eventData.description,
+          class_type: eventData.class_type,
+          instructor_id: eventData.instructor_id,
+          capacity: eventData.capacity,
+          starts_on: startsOn,
+          start_time_local: normalizeTimePart(formData.start_time),
+          end_time_local: normalizeTimePart(formData.end_time),
+          timezone,
+          is_active: true
         };
 
         if (editingEvent?.recurring_pattern_id) {
-          await supabase.from('calendar_recurring_patterns').update(patternData).eq('id', editingEvent.recurring_pattern_id);
-          await supabase.from('calendar_events').update({
-            title: eventData.title,
-            description: eventData.description,
-            start_time: eventData.start_time,
-            end_time: eventData.end_time,
-            class_type: eventData.class_type,
-            capacity: eventData.capacity
-          }).eq('id', baseId);
-          await logEventAction('update', baseId!, formData.title);
-          showSuccess('Recurring event updated successfully!');
+          const patternId = editingEvent.recurring_pattern_id;
+          const { error } = await supabase
+            .from('calendar_recurring_patterns')
+            .update(patternPayload)
+            .eq('id', patternId);
+          if (error) throw error;
+
+          const syncResult = await syncRecurringPattern(patternId);
+          await logEventAction('update', patternId, formData.title);
+          showSuccess(
+            `Recurring event synced. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
+          );
         } else {
           const { data: pattern, error: patternErr } = await supabase
             .from('calendar_recurring_patterns')
-            .insert(patternData)
+            .insert(patternPayload)
             .select('id')
             .single();
           if (patternErr) throw patternErr;
-          await supabase.from('calendar_events').insert({
-            ...eventData,
-            recurring_pattern_id: pattern.id
-          });
+
+          if (editingEvent) {
+            const occurrenceDate = startsOn;
+            const bookedCount = await getBookedCount(editingEvent.id);
+            if (bookedCount > 0) {
+              await updateEvent(editingEvent.id, {
+                ...eventData,
+                recurring_pattern_id: null,
+                recurring_series_id: pattern.id,
+                occurrence_date: occurrenceDate,
+                is_recurring_generated: false,
+                is_recurring_preserved: true
+              });
+            } else {
+              await deleteEvent(editingEvent.id);
+            }
+          }
+
+          const syncResult = await syncRecurringPattern(pattern.id);
+          if (editingEvent) {
+            await removeGeneratedOccurrence(pattern.id, startsOn);
+          }
           await logEventAction('create', pattern.id, formData.title);
-          showSuccess('Recurring event created successfully!');
+          showSuccess(
+            `Recurring event created. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
+          );
         }
+
         await refreshEvents();
         setIsModalOpen(false);
         return;
       }
 
       if (editingEvent) {
-        await updateEvent(baseId || editingEvent.id, eventData);
-        await logEventAction('update', baseId || editingEvent.id, formData.title);
+        await updateEvent(editingEvent.id, eventData);
+        await logEventAction('update', editingEvent.id, formData.title);
         showSuccess('Event updated successfully!');
       } else {
         await addEvent(eventData);
@@ -164,16 +298,24 @@ const CalendarManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const event = baseEvents.find(e => e.id === id) || events.find(e => e.id === id);
+    const event = baseEvents.find((item) => item.id === id) || events.find((item) => item.id === id);
     if (event && event.class_type === 'holiday') {
       showError('Holidays are automatically generated and cannot be deleted.');
       setDeleteConfirm({ isOpen: false, eventId: null });
       return;
     }
 
+    if (event?.recurring_pattern_id) {
+      showError('Delete recurring series from the Recurring tab to preserve booked occurrences safely.');
+      setDeleteConfirm({ isOpen: false, eventId: null });
+      return;
+    }
+
     try {
       await deleteEvent(id);
-      if (event) await logEventAction('delete', id, event.title);
+      if (event) {
+        await logEventAction('delete', id, event.title);
+      }
       showSuccess('Event deleted successfully!');
       setDeleteConfirm({ isOpen: false, eventId: null });
     } catch (error) {
@@ -190,13 +332,18 @@ const CalendarManager: React.FC = () => {
     { value: 'self_help', label: 'Self Help' }
   ];
 
+  const instructorNameById = useMemo(() => {
+    return new Map(instructors.map((item) => [item.id, item.name]));
+  }, [instructors]);
+
   const allowedTypes = ['community', 'outreach', 'fundraisers', 'self_help', 'holiday'];
-  const tableEvents = baseEvents.length > 0 ? baseEvents : events.filter(e => !e.id.match(/-\d{4}-\d{2}-\d{2}$/));
+  const tableEvents = (baseEvents.length > 0 ? baseEvents : events)
+    .filter((event) => !event.is_recurring_generated || event.is_recurring_preserved || event.class_type === 'holiday');
   const filteredEvents = tableEvents
-    .filter(event => allowedTypes.includes(event.class_type?.toLowerCase()))
-    .filter(event => {
+    .filter((event) => allowedTypes.includes(event.class_type?.toLowerCase()))
+    .filter((event) => {
       const matchesClassType = filterClassType === 'all' || event.class_type === filterClassType;
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch = searchQuery === '' ||
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesClassType && matchesSearch;
@@ -204,129 +351,188 @@ const CalendarManager: React.FC = () => {
 
   return (
     <div className="space-y-8 fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold dark:text-white">Calendar Management</h1>
-        <button
-          onClick={() => openModal()}
-          className="px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Add Event
-        </button>
-      </div>
-
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-        <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>Note:</strong> US Federal Holidays are automatically generated and displayed. You can add and edit Community, Outreach, Fundraisers, and Self Help events.
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          Manage single events, recurring schedules, instructors, and booking oversight.
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          placeholder="Search events..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
-        />
-        <select
-          value={filterClassType}
-          onChange={(e) => setFilterClassType(e.target.value)}
-          className="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
+      <div className="flex flex-wrap gap-2 border-b border-neutral-200 dark:border-neutral-700">
+        <button
+          onClick={() => setActiveTab('events')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === 'events'
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+          }`}
         >
-          <option value="all">All Types</option>
-          <option value="community">Community</option>
-          <option value="outreach">Outreach</option>
-          <option value="fundraisers">Fundraisers</option>
-          <option value="self_help">Self Help</option>
-          <option value="holiday">Holiday</option>
-        </select>
+          Events
+        </button>
+        <button
+          onClick={() => setActiveTab('recurring')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === 'recurring'
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+          }`}
+        >
+          Recurring
+        </button>
+        <button
+          onClick={() => setActiveTab('instructors')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === 'instructors'
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+          }`}
+        >
+          Instructors
+        </button>
+        <button
+          onClick={() => setActiveTab('bookings')}
+          className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
+            activeTab === 'bookings'
+              ? 'border-brand-red text-brand-red'
+              : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+          }`}
+        >
+          Bookings
+        </button>
       </div>
 
-      {isLoading ? (
-        <div className="bg-white dark:bg-neutral-800 p-12 rounded-lg shadow-sm text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-red mx-auto"></div>
-          <p className="mt-4 text-neutral-500 dark:text-neutral-400">Loading events...</p>
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
-                <tr>
-                  <th className="p-4 font-bold text-sm dark:text-white">Title</th>
-                  <th className="p-4 font-bold text-sm dark:text-white">Type</th>
-                  <th className="p-4 font-bold text-sm dark:text-white">Start Time</th>
-                  <th className="p-4 font-bold text-sm dark:text-white">End Time</th>
-                  <th className="p-4 font-bold text-sm dark:text-white">Capacity</th>
-                  <th className="p-4 font-bold text-sm text-right dark:text-white">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                {filteredEvents.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-neutral-500">
-                      {tableEvents.length === 0 
-                        ? 'No events found. Create your first event to get started.'
-                        : 'No events match your filters.'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredEvents.map(event => {
-                    const isHoliday = event.class_type === 'holiday';
-                    return (
-                      <tr key={event.id} className={`hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors ${isHoliday ? 'opacity-75' : ''}`}>
-                        <td className="p-4 font-bold text-sm dark:text-white">
-                          {event.title}
-                          {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto-generated)</span>}
-                          {event.recurring_pattern_id && <span className="ml-2 text-xs font-normal text-brand-red">(Recurring)</span>}
-                        </td>
-                        <td className="p-4">
-                          <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
-                            {formatClassType(event.class_type)}
-                          </span>
-                        </td>
-                        <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                          {new Date(event.start_time).toLocaleString()}
-                        </td>
-                        <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                          {new Date(event.end_time).toLocaleString()}
-                        </td>
-                        <td className="p-4 text-sm dark:text-white">
-                          {event.capacity || 'Unlimited'}
-                        </td>
-                        <td className="p-4 text-right space-x-3">
-                          {!isHoliday && (
-                            <>
-                              <button
-                                onClick={() => openModal(event)}
-                                className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })}
-                                className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                          {isHoliday && (
-                            <span className="text-xs text-neutral-400 italic">Read-only</span>
-                          )}
+      {activeTab === 'recurring' && <RecurringEventsManager onPatternsChanged={refreshEvents} />}
+      {activeTab === 'instructors' && <InstructorsManager />}
+      {activeTab === 'bookings' && <BookingOversightManager />}
+
+      {activeTab === 'events' && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg w-full sm:w-auto">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>Note:</strong> US Federal Holidays are auto-generated. Manage recurring series from the Recurring tab.
+              </p>
+            </div>
+            <button
+              onClick={() => openModal()}
+              className="px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Add Event
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
+            />
+            <select
+              value={filterClassType}
+              onChange={(e) => setFilterClassType(e.target.value)}
+              className="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
+            >
+              <option value="all">All Types</option>
+              <option value="community">Community</option>
+              <option value="outreach">Outreach</option>
+              <option value="fundraisers">Fundraisers</option>
+              <option value="self_help">Self Help</option>
+              <option value="holiday">Holiday</option>
+            </select>
+          </div>
+
+          {isLoading ? (
+            <div className="bg-white dark:bg-neutral-800 p-12 rounded-lg shadow-sm text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-red mx-auto"></div>
+              <p className="mt-4 text-neutral-500 dark:text-neutral-400">Loading events...</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+                    <tr>
+                      <th className="p-4 font-bold text-sm dark:text-white">Title</th>
+                      <th className="p-4 font-bold text-sm dark:text-white">Type</th>
+                      <th className="p-4 font-bold text-sm dark:text-white">Instructor</th>
+                      <th className="p-4 font-bold text-sm dark:text-white">Start Time</th>
+                      <th className="p-4 font-bold text-sm dark:text-white">End Time</th>
+                      <th className="p-4 font-bold text-sm dark:text-white">Capacity</th>
+                      <th className="p-4 font-bold text-sm text-right dark:text-white">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
+                    {filteredEvents.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-neutral-500">
+                          {tableEvents.length === 0
+                            ? 'No events found. Create your first event to get started.'
+                            : 'No events match your filters.'}
                         </td>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ) : (
+                      filteredEvents.map((event) => {
+                        const isHoliday = event.class_type === 'holiday';
+                        return (
+                          <tr key={event.id} className={`hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors ${isHoliday ? 'opacity-75' : ''}`}>
+                            <td className="p-4 font-bold text-sm dark:text-white">
+                              {event.title}
+                              {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto-generated)</span>}
+                              {event.recurring_pattern_id && <span className="ml-2 text-xs font-normal text-brand-red">(Recurring)</span>}
+                              {event.is_recurring_preserved && <span className="ml-2 text-xs font-normal text-amber-600">(Preserved)</span>}
+                            </td>
+                            <td className="p-4">
+                              <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
+                                {formatClassType(event.class_type)}
+                              </span>
+                            </td>
+                            <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                              {event.instructor_id ? instructorNameById.get(event.instructor_id) || 'Unknown' : '—'}
+                            </td>
+                            <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                              {new Date(event.start_time).toLocaleString()}
+                            </td>
+                            <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                              {new Date(event.end_time).toLocaleString()}
+                            </td>
+                            <td className="p-4 text-sm dark:text-white">
+                              {event.capacity || 'Unlimited'}
+                            </td>
+                            <td className="p-4 text-right space-x-3">
+                              {!isHoliday && (
+                                <>
+                                  <button
+                                    onClick={() => openModal(event)}
+                                    className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })}
+                                    className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                              {isHoliday && (
+                                <span className="text-xs text-neutral-400 italic">Read-only</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Event Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
@@ -344,6 +550,7 @@ const CalendarManager: React.FC = () => {
                   className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Description</label>
                 <textarea
@@ -353,6 +560,7 @@ const CalendarManager: React.FC = () => {
                   className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Start Time</label>
@@ -375,6 +583,7 @@ const CalendarManager: React.FC = () => {
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
@@ -383,7 +592,7 @@ const CalendarManager: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' | 'fundraisers' | 'self_help' })}
                     className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   >
-                    {classTypes.map(type => (
+                    {classTypes.map((type) => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </select>
@@ -398,6 +607,22 @@ const CalendarManager: React.FC = () => {
                     className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Instructor</label>
+                <select
+                  value={formData.instructor_id}
+                  onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
+                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                >
+                  <option value="">Unassigned</option>
+                  {instructors.map((instructor) => (
+                    <option key={instructor.id} value={instructor.id}>
+                      {instructor.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {isSupabaseConfigured() && (
@@ -431,24 +656,21 @@ const CalendarManager: React.FC = () => {
                           type="number"
                           min={1}
                           value={formData.interval}
-                          onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value) || 1 })}
+                          onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value, 10) || 1 })}
                           className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                         />
-                        <p className="text-xs text-neutral-500 mt-1">
-                          {formData.interval} {formData.pattern_type === 'daily' ? 'day(s)' : formData.pattern_type === 'weekly' ? 'week(s)' : 'month(s)'}
-                        </p>
                       </div>
                       {formData.pattern_type === 'weekly' && (
                         <div>
                           <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Days</label>
                           <div className="flex flex-wrap gap-2">
-                            {DAYS.map((day, i) => (
+                            {DAYS.map((day, index) => (
                               <button
                                 key={day}
                                 type="button"
-                                onClick={() => toggleDayOfWeek(i)}
+                                onClick={() => toggleDayOfWeek(index)}
                                 className={`px-2 py-1 rounded text-sm font-bold ${
-                                  formData.days_of_week.includes(i)
+                                  formData.days_of_week.includes(index)
                                     ? 'bg-brand-red text-white'
                                     : 'bg-neutral-200 dark:bg-neutral-700 dark:text-white'
                                 }`}
@@ -493,7 +715,6 @@ const CalendarManager: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
         title="Delete Event"

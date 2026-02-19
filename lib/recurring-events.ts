@@ -28,6 +28,17 @@ export interface RecurringException {
   reason: string | null;
 }
 
+interface RecurringTemplateEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  instructor_id: string | null;
+  class_type: string;
+  capacity: number | null;
+}
+
 export interface RecurrenceSyncResult {
   patternId: string;
   generatedCount: number;
@@ -70,8 +81,19 @@ const normalizeTime = (value: string): string => {
   return value.length === 5 ? `${value}:00` : value;
 };
 
-const combineDateAndTime = (dateKey: string, timeValue: string): Date =>
-  new Date(`${dateKey}T${normalizeTime(timeValue)}`);
+const combineDateAndTime = (dateKey: string, timeValue: string): Date => {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const [hours, minutes, seconds] = normalizeTime(timeValue).split(':').map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+};
+
+const getTimePartFromIso = (isoString: string): string => {
+  const date = new Date(isoString);
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+};
 
 const occurrenceDateFromEvent = (event: { occurrence_date: string | null; start_time: string }): string => {
   if (event.occurrence_date) return event.occurrence_date;
@@ -196,7 +218,11 @@ const getBookedEventIds = async (eventIds: string[]): Promise<Set<string>> => {
   return new Set((data ?? []).map((row) => row.event_id));
 };
 
-const fetchPatternWithExceptions = async (patternId: string): Promise<{ pattern: RecurringPatternDefinition; exceptions: RecurringException[] }> => {
+const fetchPatternWithExceptions = async (patternId: string): Promise<{
+  pattern: RecurringPatternDefinition;
+  exceptions: RecurringException[];
+  templateEvent: RecurringTemplateEvent | null;
+}> => {
   const { data: pattern, error: patternError } = await supabase
     .from('calendar_recurring_patterns')
     .select('*')
@@ -213,10 +239,59 @@ const fetchPatternWithExceptions = async (patternId: string): Promise<{ pattern:
 
   if (exceptionError) throw exceptionError;
 
+  const { data: templateEvents, error: templateError } = await supabase
+    .from('calendar_events')
+    .select('id, title, description, start_time, end_time, instructor_id, class_type, capacity, is_recurring_generated')
+    .eq('recurring_pattern_id', patternId)
+    .order('is_recurring_generated', { ascending: true })
+    .order('start_time', { ascending: true })
+    .limit(1);
+
+  if (templateError) throw templateError;
+
+  const templateEvent = templateEvents && templateEvents.length > 0
+    ? (templateEvents[0] as RecurringTemplateEvent)
+    : null;
+
   return {
     pattern: pattern as RecurringPatternDefinition,
-    exceptions: (exceptions ?? []) as RecurringException[]
+    exceptions: (exceptions ?? []) as RecurringException[],
+    templateEvent
   };
+};
+
+const buildEffectivePatternDefinition = (
+  pattern: RecurringPatternDefinition,
+  templateEvent: RecurringTemplateEvent | null
+): RecurringPatternDefinition => {
+  if (!templateEvent) return pattern;
+
+  return {
+    ...pattern,
+    title: templateEvent.title || pattern.title || 'Recurring Event',
+    description: templateEvent.description ?? pattern.description ?? null,
+    class_type: templateEvent.class_type || pattern.class_type || 'community',
+    instructor_id: templateEvent.instructor_id ?? pattern.instructor_id ?? null,
+    capacity: templateEvent.capacity ?? pattern.capacity ?? null,
+    starts_on: toDateKey(new Date(templateEvent.start_time)),
+    start_time_local: getTimePartFromIso(templateEvent.start_time),
+    end_time_local: getTimePartFromIso(templateEvent.end_time)
+  };
+};
+
+const getPatternEventsInWindow = async (patternId: string, windowStart: Date, windowEnd: Date) => {
+  const windowEndInclusive = new Date(windowEnd);
+  windowEndInclusive.setUTCHours(23, 59, 59, 999);
+
+  const { data, error } = await supabase
+    .from('calendar_events')
+    .select('id, start_time, occurrence_date, recurring_pattern_id, is_recurring_generated')
+    .eq('recurring_pattern_id', patternId)
+    .gte('start_time', windowStart.toISOString())
+    .lte('start_time', windowEndInclusive.toISOString());
+
+  if (error) throw error;
+  return data ?? [];
 };
 
 export const syncRecurringPattern = async (
@@ -230,7 +305,8 @@ export const syncRecurringPattern = async (
     throw new Error('Supabase is not configured');
   }
 
-  const { pattern, exceptions } = await fetchPatternWithExceptions(patternId);
+  const { pattern, exceptions, templateEvent } = await fetchPatternWithExceptions(patternId);
+  const effectivePattern = buildEffectivePatternDefinition(pattern, templateEvent);
   const existingFutureEvents = await getFuturePatternEvents(patternId);
   const existingFutureEventIds = existingFutureEvents.map((event) => event.id);
   const bookedEventIds = await getBookedEventIds(existingFutureEventIds);
@@ -262,20 +338,22 @@ export const syncRecurringPattern = async (
   const exceptionDateSet = new Set(exceptions.map((entry) => entry.exception_date));
   const preservedDateSet = new Set(eventsToPreserve.map(occurrenceDateFromEvent));
 
-  const horizonDays = options?.futureDays ?? pattern.generation_horizon_days ?? DEFAULT_FUTURE_DAYS;
+  const horizonDays = options?.futureDays ?? effectivePattern.generation_horizon_days ?? DEFAULT_FUTURE_DAYS;
   const pastDays = options?.pastDays ?? DEFAULT_PAST_DAYS;
   const now = atUtcMidnight(new Date());
   const windowStart = addDaysUtc(now, -Math.max(0, pastDays));
   const windowEnd = addDaysUtc(now, Math.max(1, horizonDays));
+  const existingWindowEvents = await getPatternEventsInWindow(patternId, windowStart, windowEnd);
+  const existingWindowDateSet = new Set(existingWindowEvents.map(occurrenceDateFromEvent));
 
-  const shouldGenerate = pattern.is_active;
+  const shouldGenerate = effectivePattern.is_active;
   const occurrenceDates = shouldGenerate
-    ? collectOccurrenceDates(pattern, windowStart, windowEnd, exceptionDateSet)
+    ? collectOccurrenceDates(effectivePattern, windowStart, windowEnd, exceptionDateSet)
     : [];
 
   const newEventPayload = occurrenceDates
-    .filter((dateKey) => !preservedDateSet.has(dateKey))
-    .map((dateKey) => buildOccurrencePayload(pattern, dateKey));
+    .filter((dateKey) => !preservedDateSet.has(dateKey) && !existingWindowDateSet.has(dateKey))
+    .map((dateKey) => buildOccurrencePayload(effectivePattern, dateKey));
 
   if (newEventPayload.length > 0) {
     const { error } = await supabase
@@ -285,9 +363,22 @@ export const syncRecurringPattern = async (
     if (error) throw error;
   }
 
+  const metadataPatch: Record<string, string | number | boolean | null> = {};
+  if (pattern.title !== effectivePattern.title) metadataPatch.title = effectivePattern.title;
+  if (pattern.description !== effectivePattern.description) metadataPatch.description = effectivePattern.description;
+  if (pattern.class_type !== effectivePattern.class_type) metadataPatch.class_type = effectivePattern.class_type;
+  if (pattern.instructor_id !== effectivePattern.instructor_id) metadataPatch.instructor_id = effectivePattern.instructor_id;
+  if (pattern.capacity !== effectivePattern.capacity) metadataPatch.capacity = effectivePattern.capacity;
+  if (pattern.starts_on !== effectivePattern.starts_on) metadataPatch.starts_on = effectivePattern.starts_on;
+  if (pattern.start_time_local !== effectivePattern.start_time_local) metadataPatch.start_time_local = effectivePattern.start_time_local;
+  if (pattern.end_time_local !== effectivePattern.end_time_local) metadataPatch.end_time_local = effectivePattern.end_time_local;
+
   const { error: materializeUpdateError } = await supabase
     .from('calendar_recurring_patterns')
-    .update({ last_materialized_at: new Date().toISOString() })
+    .update({
+      ...metadataPatch,
+      last_materialized_at: new Date().toISOString()
+    })
     .eq('id', patternId);
 
   if (materializeUpdateError) throw materializeUpdateError;

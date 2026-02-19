@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useToast } from '../../context/ToastContext';
+import { syncPatternAfterExceptionChange } from '../../lib/recurring-events';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
 
@@ -14,11 +15,13 @@ interface RecurringException {
 interface RecurringExceptionsManagerProps {
   patternId: string;
   patternName: string;
+  onChanged?: () => Promise<void> | void;
 }
 
 const RecurringExceptionsManager: React.FC<RecurringExceptionsManagerProps> = ({
   patternId,
-  patternName
+  patternName,
+  onChanged
 }) => {
   const { showSuccess, showError } = useToast();
   const [exceptions, setExceptions] = useState<RecurringException[]>([]);
@@ -65,11 +68,14 @@ const RecurringExceptionsManager: React.FC<RecurringExceptionsManagerProps> = ({
         });
 
       if (error) throw error;
+      const syncResult = await syncPatternAfterExceptionChange(patternId);
       showSuccess('Exception date added successfully!');
       setIsModalOpen(false);
       setExceptionDate('');
       setExceptionReason('');
       await loadExceptions();
+      if (onChanged) await onChanged();
+      showSuccess(`Recurring events re-synced (${syncResult.generatedCount} generated, ${syncResult.deletedUnbookedCount} replaced).`);
     } catch (error: any) {
       console.error('Error adding exception:', error);
       if (error.code === '23505') {
@@ -90,9 +96,12 @@ const RecurringExceptionsManager: React.FC<RecurringExceptionsManagerProps> = ({
         .eq('id', id);
 
       if (error) throw error;
+      const syncResult = await syncPatternAfterExceptionChange(patternId);
       showSuccess('Exception removed successfully!');
       setDeleteConfirm({ isOpen: false, exceptionId: null });
       await loadExceptions();
+      if (onChanged) await onChanged();
+      showSuccess(`Recurring events re-synced (${syncResult.generatedCount} generated, ${syncResult.deletedUnbookedCount} replaced).`);
     } catch (error) {
       console.error('Error deleting exception:', error);
       showError('Failed to delete exception.');
