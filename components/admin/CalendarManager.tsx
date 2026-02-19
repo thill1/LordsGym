@@ -210,11 +210,15 @@ const CalendarManager: React.FC = () => {
       if (formData.isRecurring && isSupabaseConfigured()) {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles';
         const startsOn = formData.start_time.split('T')[0];
-        const patternPayload = {
+
+        const basePayload = {
           pattern_type: formData.pattern_type,
           interval: Math.max(1, formData.interval || 1),
           days_of_week: formData.pattern_type === 'weekly' ? formData.days_of_week.map(toDbDay) : null,
           end_date: formData.end_date ? `${formData.end_date}T23:59:59.000Z` : null,
+        };
+
+        const extendedFields = {
           title: eventData.title,
           description: eventData.description,
           class_type: eventData.class_type,
@@ -227,26 +231,62 @@ const CalendarManager: React.FC = () => {
           is_active: true
         };
 
-        if (editingEvent?.recurring_pattern_id) {
-          const patternId = editingEvent.recurring_pattern_id;
-          const { error } = await supabase
+        const insertPattern = async (): Promise<string> => {
+          const fullPayload = { ...basePayload, ...extendedFields };
+          const { data, error } = await supabase
             .from('calendar_recurring_patterns')
-            .update(patternPayload)
-            .eq('id', patternId);
-          if (error) throw error;
-
-          const syncResult = await syncRecurringPattern(patternId);
-          await logEventAction('update', patternId, formData.title);
-          showSuccess(
-            `Recurring event synced. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
-          );
-        } else {
-          const { data: pattern, error: patternErr } = await supabase
-            .from('calendar_recurring_patterns')
-            .insert(patternPayload)
+            .insert(fullPayload)
             .select('id')
             .single();
-          if (patternErr) throw patternErr;
+          if (!error) return data.id;
+
+          if (error.code === 'PGRST204' || error.message?.includes('column')) {
+            const { data: fallback, error: fallbackErr } = await supabase
+              .from('calendar_recurring_patterns')
+              .insert(basePayload)
+              .select('id')
+              .single();
+            if (fallbackErr) throw fallbackErr;
+            return fallback.id;
+          }
+          throw error;
+        };
+
+        const updatePattern = async (patternId: string): Promise<void> => {
+          const fullPayload = { ...basePayload, ...extendedFields };
+          const { error } = await supabase
+            .from('calendar_recurring_patterns')
+            .update(fullPayload)
+            .eq('id', patternId);
+          if (!error) return;
+
+          if (error.code === 'PGRST204' || error.message?.includes('column')) {
+            const { error: fallbackErr } = await supabase
+              .from('calendar_recurring_patterns')
+              .update(basePayload)
+              .eq('id', patternId);
+            if (fallbackErr) throw fallbackErr;
+            return;
+          }
+          throw error;
+        };
+
+        if (editingEvent?.recurring_pattern_id) {
+          const patternId = editingEvent.recurring_pattern_id;
+          await updatePattern(patternId);
+
+          try {
+            const syncResult = await syncRecurringPattern(patternId);
+            showSuccess(
+              `Recurring event synced. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
+            );
+          } catch {
+            await addEvent({ ...eventData, recurring_pattern_id: patternId });
+            showSuccess('Recurring pattern updated. Event created (run DB migration for full sync).');
+          }
+          await logEventAction('update', patternId, formData.title);
+        } else {
+          const patternId = await insertPattern();
 
           if (editingEvent) {
             const occurrenceDate = startsOn;
@@ -255,7 +295,7 @@ const CalendarManager: React.FC = () => {
               await updateEvent(editingEvent.id, {
                 ...eventData,
                 recurring_pattern_id: null,
-                recurring_series_id: pattern.id,
+                recurring_series_id: patternId,
                 occurrence_date: occurrenceDate,
                 is_recurring_generated: false,
                 is_recurring_preserved: true
@@ -265,14 +305,19 @@ const CalendarManager: React.FC = () => {
             }
           }
 
-          const syncResult = await syncRecurringPattern(pattern.id);
-          if (editingEvent) {
-            await removeGeneratedOccurrence(pattern.id, startsOn);
+          try {
+            const syncResult = await syncRecurringPattern(patternId);
+            if (editingEvent) {
+              await removeGeneratedOccurrence(patternId, startsOn);
+            }
+            showSuccess(
+              `Recurring event created. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
+            );
+          } catch {
+            await addEvent({ ...eventData, recurring_pattern_id: patternId });
+            showSuccess('Recurring pattern created. First event added (run DB migration for full sync).');
           }
-          await logEventAction('create', pattern.id, formData.title);
-          showSuccess(
-            `Recurring event created. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
-          );
+          await logEventAction('create', patternId, formData.title);
         }
 
         await refreshEvents();

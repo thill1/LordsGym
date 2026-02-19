@@ -102,7 +102,8 @@ const occurrenceDateFromEvent = (event: { occurrence_date: string | null; start_
 
 const uniqueSortedDays = (days: number[] | null, fallbackDay: number): number[] => {
   const values = days && days.length > 0 ? days : [fallbackDay];
-  return [...new Set(values.filter((day) => day >= 0 && day <= 6))].sort((a, b) => a - b);
+  const jsDays = values.map((d) => (d === 7 ? 0 : d));
+  return [...new Set(jsDays.filter((day) => day >= 0 && day <= 6))].sort((a, b) => a - b);
 };
 
 const calculateMonthDifference = (from: Date, to: Date): number => {
