@@ -49,10 +49,10 @@ const Calendar: React.FC = () => {
 
   return (
     <>
-      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[45vh] md:min-h-[55vh] flex items-center justify-center text-center pt-32 pb-12">
-        <div className="relative z-10 max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Lord's Gym <span className="text-brand-red">Calendar</span></h1>
-          <p className="text-lg md:text-xl text-white/90 drop-shadow-md">
+      <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-16">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 fade-in">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-lg font-display">Lord's Gym <span className="text-brand-red">Calendar</span></h1>
+          <p className="text-xl md:text-2xl text-white/90 drop-shadow-md">
             View our Community, Outreach, and Holiday events.
           </p>
         </div>
