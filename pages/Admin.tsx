@@ -305,172 +305,145 @@ const Admin: React.FC = () => {
     const displayAnonKeyConfig = showAnonKeyConfig || (needsSupabaseConfigHelp && !configSaved);
 
     return (
-      <div className="min-h-screen bg-brand-charcoal">
-        <div className="mx-auto w-full max-w-6xl px-6 py-12">
-          <div className="grid items-center gap-10 md:grid-cols-5">
-            <div className="md:col-span-2 text-white">
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-red">Admin Access</p>
-              <h1 className="mt-3 font-display text-4xl font-bold leading-tight">
-                Lord&apos;s Gym
-                <span className="block text-neutral-200">Admin Portal</span>
-              </h1>
-              <p className="mt-4 text-sm text-neutral-300">
-                Sign in with your allowlisted Google account to access admin tools. Password sign-in is reserved for emergency recovery only.
+      <div className="min-h-screen bg-neutral-950 text-white">
+        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col lg:flex-row">
+          <section className="relative flex flex-1 overflow-hidden px-6 py-14 sm:px-10 lg:px-14">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-brand-red/20 blur-3xl" />
+              <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute bottom-0 left-1/4 h-56 w-56 rounded-full bg-brand-red/15 blur-3xl" />
+            </div>
+            <div className="relative z-10 my-auto max-w-xl">
+              <p className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-200">
+                Lord&apos;s Gym Admin
               </p>
-
-              <div className="mt-6 space-y-2 text-sm text-neutral-300">
-                <div className="flex gap-2">
-                  <span className="text-brand-red">•</span>
-                  <span>Normal access uses Google OAuth</span>
+              <h1 className="mt-5 text-4xl font-display font-bold leading-tight sm:text-5xl">
+                Command center for your gym operations.
+              </h1>
+              <p className="mt-4 text-base text-neutral-300 sm:text-lg">
+                Securely manage classes, content, storefront, media, and member-facing updates from one place.
+              </p>
+              <div className="mt-8 grid gap-3 text-sm sm:grid-cols-2">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="font-semibold text-white">Secure Access</p>
+                  <p className="mt-1 text-neutral-300">Google allowlist + break-glass fallback.</p>
                 </div>
-                <div className="flex gap-2">
-                  <span className="text-brand-red">•</span>
-                  <span>Accounts must be on the admin email allowlist</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-brand-red">•</span>
-                  <span>Emergency password sign-in is limited to the break-glass account</span>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="font-semibold text-white">Full Control</p>
+                  <p className="mt-1 text-neutral-300">Edit pages, store, calendar, and analytics.</p>
                 </div>
               </div>
-
-              <a
-                href="#/"
-                onClick={handleBackToSite}
-                className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-neutral-300 hover:text-white"
-              >
-                &larr; Back to Website
-              </a>
             </div>
+          </section>
 
-            <div className="md:col-span-3">
-              <div className="rounded-2xl bg-white p-6 shadow-2xl sm:p-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-display font-bold text-brand-charcoal">Sign in</h2>
-                  <p className="mt-1 text-sm text-neutral-500">Use your allowlisted Gmail account.</p>
-                </div>
+          <section className="flex w-full items-center justify-center px-6 pb-12 sm:px-10 lg:w-[480px] lg:pb-0 lg:pr-10">
+            <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 text-neutral-900 shadow-2xl sm:p-8">
+              <div className="mb-6 text-center">
+                <h2 className="text-3xl font-display font-bold text-brand-charcoal">Admin Portal</h2>
+                <p className="mt-2 text-sm text-neutral-500">Authorized personnel only.</p>
+              </div>
 
-                <div className="space-y-4">
-                  <Button fullWidth type="button" onClick={handleGoogleLogin} disabled={isLoading}>
-                    {isLoading ? (
-                      <span className="inline-flex items-center justify-center gap-2">
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                        Starting Google sign-in...
-                      </span>
-                    ) : (
-                      'Continue with Google'
+              <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                    <path
+                      fill="#EA4335"
+                      d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.8-5.5 3.8-3.3 0-6-2.8-6-6.2s2.7-6.2 6-6.2c1.9 0 3.2.8 3.9 1.5l2.7-2.7C16.9 2.7 14.7 1.8 12 1.8 6.9 1.8 2.8 6.2 2.8 11.7S6.9 21.6 12 21.6c6.9 0 9.1-4.9 9.1-7.4 0-.5-.1-.9-.1-1.3H12z"
+                    />
+                  </svg>
+                  {isLoading ? 'Starting Google sign-in...' : 'Continue with Google'}
+                </button>
+
+                <p className="text-center text-xs text-neutral-500">
+                  Sign in with an allowlisted Google account to access admin tools.
+                </p>
+
+                {effectiveError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-sm font-semibold text-red-700">{effectiveError}</p>
+                    {allowlistDenied && (
+                      <p className="mt-1 text-xs text-red-600">
+                        This account authenticated successfully, but it is not on the admin allowlist.
+                      </p>
                     )}
-                  </Button>
+                  </div>
+                )}
 
-                  {effectiveError && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                      <p className="text-sm font-bold text-red-700">{effectiveError}</p>
-                      {allowlistDenied && (
-                        <p className="mt-1 text-xs text-red-600">
-                          Google authenticated successfully, but admin access is blocked by the email allowlist.
-                        </p>
-                      )}
-                      {providerDisabled && (
-                        <p className="mt-1 text-xs text-red-600">
-                          Google OAuth must be enabled in Supabase (Authentication &rarr; Providers &rarr; Google).
-                        </p>
-                      )}
-                      {authErrorCode && (
-                        <p className="mt-2 text-[11px] font-mono text-red-700/80">
-                          code: {authErrorCode}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                <button
+                  type="button"
+                  className="w-full rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-left text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100"
+                  onClick={() => {
+                    setShowAnonKeyConfig((open) => !open);
+                    setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
+                  }}
+                >
+                  {displayAnonKeyConfig ? 'Hide Supabase key setup' : 'Having trouble signing in? Add Supabase anon key'}
+                </button>
 
-                  <details
-                    className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"
-                    open={displayAnonKeyConfig}
-                    onToggle={(e) => {
-                      const isOpen = (e.currentTarget as HTMLDetailsElement).open;
-                      setShowAnonKeyConfig(isOpen);
-                      if (isOpen) setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
-                    }}
+                {displayAnonKeyConfig && (
+                  <div className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <p className="text-sm font-bold text-amber-800">Add Supabase anon key (one-time)</p>
+                    <p className="text-xs text-amber-700">Supabase &rarr; Project &rarr; Settings &rarr; API &rarr; anon public</p>
+                    <input
+                      type="password"
+                      className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                      value={anonKeyInput}
+                      onChange={(e) => setAnonKeyInput(e.target.value)}
+                      placeholder="Paste anon key (eyJ...)"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSupabaseAnonKey(anonKeyInput);
+                        resetSupabaseClient();
+                        setConfigSaved(true);
+                        setError('');
+                        clearAuthError();
+                        setShowAnonKeyConfig(false);
+                      }}
+                    >
+                      Save & retry
+                    </Button>
+                    {configSaved && <p className="text-xs font-semibold text-green-700">Key saved. Sign in above.</p>}
+                  </div>
+                )}
+
+                <div className="border-t border-neutral-200 pt-4">
+                  <button
+                    type="button"
+                    className="w-full text-left text-sm font-semibold text-neutral-700 hover:text-brand-charcoal"
+                    onClick={() => setShowEmergencyAccess((open) => !open)}
                   >
-                    <summary className="cursor-pointer select-none text-sm font-bold text-neutral-700">
-                      Troubleshooting: Supabase configuration
-                    </summary>
-                    <div className="mt-3 space-y-3 text-sm text-neutral-600">
-                      {providerDisabled && (
-                        <p className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                          If you see “provider is not enabled”, enable Google in Supabase Auth Providers and add the redirect URL to the allowlist.
-                        </p>
-                      )}
-                      <p>
-                        If sign-in fails with a configuration error, the deployed build may be missing the Supabase anon key.
-                      </p>
-                      <p className="text-xs text-neutral-500">
-                        OAuth callback URL expected: <code className="rounded bg-neutral-200 px-1 font-mono">{adminAuthConfig.googleRedirectUrl}</code>
-                      </p>
+                    {showEmergencyAccess ? 'Hide emergency access' : 'Emergency access (break-glass password sign-in)'}
+                  </button>
 
-                      <div className="space-y-2">
-                        <p className="text-sm font-bold text-neutral-700">Add Supabase anon key (one-time)</p>
-                        <p className="text-xs text-neutral-500">
-                          Supabase &rarr; Project &rarr; Settings &rarr; API &rarr; anon public
-                        </p>
-                        <input
-                          type="password"
-                          className="w-full rounded border border-neutral-300 bg-white p-2 text-sm font-mono text-neutral-900 outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
-                          value={anonKeyInput}
-                          onChange={(e) => setAnonKeyInput(e.target.value)}
-                          placeholder="Paste anon key (eyJ...)"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSupabaseAnonKey(anonKeyInput);
-                              resetSupabaseClient();
-                              setConfigSaved(true);
-                              setError('');
-                              clearAuthError();
-                              setShowAnonKeyConfig(false);
-                            }}
-                          >
-                            Save
-                          </Button>
-                          {configSaved && <span className="text-xs font-bold text-green-700">Saved</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </details>
-
-                  <details
-                    className="rounded-xl border border-neutral-200 bg-white p-4"
-                    open={showEmergencyAccess}
-                    onToggle={(e) => setShowEmergencyAccess((e.currentTarget as HTMLDetailsElement).open)}
-                  >
-                    <summary className="cursor-pointer select-none text-sm font-bold text-neutral-700">
-                      Emergency access (break-glass password sign-in)
-                    </summary>
-
+                  {showEmergencyAccess && (
                     <form onSubmit={handleLogin} className="mt-4 space-y-4">
                       <div>
-                        <label className="mb-2 block text-sm font-bold text-neutral-700">Break-glass Email</label>
+                        <label className="block text-sm font-bold text-neutral-800">Break-glass Email</label>
                         <input
                           type="email"
-                          className="w-full rounded border border-neutral-300 bg-white p-3 text-sm text-neutral-900 outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
+                          className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-brand-red focus:ring-2 focus:ring-red-100"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder={breakGlassEmailHint}
                           required
                         />
-                        <p className="mt-1 text-xs text-neutral-500">
-                          Only the designated break-glass account can use password sign-in.
-                        </p>
+                        <p className="mt-1 text-xs text-neutral-500">Only the designated break-glass account can use password sign-in.</p>
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-bold text-neutral-700">Password</label>
+                        <label className="block text-sm font-bold text-neutral-800">Password</label>
                         <input
                           type="password"
-                          className="w-full rounded border border-neutral-300 bg-white p-3 text-sm text-neutral-900 outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
+                          className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-brand-red focus:ring-2 focus:ring-red-100"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Enter emergency password..."
@@ -479,8 +452,8 @@ const Admin: React.FC = () => {
                       </div>
 
                       {import.meta.env.DEV && (
-                        <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm">
-                          <p className="mb-1 font-bold text-blue-700">Dev Mode:</p>
+                        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm">
+                          <p className="font-bold text-blue-700">Dev Mode:</p>
                           <p className="text-xs text-blue-600">
                             Use any email with password: <code className="rounded bg-blue-100 px-1 font-mono">dev</code>
                           </p>
@@ -493,9 +466,19 @@ const Admin: React.FC = () => {
                     </form>
                   </details>
                 </div>
+
+                <div className="border-t border-neutral-200 pt-4 text-center">
+                  <a
+                    href="#/"
+                    onClick={handleBackToSite}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-brand-charcoal"
+                  >
+                    &larr; Back to Website
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     );
