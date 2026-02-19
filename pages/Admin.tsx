@@ -297,6 +297,10 @@ const Admin: React.FC = () => {
   if (!isAuthenticated) {
     const effectiveError = error || authError;
     const allowlistDenied = authErrorCode === 'allowlist_denied' || effectiveError?.toLowerCase().includes('allowlisted');
+    const providerDisabled =
+      authErrorCode === 'google_provider_not_enabled' ||
+      effectiveError?.toLowerCase().includes('provider is not enabled') ||
+      effectiveError?.toLowerCase().includes('unsupported provider');
     const needsSupabaseConfigHelp = authErrorCode === 'supabase_not_configured' || isSupabaseConfigIssue(effectiveError || '');
     const displayAnonKeyConfig = showAnonKeyConfig || (needsSupabaseConfigHelp && !configSaved);
 
@@ -365,6 +369,11 @@ const Admin: React.FC = () => {
                           Google authenticated successfully, but admin access is blocked by the email allowlist.
                         </p>
                       )}
+                      {providerDisabled && (
+                        <p className="mt-1 text-xs text-red-600">
+                          Google OAuth must be enabled in Supabase (Authentication &rarr; Providers &rarr; Google).
+                        </p>
+                      )}
                       {authErrorCode && (
                         <p className="mt-2 text-[11px] font-mono text-red-700/80">
                           code: {authErrorCode}
@@ -386,6 +395,11 @@ const Admin: React.FC = () => {
                       Troubleshooting: Supabase configuration
                     </summary>
                     <div className="mt-3 space-y-3 text-sm text-neutral-600">
+                      {providerDisabled && (
+                        <p className="rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                          If you see “provider is not enabled”, enable Google in Supabase Auth Providers and add the redirect URL to the allowlist.
+                        </p>
+                      )}
                       <p>
                         If sign-in fails with a configuration error, the deployed build may be missing the Supabase anon key.
                       </p>
