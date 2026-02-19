@@ -46,10 +46,14 @@ const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = env.VITE_SUPABASE_ANON_KEY;
 
 const ADMIN_EMAIL = (
+  env.ADMIN_EMAIL ||
   env.VITE_BREAK_GLASS_ADMIN_EMAIL ||
   env.BREAK_GLASS_ADMIN_EMAIL ||
   'lordsgymoutreach@gmail.com'
 ).trim();
+
+const FIXED_PASSWORD = (env.ADMIN_PASSWORD || env.ADMIN_FIXED_PASSWORD || '').trim();
+const shouldForcePasswordChange = FIXED_PASSWORD ? false : true;
 
 async function main() {
   console.log('🔐 Create Admin User for Lord\'s Gym\n');
@@ -88,7 +92,7 @@ async function main() {
     return;
   }
 
-  const password = generatePassword(16);
+  const password = FIXED_PASSWORD || generatePassword(16);
 
   const res = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
     method: 'POST',
@@ -101,7 +105,7 @@ async function main() {
       email: ADMIN_EMAIL,
       password,
       email_confirm: true,
-      user_metadata: { role: 'admin', needs_password_change: true },
+      user_metadata: { role: 'admin', needs_password_change: shouldForcePasswordChange },
     }),
   });
 
@@ -131,7 +135,7 @@ async function main() {
       process.exit(1);
     }
 
-    const newPassword = generatePassword(16);
+    const newPassword = FIXED_PASSWORD || generatePassword(16);
     const updateRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
       method: 'PUT',
       headers: {
@@ -141,7 +145,7 @@ async function main() {
       },
       body: JSON.stringify({
         password: newPassword,
-        user_metadata: { role: 'admin', needs_password_change: true },
+        user_metadata: { role: 'admin', needs_password_change: shouldForcePasswordChange },
       }),
     });
 
