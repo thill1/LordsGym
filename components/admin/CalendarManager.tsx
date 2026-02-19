@@ -231,6 +231,9 @@ const CalendarManager: React.FC = () => {
           is_active: true
         };
 
+        const isColumnError = (err: { code?: string; message?: string }) =>
+          err.code === 'PGRST204' || (err.message ?? '').includes('column');
+
         const insertPattern = async (): Promise<string> => {
           const fullPayload = { ...basePayload, ...extendedFields };
           const { data, error } = await supabase
@@ -240,7 +243,7 @@ const CalendarManager: React.FC = () => {
             .single();
           if (!error) return data.id;
 
-          if (error.code === 'PGRST204' || error.message?.includes('column')) {
+          if (isColumnError(error)) {
             const { data: fallback, error: fallbackErr } = await supabase
               .from('calendar_recurring_patterns')
               .insert(basePayload)
@@ -260,7 +263,7 @@ const CalendarManager: React.FC = () => {
             .eq('id', patternId);
           if (!error) return;
 
-          if (error.code === 'PGRST204' || error.message?.includes('column')) {
+          if (isColumnError(error)) {
             const { error: fallbackErr } = await supabase
               .from('calendar_recurring_patterns')
               .update(basePayload)
@@ -269,6 +272,124 @@ const CalendarManager: React.FC = () => {
             return;
           }
           throw error;
+        };
+
+        const GENERATION_DAYS = 180;
+
+        const generateOccurrenceDates = (): string[] => {
+          const startDate = new Date(startsOn + 'T00:00:00Z');
+          const endLimit = formData.end_date
+            ? new Date(formData.end_date + 'T23:59:59Z')
+            : new Date(startDate.getTime() + GENERATION_DAYS * 86400000);
+          const interval = Math.max(1, formData.interval || 1);
+          const dates: string[] = [];
+
+          if (formData.pattern_type === 'daily') {
+            for (let d = new Date(startDate); d <= endLimit; d.setUTCDate(d.getUTCDate() + 1)) {
+              const diff = Math.floor((d.getTime() - startDate.getTime()) / 86400000);
+              if (diff >= 0 && diff % interval === 0) {
+                dates.push(d.toISOString().split('T')[0]);
+              }
+            }
+          } else if (formData.pattern_type === 'weekly') {
+            const allowedJs = formData.days_of_week;
+            for (let d = new Date(startDate); d <= endLimit; d.setUTCDate(d.getUTCDate() + 1)) {
+              if (!allowedJs.includes(d.getUTCDay())) continue;
+              const diff = Math.floor((d.getTime() - startDate.getTime()) / 86400000);
+              if (diff < 0) continue;
+              const weekDiff = Math.floor(diff / 7);
+              if (weekDiff % interval !== 0) continue;
+              dates.push(d.toISOString().split('T')[0]);
+            }
+          } else {
+            const startDay = startDate.getUTCDate();
+            for (let cursor = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1));
+              cursor <= endLimit;
+              cursor.setUTCMonth(cursor.getUTCMonth() + 1)) {
+              const monthDiff = (cursor.getUTCFullYear() - startDate.getUTCFullYear()) * 12 + (cursor.getUTCMonth() - startDate.getUTCMonth());
+              if (monthDiff < 0 || monthDiff % interval !== 0) continue;
+              const maxDay = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth() + 1, 0)).getUTCDate();
+              const target = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), Math.min(startDay, maxDay)));
+              if (target >= startDate && target <= endLimit) {
+                dates.push(target.toISOString().split('T')[0]);
+              }
+            }
+          }
+
+          return dates;
+        };
+
+        const buildEventForDate = (dateKey: string, patternId: string): Omit<CalendarEvent, 'id'> => {
+          const timePart = normalizeTimePart(formData.start_time);
+          const endTimePart = normalizeTimePart(formData.end_time);
+          const [h1, m1, s1] = timePart.split(':').map(Number);
+          const [h2, m2, s2] = endTimePart.split(':').map(Number);
+          const [year, month, day] = dateKey.split('-').map(Number);
+          const evStart = new Date(Date.UTC(year, month - 1, day, h1, m1, s1));
+          const evEnd = new Date(Date.UTC(year, month - 1, day, h2, m2, s2));
+          if (evEnd <= evStart) evEnd.setUTCDate(evEnd.getUTCDate() + 1);
+
+          return {
+            title: eventData.title,
+            description: eventData.description,
+            start_time: evStart.toISOString(),
+            end_time: evEnd.toISOString(),
+            instructor_id: eventData.instructor_id,
+            class_type: eventData.class_type,
+            capacity: eventData.capacity,
+            recurring_pattern_id: patternId,
+          };
+        };
+
+        const generateSeriesEvents = async (patternId: string): Promise<number> => {
+          const dates = generateOccurrenceDates();
+          if (dates.length === 0) return 0;
+
+          const payloads = dates.map((dateKey) => {
+            const ev = buildEventForDate(dateKey, patternId);
+            return {
+              title: ev.title,
+              description: ev.description,
+              start_time: ev.start_time,
+              end_time: ev.end_time,
+              instructor_id: ev.instructor_id,
+              class_type: ev.class_type,
+              capacity: ev.capacity,
+              recurring_pattern_id: ev.recurring_pattern_id,
+            };
+          });
+
+          const BATCH = 50;
+          for (let i = 0; i < payloads.length; i += BATCH) {
+            const batch = payloads.slice(i, i + BATCH);
+            const { error: batchErr } = await supabase
+              .from('calendar_events')
+              .insert(batch);
+            if (batchErr) throw batchErr;
+          }
+
+          return payloads.length;
+        };
+
+        const deleteExistingSeriesEvents = async (patternId: string) => {
+          const { data, error: fetchErr } = await supabase
+            .from('calendar_events')
+            .select('id')
+            .eq('recurring_pattern_id', patternId);
+          if (fetchErr) throw fetchErr;
+
+          const ids = (data || []).map((r) => r.id);
+          if (ids.length === 0) return;
+
+          const BATCH = 50;
+          for (let i = 0; i < ids.length; i += BATCH) {
+            const batch = ids.slice(i, i + BATCH);
+            const { error: delErr } = await supabase
+              .from('calendar_events')
+              .delete()
+              .in('id', batch);
+            if (delErr) throw delErr;
+          }
         };
 
         if (editingEvent?.recurring_pattern_id) {
@@ -281,8 +402,9 @@ const CalendarManager: React.FC = () => {
               `Recurring event synced. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
             );
           } catch {
-            await addEvent({ ...eventData, recurring_pattern_id: patternId });
-            showSuccess('Recurring pattern updated. Event created (run DB migration for full sync).');
+            await deleteExistingSeriesEvents(patternId);
+            const count = await generateSeriesEvents(patternId);
+            showSuccess(`Recurring pattern updated. Generated ${count} event(s).`);
           }
           await logEventAction('update', patternId, formData.title);
         } else {
@@ -314,8 +436,8 @@ const CalendarManager: React.FC = () => {
               `Recurring event created. Generated ${syncResult.generatedCount}, replaced ${syncResult.deletedUnbookedCount}, preserved ${syncResult.preservedBookedCount}.`
             );
           } catch {
-            await addEvent({ ...eventData, recurring_pattern_id: patternId });
-            showSuccess('Recurring pattern created. First event added (run DB migration for full sync).');
+            const count = await generateSeriesEvents(patternId);
+            showSuccess(`Recurring series created. Generated ${count} event(s) across your calendar.`);
           }
           await logEventAction('create', patternId, formData.title);
         }
@@ -346,12 +468,6 @@ const CalendarManager: React.FC = () => {
     const event = baseEvents.find((item) => item.id === id) || events.find((item) => item.id === id);
     if (event && event.class_type === 'holiday') {
       showError('Holidays are automatically generated and cannot be deleted.');
-      setDeleteConfirm({ isOpen: false, eventId: null });
-      return;
-    }
-
-    if (event?.recurring_pattern_id) {
-      showError('Delete recurring series from the Recurring tab to preserve booked occurrences safely.');
       setDeleteConfirm({ isOpen: false, eventId: null });
       return;
     }
