@@ -99,11 +99,18 @@ const CalendarManager: React.FC = () => {
     }
 
     setEditingEvent(event);
+
+    const toLocalDatetime = (iso: string): string => {
+      const d = new Date(iso);
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
     setFormData({
       title: event.title,
       description: event.description || '',
-      start_time: event.start_time.slice(0, 16),
-      end_time: event.end_time.slice(0, 16),
+      start_time: toLocalDatetime(event.start_time),
+      end_time: toLocalDatetime(event.end_time),
       class_type: event.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help',
       capacity: event.capacity?.toString() || '',
       instructor_id: event.instructor_id || '',

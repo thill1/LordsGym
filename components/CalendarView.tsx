@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCalendar } from '../context/CalendarContext';
 import {
   getDaysInMonth,
   getEventsForDate,
+  expandRecurringEvents,
   formatTime,
   isSameDay,
   getClassTypeColor,
@@ -32,8 +33,17 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const { events, isLoading } = useCalendar();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Filter events by search query only (events are already filtered by type in CalendarContext)
-  const filteredEvents = events.filter(event => {
+  const expandedEvents = useMemo(() => {
+    const rangeStart = new Date(currentDate);
+    rangeStart.setMonth(rangeStart.getMonth() - 1);
+    rangeStart.setDate(1);
+    const rangeEnd = new Date(currentDate);
+    rangeEnd.setMonth(rangeEnd.getMonth() + 2);
+    rangeEnd.setDate(0);
+    return expandRecurringEvents(events, rangeStart, rangeEnd);
+  }, [events, currentDate]);
+
+  const filteredEvents = expandedEvents.filter(event => {
     const matchesSearch = searchQuery === '' || 
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description?.toLowerCase().includes(searchQuery.toLowerCase());
