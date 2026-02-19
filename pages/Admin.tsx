@@ -371,6 +371,11 @@ const Admin: React.FC = () => {
                         This account authenticated successfully, but it is not on the admin allowlist.
                       </p>
                     )}
+                    {providerDisabled && (
+                      <p className="mt-1 text-xs text-red-600">
+                        Google sign-in is not enabled for this Supabase project yet. Enable the Google provider in Supabase Auth.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -464,7 +469,7 @@ const Admin: React.FC = () => {
                         {isLoading ? 'Signing in...' : 'Sign in with password'}
                       </Button>
                     </form>
-                  </details>
+                  )}
                 </div>
 
                 <div className="border-t border-neutral-200 pt-4 text-center">
