@@ -47,5 +47,8 @@ verify_jwt = false
 [functions.contact-form]
 verify_jwt = false
 
+[functions.google-reviews]
+verify_jwt = false
+
 [realtime]
 enabled = true
