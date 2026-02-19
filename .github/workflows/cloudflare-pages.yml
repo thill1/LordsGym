@@ -85,11 +85,9 @@ jobs:
 
       - name: Run type check
         run: npm run type-check
-        continue-on-error: true
 
       - name: Run lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Build application
         id: build

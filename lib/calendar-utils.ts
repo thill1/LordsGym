@@ -29,8 +29,33 @@ export interface CalendarEvent {
 }
 
 /**
+ * Convert JS getDay() (0=Sun, 1=Mon, ..., 6=Sat) to DB/ISO format (7=Sun, 1=Mon, ..., 6=Sat).
+ */
+export function toDbDay(jsDay: number): number {
+  return jsDay === 0 ? 7 : jsDay;
+}
+
+/**
+ * Convert DB/ISO day (7=Sun, 1=Mon, ..., 6=Sat) to JS getDay() (0=Sun, 1=Mon, ..., 6=Sat).
+ * Handles legacy data stored as 0-6 (toJsDay(0)=0, toJsDay(1)=1, etc.).
+ */
+export function toJsDay(dbDay: number): number {
+  return dbDay === 7 ? 0 : dbDay;
+}
+
+/**
+ * Normalize raw days_of_week from DB for use with JS getDay() in expansion.
+ * Accepts unknown[] (Postgres may return string numbers), filters invalid values.
+ */
+export function normalizeDaysForExpand(raw: unknown[]): number[] {
+  return raw
+    .map(d => toJsDay(Number(d)))
+    .filter(d => d >= 0 && d <= 6);
+}
+
+/**
  * Expand recurring events into individual occurrences for a date range.
- * Pattern days_of_week: 0=Sun, 1=Mon, ... 6=Sat (JS getDay()).
+ * Pattern days_of_week: DB format 7=Sun, 1=Mon, ... 6=Sat. Converted to JS getDay() for expansion.
  * @param getExceptions - optional function to get exception dates per event (by pattern id)
  */
 export function expandRecurringEvents(
@@ -89,7 +114,7 @@ export function expandRecurringEvents(
         d.setDate(d.getDate() + interval);
       }
     } else if (pattern.pattern_type === 'weekly') {
-      const days = pattern.days_of_week || [];
+      const days = normalizeDaysForExpand(pattern.days_of_week || []);
       if (days.length === 0) {
         result.push(event);
         continue;

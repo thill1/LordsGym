@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
+import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
 import { safeGet, safeSet } from '../lib/localStorage';
 
@@ -27,6 +28,13 @@ const getMediaImage = (filename: string) => {
   return `${base}media/${filename}`;
 };
 
+// Sanitize hero headline: remove \n (bug) so it displays on one line
+const sanitizeHeadline = (s: string): string => (s || '').replace(/\\n|\n/g, ' ').trim();
+
+const MAX_TESTIMONIAL_QUOTE_LENGTH = 200;
+const truncateQuote = (s: string): string =>
+  (s || '').slice(0, MAX_TESTIMONIAL_QUOTE_LENGTH).trim();
+
 // Helper to get hero image path
 const getHeroImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
@@ -35,7 +43,7 @@ const getHeroImage = (filename: string) => {
 
 const DEFAULT_HOME_CONTENT: HomePageContent = {
   hero: {
-    headline: "Train with Purpose.\nLive with Faith.",
+    headline: "Train with Purpose. Live with Faith.",
     subheadline: "Our mission is to bring strength and healing to our community through fitness, Christ and service.",
     ctaText: "Join Now",
     backgroundImage: getHeroImage('hero-background.jpg.jpg')
@@ -105,6 +113,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...parsed,
       hero: {
         ...parsed.hero,
+        headline: sanitizeHeadline(parsed?.hero?.headline || ''),
         backgroundImage: getHeroImage('hero-background.jpg.jpg')
       }
     };
@@ -226,12 +235,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             .single();
 
           if (homeData) {
+            const hero = homeData.hero as HomePageContent['hero'];
             const content = {
-              hero: homeData.hero as HomePageContent['hero'],
+              hero: {
+                ...hero,
+                headline: sanitizeHeadline(hero?.headline || ''),
+                backgroundImage: getHeroImage('hero-background.jpg.jpg')
+              },
               values: homeData.values as HomePageContent['values']
             };
-            // Ensure hero background uses local image
-            content.hero.backgroundImage = getHeroImage('hero-background.jpg.jpg');
             setHomeContent(content);
           }
         } else {
@@ -241,45 +253,60 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ...localContent,
             hero: {
               ...localContent.hero,
+              headline: sanitizeHeadline(localContent?.hero?.headline || ''),
               backgroundImage: getHeroImage('hero-background.jpg.jpg')
             }
           });
         }
 
-        // Load testimonials
-        // Check if localStorage has saved testimonials - if so, preserve them (user's local changes take precedence)
-        const savedLocalTestimonials = localStorage.getItem('site_testimonials');
-        let hasLocalTestimonials = false;
-        
-        if (savedLocalTestimonials) {
-          try {
-            const parsed = JSON.parse(savedLocalTestimonials) as Testimonial[];
-            hasLocalTestimonials = Array.isArray(parsed) && parsed.length > 0;
-          } catch {
-            hasLocalTestimonials = false;
-          }
-        }
-        
-        if (!hasLocalTestimonials) {
-          // Only load from Supabase if localStorage is empty
-          const { data: testimonialsData } = await supabase
-            .from('testimonials')
-            .select('*')
-            .order('created_at', { ascending: false });
+        // Load testimonials - Supabase is source of truth when configured (prevents data loss across devices)
+        const { data: testimonialsData, error: testimonialsErr } = await supabase
+          .from('testimonials')
+          .select('id, name, role, quote')
+          .order('created_at', { ascending: false });
 
-          if (testimonialsData && testimonialsData.length > 0) {
-            setTestimonials(testimonialsData.map(t => ({
-              id: t.id,
-              name: t.name,
-              role: t.role,
-              quote: t.quote
-            })));
-          }
+        let manualTestimonials: Testimonial[] = [];
+        if (!testimonialsErr && testimonialsData && testimonialsData.length > 0) {
+          manualTestimonials = testimonialsData.map(t => ({
+            id: t.id,
+            name: t.name,
+            role: t.role,
+            quote: t.quote,
+            source: 'manual' as const
+          }));
+          safeSet('site_testimonials', testimonialsData.map(t => ({
+            id: t.id,
+            name: t.name,
+            role: t.role,
+            quote: t.quote
+          })));
         } else {
-          // Keep localStorage testimonials - user's changes are preserved
           const localTestimonials = safeGet<Testimonial[]>('site_testimonials', TESTIMONIALS);
-          setTestimonials(localTestimonials);
+          if (Array.isArray(localTestimonials) && localTestimonials.length > 0) {
+            manualTestimonials = localTestimonials.map(t => ({ ...t, source: 'manual' as const }));
+          }
         }
+
+        // Fetch 5-star Google reviews (truncated) and merge with manual testimonials
+        const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID as string | undefined;
+        const googleReviews = placeId
+          ? await fetchGoogleReviews(
+              SUPABASE_URL,
+              getAnonKey(),
+              placeId,
+              DEFAULT_MAX_QUOTE_LENGTH
+            )
+          : [];
+
+        const googleAsTestimonials: Testimonial[] = googleReviews.map(t => ({
+          id: t.id,
+          name: t.name,
+          role: t.role,
+          quote: t.quote,
+          source: 'google' as const
+        }));
+
+        setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
 
         // Load products
         const { data: productsData } = await supabase
@@ -377,24 +404,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [homeContent, isLoading]);
 
   useEffect(() => {
-    safeSet('site_testimonials', testimonials);
-    
-    if (isSupabaseConfigured() && !isLoading) {
-      // Note: This will create duplicates if not careful. Consider using upsert with id.
-      testimonials.forEach(testimonial => {
-        supabase
-          .from('testimonials')
-          .upsert({
-            id: testimonial.id,
-            name: testimonial.name,
-            role: testimonial.role,
-            quote: testimonial.quote,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'id' })
-          .then(({ error }) => {
-            if (error) console.error('Error saving testimonial to Supabase:', error);
-          });
-      });
+    const manualOnly = testimonials.filter((t): t is Testimonial & { id: number } => typeof t.id === 'number');
+    safeSet('site_testimonials', manualOnly);
+
+    if (isSupabaseConfigured() && !isLoading && manualOnly.length > 0) {
+      (async () => {
+        for (const t of manualOnly) {
+          const { error } = await supabase
+            .from('testimonials')
+            .upsert(
+              {
+                id: t.id,
+                name: t.name,
+                role: t.role,
+                quote: truncateQuote(t.quote),
+                updated_at: new Date().toISOString()
+              },
+              { onConflict: 'id', ignoreDuplicates: false }
+            );
+          if (error) {
+            console.error('Error syncing testimonial to Supabase:', error);
+          }
+        }
+      })();
     }
   }, [testimonials, isLoading]);
 
@@ -452,41 +484,59 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateHomeContent = async (newContent: HomePageContent) => {
-    setHomeContent(newContent);
-    
+    const cleaned = {
+      ...newContent,
+      hero: {
+        ...newContent.hero,
+        headline: sanitizeHeadline(newContent?.hero?.headline || '')
+      }
+    };
+    setHomeContent(cleaned);
+
     if (isSupabaseConfigured()) {
       await supabase
         .from('home_content')
         .upsert({
           id: 'default',
-          hero: newContent.hero,
-          values: newContent.values,
+          hero: cleaned.hero,
+          values: cleaned.values,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
     }
   };
 
   const addTestimonial = async (t: Testimonial) => {
-    setTestimonials(prev => [...prev, t]);
-    
+    const quote = truncateQuote(t.quote);
     if (isSupabaseConfigured()) {
-      await supabase
+      const { data: inserted, error } = await supabase
         .from('testimonials')
         .insert({
-          id: t.id,
           name: t.name,
           role: t.role,
-          quote: t.quote
-        });
+          quote
+        })
+        .select('id, name, role, quote')
+        .single();
+      if (error) {
+        console.error('Error saving testimonial to Supabase:', error);
+        throw error;
+      }
+      if (inserted) {
+        setTestimonials(prev => [...prev, inserted as Testimonial]);
+        return;
+      }
     }
+    setTestimonials(prev => [...prev, { ...t, quote }]);
   };
 
   const updateTestimonial = async (id: number, updates: Partial<Testimonial>) => {
     let updatedTestimonial: Testimonial | undefined;
+    const quote = updates.quote !== undefined ? truncateQuote(updates.quote) : undefined;
+    const cleanUpdates = quote !== undefined ? { ...updates, quote } : updates;
     setTestimonials(prev => {
       const updated = prev.map(t => {
         if (t.id === id) {
-          updatedTestimonial = { ...t, ...updates };
+          updatedTestimonial = { ...t, ...cleanUpdates };
           return updatedTestimonial;
         }
         return t;
@@ -495,12 +545,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     
     if (isSupabaseConfigured() && updatedTestimonial) {
+      const quoteToSave = truncateQuote(updatedTestimonial.quote);
       await supabase
         .from('testimonials')
         .update({
           name: updatedTestimonial.name,
           role: updatedTestimonial.role,
-          quote: updatedTestimonial.quote,
+          quote: quoteToSave,
           updated_at: new Date().toISOString()
         })
         .eq('id', id);

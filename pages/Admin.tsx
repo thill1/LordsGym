@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
-import { updatePassword } from '../lib/auth';
-import { setSupabaseAnonKey, resetSupabaseClient, getSupabaseAnonKeyFromStorage } from '../lib/supabase';
 import Button from '../components/Button';
 import { Product } from '../types';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -30,17 +28,11 @@ const Admin: React.FC = () => {
     deleteProduct
   } = useStore();
 
-  const { isAuthenticated, isLoading, login, logout, user, refreshUser } = useAuth();
+  const { isAuthenticated, isLoading, login, logout, user } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [showAnonKeyConfig, setShowAnonKeyConfig] = useState(false);
-  const [anonKeyInput, setAnonKeyInput] = useState('');
-  const [configSaved, setConfigSaved] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
-  const [passwordChangeError, setPasswordChangeError] = useState('');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
@@ -59,39 +51,24 @@ const Admin: React.FC = () => {
   const [prodFeatured, setProdFeatured] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
-  const isSupabaseConfigIssue = (message?: string): boolean => {
-    const value = (message || '').toLowerCase();
-    return (
-      value.includes('not configured') ||
-      value.includes('invalid supabase') ||
-      value.includes('invalid api key') ||
-      value.includes('github secrets')
-    );
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Please enter both email and password');
+    if (!username || !password) {
+      setError('Please enter username and password');
       return;
     }
 
-    const result = await login(email, password);
+    const result = await login(username.trim(), password);
     if (!result.success) {
-      setError(result.error || 'Invalid email or password');
-      setConfigSaved(false);
-      if (result.error && isSupabaseConfigIssue(result.error)) {
-        setShowAnonKeyConfig(true);
-        setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
-      }
+      setError(result.error || 'Invalid username or password');
     } else {
       const { logActivity } = await import('../lib/activity-logger');
       await logActivity({
         action_type: 'login',
         entity_type: 'user',
-        description: `User logged in: ${email}`
+        description: `User logged in: ${username}`
       });
     }
   };
@@ -181,80 +158,6 @@ const Admin: React.FC = () => {
     );
   }
 
-  // Force password change on first login
-  if (isAuthenticated && user?.needsPasswordChange) {
-    const handleChangePassword = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setPasswordChangeError('');
-      if (newPassword.length < 8) {
-        setPasswordChangeError('Password must be at least 8 characters');
-        return;
-      }
-      if (newPassword !== newPasswordConfirm) {
-        setPasswordChangeError('Passwords do not match');
-        return;
-      }
-      const { error } = await updatePassword(newPassword);
-      if (error) {
-        setPasswordChangeError(error.message || 'Failed to update password');
-        return;
-      }
-      await refreshUser();
-      setNewPassword('');
-      setNewPasswordConfirm('');
-    };
-
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-charcoal">
-        <div className="bg-white dark:bg-neutral-800 p-8 rounded-lg shadow-xl max-w-md w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-display font-bold text-brand-charcoal dark:text-white mb-2">Change Your Password</h2>
-            <p className="text-neutral-500 dark:text-neutral-400">You must set a new password before accessing the admin dashboard.</p>
-          </div>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold mb-2 dark:text-white">New Password</label>
-              <input
-                type="password"
-                className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-800 dark:text-white"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password..."
-                required
-                minLength={8}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold mb-2 dark:text-white">Confirm New Password</label>
-              <input
-                type="password"
-                className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-800 dark:text-white"
-                value={newPasswordConfirm}
-                onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                placeholder="Confirm new password..."
-                required
-                minLength={8}
-              />
-            </div>
-            {passwordChangeError && <p className="text-red-600 text-sm font-bold">{passwordChangeError}</p>}
-            <Button fullWidth type="submit">
-              Set New Password
-            </Button>
-            <div className="text-center pt-4 border-t border-neutral-100 dark:border-neutral-700 mt-4">
-              <button
-                type="button"
-                onClick={() => logout()}
-                className="text-neutral-500 hover:text-brand-charcoal dark:hover:text-white text-sm font-bold"
-              >
-                Sign out
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-charcoal">
@@ -265,13 +168,13 @@ const Admin: React.FC = () => {
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Email</label>
+              <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Username</label>
               <input
-                type="email"
+                type="text"
                 className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-900 dark:text-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="lordsgymoutreach@gmail.com"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
                 required
               />
             </div>
@@ -282,39 +185,13 @@ const Admin: React.FC = () => {
                 className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-900 dark:text-white"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password..."
+                placeholder="Enter password"
                 required
               />
             </div>
-            {import.meta.env.DEV && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
-                <p className="text-blue-700 dark:text-blue-300 font-bold mb-1">Dev Mode:</p>
-                <p className="text-blue-600 dark:text-blue-400 text-xs">Use any email with password: <code className="font-mono bg-blue-100 dark:bg-blue-800 px-1 rounded">dev</code></p>
-              </div>
-            )}
             {error && <p className="text-red-600 text-sm font-bold">{error}</p>}
-            {showAnonKeyConfig && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded space-y-2">
-                <p className="text-amber-800 dark:text-amber-200 text-sm font-bold">Add Supabase anon key (one-time)</p>
-                <p className="text-amber-700 dark:text-amber-300 text-xs">Get it from Supabase → Project → Settings → API → anon public</p>
-                <input
-                  type="password"
-                  className="w-full p-2 border border-amber-300 dark:border-amber-700 rounded text-sm dark:bg-neutral-800 dark:text-white"
-                  value={anonKeyInput}
-                  onChange={(e) => setAnonKeyInput(e.target.value)}
-                  placeholder="Paste anon key (eyJ...)"
-                />
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => { setSupabaseAnonKey(anonKeyInput); resetSupabaseClient(); setConfigSaved(true); setError(''); setShowAnonKeyConfig(false); }}>
-                    Save & retry
-                  </Button>
-                  <button type="button" onClick={() => setShowAnonKeyConfig(false)} className="text-sm text-amber-600 dark:text-amber-400">Hide</button>
-                </div>
-                {configSaved && <p className="text-green-600 dark:text-green-400 text-xs">Key saved. Sign in above.</p>}
-              </div>
-            )}
             <Button fullWidth type="submit" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Access Dashboard'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
 
             <div className="text-center pt-4 border-t border-neutral-100 dark:border-neutral-700 mt-4">

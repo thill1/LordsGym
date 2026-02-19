@@ -1,9 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const STORAGE_KEY = 'lordsgym_supabase_anon_key';
 
-function getAnonKey(): string {
+export function getAnonKey(): string {
   const fromEnv = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (fromEnv && typeof fromEnv === 'string') return fromEnv;
   return (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null) || '';
