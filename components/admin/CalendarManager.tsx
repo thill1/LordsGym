@@ -320,14 +320,11 @@ const CalendarManager: React.FC = () => {
         };
 
         const buildEventForDate = (dateKey: string, patternId: string): Omit<CalendarEvent, 'id'> => {
-          const timePart = normalizeTimePart(formData.start_time);
-          const endTimePart = normalizeTimePart(formData.end_time);
-          const [h1, m1, s1] = timePart.split(':').map(Number);
-          const [h2, m2, s2] = endTimePart.split(':').map(Number);
-          const [year, month, day] = dateKey.split('-').map(Number);
-          const evStart = new Date(Date.UTC(year, month - 1, day, h1, m1, s1));
-          const evEnd = new Date(Date.UTC(year, month - 1, day, h2, m2, s2));
-          if (evEnd <= evStart) evEnd.setUTCDate(evEnd.getUTCDate() + 1);
+          const timePart = formData.start_time.split('T')[1] || '00:00';
+          const endTimePart = formData.end_time.split('T')[1] || '00:00';
+          const evStart = new Date(`${dateKey}T${timePart}`);
+          const evEnd = new Date(`${dateKey}T${endTimePart}`);
+          if (evEnd <= evStart) evEnd.setDate(evEnd.getDate() + 1);
 
           return {
             title: eventData.title,
