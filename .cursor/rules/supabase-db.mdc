@@ -1,0 +1,29 @@
+---
+description: Supabase database management and migrations
+alwaysApply: false
+globs: supabase/**/*,*.sql
+---
+
+# Supabase Database Management
+
+When working with Supabase migrations or the database:
+
+## Running migrations
+
+Use `npm run db:push` to apply migrations. This script loads `SUPABASE_ACCESS_TOKEN` from `.env.local` so it works in automated/agent contexts.
+
+Do **not** run `npx supabase db push` directly—it will fail without the token. Always use `npm run db:push`.
+
+## Setup (one-time)
+
+The user must add `SUPABASE_ACCESS_TOKEN` to `.env.local`:
+
+1. Go to https://supabase.com/dashboard/account/tokens
+2. Create a token (or use existing)
+3. Add: `SUPABASE_ACCESS_TOKEN=sbp_xxxxx` to `.env.local`
+
+## Common tasks
+
+- **Apply migrations**: `npm run db:push`
+- **Test RPC after migration**: `npm run test:calendar-rpc`
+- **New migration**: create file in `supabase/migrations/` with format `YYYYMMDD_description.sql`

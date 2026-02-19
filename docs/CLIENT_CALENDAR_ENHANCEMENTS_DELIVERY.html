@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lord's Gym Calendar — Recurring Events & Enhancements</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      background: #fff;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0 0 0.25rem 0;
+      border-bottom: 3px solid #b91c1c;
+      padding-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 0.95rem;
+      color: #6b7280;
+      margin: 0 0 2rem 0;
+    }
+    .badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+      margin: 2rem 0 1rem 0;
+    }
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #374151;
+      margin: 1.25rem 0 0.5rem 0;
+    }
+    p {
+      margin: 0 0 1rem 0;
+      color: #4b5563;
+    }
+    ul {
+      margin: 0 0 1rem 0;
+      padding-left: 1.5rem;
+      color: #4b5563;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background: #f9fafb;
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: #374151;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f3f4f6;
+      color: #4b5563;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .check {
+      color: #16a34a;
+      font-weight: 600;
+    }
+    .tech-note {
+      background: #f8fafc;
+      border-left: 4px solid #94a3b8;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+    .footer {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    @media print {
+      body { padding: 1rem; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lord's Gym Calendar</h1>
+  <p class="subtitle">Recurring Events & Enhancements — Client Delivery Summary</p>
+  <span class="badge">✓ Completed & Validated</span>
+  <p class="subtitle" style="margin-top: 0;">February 2025</p>
+
+  <h2>Executive Summary</h2>
+  <p>
+    The calendar has been updated so recurring events (e.g., Bible Study, 12-Step Bible Study, Alcoholics Anonymous) 
+    display correctly on all devices, including iPhones. A number of usability improvements were also added to make 
+    the calendar easier to navigate and use.
+  </p>
+
+  <h2>What Was Fixed</h2>
+  <h3>Recurring Events on Mobile</h3>
+  <p><strong>Issue:</strong> Recurring events appeared on desktop but not on mobile phones (especially iPhones), even after a hard refresh.</p>
+  <p><strong>Solution:</strong> Changes were made to how recurring event data is loaded and displayed so it works for all visitors, including those using mobile browsers. Recurring events now appear consistently across:</p>
+  <ul>
+    <li>Month view</li>
+    <li>Week view</li>
+    <li>Day view</li>
+    <li>List view</li>
+  </ul>
+  <p><strong>Result:</strong> Recurring events display correctly on iPhones and other mobile devices.</p>
+
+  <h2>Calendar Enhancements</h2>
+  <p>New and improved features added to the calendar:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Benefit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Event type legend</strong></td>
+        <td>Color-coded dots for Community, Outreach, Fundraisers, Self Help, and Holiday events make it easy to see event types at a glance.</td>
+      </tr>
+      <tr>
+        <td><strong>Jump to date</strong></td>
+        <td>A date picker in the toolbar lets visitors quickly jump to any date without using Previous/Next.</td>
+      </tr>
+      <tr>
+        <td><strong>Show past events</strong></td>
+        <td>In List view, visitors can toggle between "Upcoming Events" and "All Events" to view past events if desired.</td>
+      </tr>
+      <tr>
+        <td><strong>Export on mobile</strong></td>
+        <td>The Export button is now visible and usable on mobile devices for adding the calendar to their own calendar app.</td>
+      </tr>
+      <tr>
+        <td><strong>Improved mobile view</strong></td>
+        <td>Event dots on mobile are larger (2×2) for better visibility on phones.</td>
+      </tr>
+      <tr>
+        <td><strong>Better day popover</strong></td>
+        <td>Clicking a day in a previous or next month opens the event list without unexpectedly changing the visible month.</td>
+      </tr>
+      <tr>
+        <td><strong>Recurring event details</strong></td>
+        <td>When viewing a recurring event, visitors see when it repeats (e.g., "Repeats every 2 weeks on Monday, Wednesday") and when it ends, if applicable.</td>
+      </tr>
+      <tr>
+        <td><strong>iCal export with recurrences</strong></td>
+        <td>Exported .ics files now include proper recurrence rules so recurring events sync correctly in Google Calendar, Apple Calendar, Outlook, etc.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Technical Summary</h2>
+  <p class="tech-note">
+    For transparency: Backend changes ensure recurring event data is served to all visitors including anonymous mobile users. 
+    Date handling now uses the user's local timezone so events display on the correct day. Data loading has been made robust 
+    for different browsers and devices.
+  </p>
+
+  <h2>Validation</h2>
+  <ul>
+    <li><span class="check">✓</span> Recurring events display in all views (Month, Week, Day, List)</li>
+    <li><span class="check">✓</span> Verified on iPhone</li>
+    <li><span class="check">✓</span> Calendar export (.ics) includes recurring events</li>
+    <li><span class="check">✓</span> Past and future events behave correctly across timezones</li>
+  </ul>
+
+  <div class="footer">
+    <p><strong>Questions or issues?</strong> If you notice any problems with the calendar or recurring events, please let us know so we can address them quickly.</p>
+  </div>
+
+</body>
+</html>

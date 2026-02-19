@@ -91,6 +91,12 @@ export function normalizeDaysForExpand(raw: unknown): number[] {
 /**
  * Expand recurring events into individual occurrences for a date range.
  * Pattern days_of_week: DB format 7=Sun, 1=Mon, ... 6=Sat. Converted to JS getDay() for expansion.
+ *
+ * CRITICAL: Only expand template events. Materialized events (is_recurring_generated) are
+ * concrete occurrences from the DB—pass them through as-is. Expanding them would produce
+ * duplicate series (each materialized event would generate a full recurrence), causing
+ * cascading duplicates on mobile (e.g. iPhone calendar dots).
+ *
  * @param getExceptions - optional function to get exception dates per event (by pattern id)
  */
 export function expandRecurringEvents(
@@ -106,12 +112,36 @@ export function expandRecurringEvents(
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
 
+  // Group recurring events by pattern: use materialized when present, else expand template
+  const byPattern = new Map<string, CalendarEvent[]>();
   for (const event of events) {
     if (!event.recurring_pattern_id || !event.recurring_pattern) {
       result.push(event);
       continue;
     }
+    const pid = event.recurring_pattern_id;
+    if (!byPattern.has(pid)) byPattern.set(pid, []);
+    byPattern.get(pid)!.push(event);
+  }
+
+  for (const [, patternEvents] of byPattern) {
+    const materialized = patternEvents.filter((e) => e.is_recurring_generated);
+    const templates = patternEvents.filter((e) => !e.is_recurring_generated);
+    // Use materialized when present—never expand them (would cause cascading duplicates).
+    // Expand template only when there are no materialized events (sync hasn't run yet).
+    const useMaterialized = materialized.length > 0;
+
+    if (useMaterialized) {
+      for (const event of materialized) {
+        result.push(event);
+      }
+      continue;
+    }
+
+    const event = templates[0] ?? patternEvents[0];
+    if (!event.recurring_pattern) continue;
     const pattern = event.recurring_pattern;
+    const exceptionDates = getEx(event);
     const templateStart = new Date(event.start_time);
     const templateEnd = new Date(event.end_time);
     const baseDate = new Date(templateStart);
@@ -129,7 +159,6 @@ export function expandRecurringEvents(
         })()
       : null;
     const interval = pattern.interval || 1;
-    const exceptionDates = getEx(event);
 
     if (pattern.pattern_type === 'daily') {
       let d = new Date(Math.max(baseDate.getTime(), start.getTime()));
@@ -220,7 +249,24 @@ export function expandRecurringEvents(
       result.push(event);
     }
   }
-  return result.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  const sorted = result.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  return deduplicateRecurringByDate(sorted);
+}
+
+/**
+ * Ensure at most one event per (recurring_pattern_id, date). Handles overlap between
+ * template and materialized events, or duplicate materialized rows.
+ */
+function deduplicateRecurringByDate(events: CalendarEvent[]): CalendarEvent[] {
+  const seen = new Set<string>();
+  return events.filter((e) => {
+    if (!e.recurring_pattern_id) return true;
+    const dateKey = toLocalDateKey(new Date(e.start_time));
+    const key = `${e.recurring_pattern_id}:${dateKey}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export type CalendarView = 'month' | 'week' | 'day' | 'list';
@@ -284,10 +330,14 @@ export const getDaysInMonth = (date: Date): Date[] => {
  * Uses local date key (YYYY-MM-DD) to avoid timezone shift—toISOString() would
  * convert to UTC and can shift dates (e.g. Jan 15 PST midnight → previous day in UTC),
  * which caused recurring events to not appear on mobile/Safari in western timezones.
+ *
+ * Deduplicates recurring events so at most one per (pattern, date)—fixes multiple
+ * dots on mobile/iPhone when template+materialized or other sources produce duplicates.
  */
 export const getEventsForDate = (events: CalendarEvent[], date: Date): CalendarEvent[] => {
   const dateKey = toLocalDateKey(date);
-  return events.filter(event => toLocalDateKey(new Date(event.start_time)) === dateKey);
+  const forDate = events.filter(event => toLocalDateKey(new Date(event.start_time)) === dateKey);
+  return deduplicateRecurringByDate(forDate);
 };
 
 /**
