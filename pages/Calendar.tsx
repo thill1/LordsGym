@@ -88,7 +88,7 @@ const Calendar: React.FC = () => {
           <div className="bg-white dark:bg-neutral-800 px-3 py-3 sm:px-4 rounded-lg shadow-sm">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               {/* Segmented view toggle */}
-              <div className="inline-flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden" role="tablist" aria-label="Calendar view">
+              <div className="inline-flex rounded-lg border-2 border-neutral-300 dark:border-neutral-400 overflow-hidden" role="tablist" aria-label="Calendar view">
                 {VIEW_OPTIONS.map(opt => (
                   <button
                     key={opt.value}
@@ -98,7 +98,7 @@ const Calendar: React.FC = () => {
                     className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold uppercase tracking-wide transition-colors ${
                       view === opt.value
                         ? 'bg-brand-red text-white'
-                        : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
+                        : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }`}
                   >
                     {opt.label}
@@ -112,20 +112,20 @@ const Calendar: React.FC = () => {
                   <button
                     onClick={() => navigate(-1)}
                     aria-label="Previous"
-                    className="p-2 rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                    className="p-2 rounded-lg border-2 border-neutral-300 dark:border-neutral-400 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                   </button>
                   <button
                     onClick={() => navigate(0)}
-                    className="px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                    className="px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg border-2 border-neutral-300 dark:border-neutral-400 text-neutral-800 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                   >
                     Today
                   </button>
                   <button
                     onClick={() => navigate(1)}
                     aria-label="Next"
-                    className="p-2 rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                    className="p-2 rounded-lg border-2 border-neutral-300 dark:border-neutral-400 text-neutral-700 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </button>
@@ -137,7 +137,7 @@ const Calendar: React.FC = () => {
                       if (v) setCurrentDate(new Date(v));
                     }}
                     aria-label="Jump to date"
-                    className="px-2 py-1.5 text-xs sm:text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                    className="px-2 py-1.5 text-xs sm:text-sm border-2 border-neutral-300 dark:border-neutral-400 rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-brand-red/50 dark:focus:border-neutral-300"
                   />
                 </div>
               )}
@@ -153,7 +153,7 @@ const Calendar: React.FC = () => {
                   aria-label="Search events"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 text-sm border-2 border-neutral-300 dark:border-neutral-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red dark:bg-neutral-800 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400"
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600" aria-label="Clear search">
@@ -163,7 +163,7 @@ const Calendar: React.FC = () => {
               </div>
               <button
                 onClick={handleExportCalendar}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-lg border-2 border-neutral-300 dark:border-neutral-400 text-neutral-800 dark:text-white hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 <span className="hidden sm:inline">Export</span>

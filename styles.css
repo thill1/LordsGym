@@ -143,3 +143,9 @@ html.dark body {
     display: none !important;
   }
 }
+
+/* Date/DateTime inputs – high contrast in dark mode + native calendar dark theme */
+html.dark input[type="date"],
+html.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}

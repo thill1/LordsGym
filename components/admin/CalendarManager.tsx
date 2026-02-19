@@ -820,11 +820,11 @@ const CalendarManager: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Start Time</label>
-                    <input type="datetime-local" required value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className={`w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : ''}`} />
+                    <input type="datetime-local" required value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className={`w-full p-2.5 border-2 rounded-lg dark:bg-neutral-800 dark:border-neutral-400 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-400'}`} />
                   </div>
                   <div>
                     <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End Time</label>
-                    <input type="datetime-local" required value={formData.end_time} onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} className={`w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : ''}`} />
+                    <input type="datetime-local" required value={formData.end_time} onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} className={`w-full p-2.5 border-2 rounded-lg dark:bg-neutral-800 dark:border-neutral-400 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : 'border-neutral-300 dark:border-neutral-400'}`} />
                   </div>
                 </div>
                 {timeValidationError && (
@@ -877,7 +877,7 @@ const CalendarManager: React.FC = () => {
                       )}
                       <div>
                         <label className="block text-xs font-bold mb-1 dark:text-neutral-300">End Date (optional)</label>
-                        <input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="w-full p-2 text-sm border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
+                        <input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="w-full p-2 text-sm border-2 rounded-lg dark:bg-neutral-800 dark:border-neutral-400 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:ring-2 focus:ring-brand-red focus:outline-none border-neutral-300 dark:border-neutral-400" />
                       </div>
                       {/* Recurring preview */}
                       {recurringPreviewDates.length > 0 && (

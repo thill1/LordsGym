@@ -174,7 +174,7 @@ const RecurringExceptionsManager: React.FC<RecurringExceptionsManagerProps> = ({
                   required
                   value={exceptionDate}
                   onChange={(e) => setExceptionDate(e.target.value)}
-                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
+                  className="w-full p-2 border-2 rounded-lg border-neutral-300 dark:border-neutral-400 dark:bg-neutral-800 dark:text-white placeholder-neutral-500 dark:placeholder-neutral-400 focus:ring-2 focus:ring-brand-red focus:outline-none"
                 />
               </div>
               <div>
