@@ -132,7 +132,7 @@ const CalendarManager: React.FC = () => {
         isRecurring: true,
         pattern_type: (pattern.pattern_type as 'daily' | 'weekly' | 'monthly') || 'weekly',
         interval: pattern.interval || 1,
-        days_of_week: pattern.days_of_week || [],
+        days_of_week: (pattern.days_of_week || []).map((d: number) => toJsDay(Number(d))).filter((d: number) => d >= 0 && d <= 6),
         end_date: pattern.end_date ? pattern.end_date.slice(0, 10) : ''
       }));
     } catch (error) {
@@ -213,7 +213,7 @@ const CalendarManager: React.FC = () => {
         const patternPayload = {
           pattern_type: formData.pattern_type,
           interval: Math.max(1, formData.interval || 1),
-          days_of_week: formData.pattern_type === 'weekly' ? formData.days_of_week : null,
+          days_of_week: formData.pattern_type === 'weekly' ? formData.days_of_week.map(toDbDay) : null,
           end_date: formData.end_date ? `${formData.end_date}T23:59:59.000Z` : null,
           title: eventData.title,
           description: eventData.description,

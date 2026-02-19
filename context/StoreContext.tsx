@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
 import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
-import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH } from '../lib/google-reviews';
+import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
 import { safeGet, safeSet } from '../lib/localStorage';
 
@@ -298,7 +298,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             )
           : [];
 
-        const googleAsTestimonials: Testimonial[] = googleReviews.map(t => ({
+        const googleAsTestimonials: Testimonial[] = googleReviews.map((t: GoogleReviewTestimonial) => ({
           id: t.id,
           name: t.name,
           role: t.role,

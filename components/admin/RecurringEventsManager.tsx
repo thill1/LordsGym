@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { toJsDay } from '../../lib/calendar-utils';
 import { useToast } from '../../context/ToastContext';
 import { deleteRecurringPatternSafely, syncRecurringPattern } from '../../lib/recurring-events';
 import RecurringExceptionsManager from './RecurringExceptionsManager';
@@ -149,7 +150,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
                     {pattern.pattern_type.charAt(0).toUpperCase() + pattern.pattern_type.slice(1)}{' '}
                     (every {pattern.interval} {pattern.interval === 1 ? pattern.pattern_type.slice(0, -2) : pattern.pattern_type})
                     {pattern.days_of_week && pattern.days_of_week.length > 0 && (
-                      <span> — Days: {pattern.days_of_week.map((d) => DAYS[d]).join(', ')}</span>
+                      <span> — Days: {pattern.days_of_week.map((d) => DAYS[toJsDay(Number(d))]).join(', ')}</span>
                     )}
                   </p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
