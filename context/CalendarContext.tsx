@@ -55,22 +55,28 @@ interface CalendarEventJoinRow {
 }
 
 const toRecurringPattern = (
-  row: RecurringPatternJoinRow | RecurringPatternJoinRow[] | null | undefined
+  row: RecurringPatternJoinRow | RecurringPatternJoinRow[] | Record<string, unknown> | null | undefined
 ): RecurringPattern | null => {
-  const patternRow = Array.isArray(row) ? row[0] : row;
-  if (!patternRow) return null;
+  if (row == null) return null;
+  const patternRow = (Array.isArray(row) ? row[0] : row) as RecurringPatternJoinRow | undefined;
+  if (!patternRow || typeof patternRow !== 'object') return null;
 
-  const patternType = patternRow.pattern_type;
+  const patternType = String(patternRow.pattern_type || '').toLowerCase();
   if (patternType !== 'daily' && patternType !== 'weekly' && patternType !== 'monthly') {
     return null;
   }
 
+  const daysOfWeek = patternRow.days_of_week;
+  const normalizedDays = Array.isArray(daysOfWeek)
+    ? daysOfWeek.map((d) => Number(d)).filter((n) => !Number.isNaN(n))
+    : null;
+
   return {
-    id: patternRow.id,
-    pattern_type: patternType,
-    interval: patternRow.interval,
-    days_of_week: patternRow.days_of_week,
-    end_date: patternRow.end_date
+    id: String(patternRow.id || ''),
+    pattern_type: patternType as 'daily' | 'weekly' | 'monthly',
+    interval: Math.max(1, Number(patternRow.interval) || 1),
+    days_of_week: normalizedDays && normalizedDays.length > 0 ? normalizedDays : null,
+    end_date: patternRow.end_date ? String(patternRow.end_date) : null,
   };
 };
 
@@ -109,6 +115,15 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const loadSupabaseEvents = useCallback(async (): Promise<CalendarEvent[]> => {
+    // Prefer RPC: bypasses RLS on calendar_recurring_patterns so anon (e.g. mobile Safari) see recurring events
+    const { data: rpcData, error: rpcError } = await supabase.rpc('get_calendar_events_for_display');
+    if (!rpcError && Array.isArray(rpcData)) {
+      return (rpcData as any[]).map((row) => ({
+        ...toCalendarEvent(row),
+        booked_count: row.booked_count ?? 0
+      }));
+    }
+
     const missingColumn = (err: any): boolean => {
       const msg = String(err?.message || '').toLowerCase();
       return msg.includes('does not exist') && (

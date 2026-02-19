@@ -23,8 +23,9 @@ const App: React.FC = () => {
   // Simple Hash Router Implementation
   // Support both /#/admin (hash) and /admin (pathname) for admin access
   const getPath = () => {
-    const hash = window.location.hash.slice(1);
-    if (hash) return hash;
+    const raw = window.location.hash.slice(1);
+    const path = raw ? raw.split('?')[0] : '';
+    if (path) return path;
     // Support /admin and /LordsGym/admin (GitHub Pages base path)
     const p = window.location.pathname;
     if (p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) return '/admin';

@@ -144,6 +144,15 @@ const DayPopover: React.FC<{ date: Date; events: CalendarEvent[]; onEventClick?:
   );
 };
 
+const useDebugMode = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const search = window.location.search;
+  const hash = window.location.hash || '';
+  const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const params = new URLSearchParams(search || hashQuery);
+  return params.get('debug') === 'calendar' || params.has('debug') || params.get('debug') === '1';
+};
+
 const CalendarView: React.FC<CalendarViewProps> = ({
   view,
   currentDate,
@@ -154,6 +163,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const { events, isLoading } = useCalendar();
   const [popoverDate, setPopoverDate] = useState<Date | null>(null);
   const [listShowPast, setListShowPast] = useState(false);
+  const showDebug = useDebugMode();
 
   const expandedEvents = useMemo(() => {
     const rangeStart = new Date(currentDate);
@@ -186,12 +196,40 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     );
   }
 
+  const debugInfo = showDebug ? (() => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+    return {
+      baseEvents: events.length,
+      withRecurring: events.filter((e) => e.recurring_pattern).length,
+      expandedCount: expandedEvents.length,
+      todayEvents: getEventsForDate(filteredEvents, new Date()).length,
+      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      device: isMobile ? 'Mobile (iPhone/iPad/Android)' : 'Desktop',
+      rlsHint: events.some((e) => e.recurring_pattern_id) && events.filter((e) => e.recurring_pattern).length === 0,
+    };
+  })() : null;
+
   // ──── MONTH VIEW ────
   if (view === 'month') {
     const days = getDaysInMonth(currentDate);
     const today = new Date();
 
     return (
+      <div className="space-y-2">
+        {showDebug && debugInfo && (
+          <div className="rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-600 p-3 text-xs font-mono space-y-1">
+            <div className="font-bold text-amber-800 dark:text-amber-200">Calendar Debug (for iPhone)</div>
+            <div>Device: {debugInfo.device}</div>
+            <div>Base events: {debugInfo.baseEvents} | With recurring_pattern: {debugInfo.withRecurring} | Expanded: {debugInfo.expandedCount}</div>
+            <div>Today events: {debugInfo.todayEvents} | TZ: {debugInfo.tz}</div>
+            {debugInfo.rlsHint && (
+              <div className="mt-2 pt-2 border-t border-amber-400 font-bold text-red-700 dark:text-red-400">
+                ⚠️ RLS likely blocking: events have recurring_pattern_id but pattern is null. Run: supabase db push
+              </div>
+            )}
+          </div>
+        )}
       <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
         {/* Month header */}
         <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
@@ -285,6 +323,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           })}
         </div>
       </div>
+      </div>
     );
   }
 
@@ -304,6 +343,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     }
 
     return (
+      <div className="space-y-2">
+        {showDebug && debugInfo && (
+          <div className="rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-600 p-3 text-xs font-mono space-y-1">
+            <div className="font-bold text-amber-800 dark:text-amber-200">Calendar Debug</div>
+            <div>Device: {debugInfo.device} | Base: {debugInfo.baseEvents} | Recurring: {debugInfo.withRecurring} | Expanded: {debugInfo.expandedCount}</div>
+            {debugInfo.rlsHint && (
+              <div className="font-bold text-red-700 dark:text-red-400">⚠️ RLS blocking — run supabase db push</div>
+            )}
+          </div>
+        )}
       <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
         <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
@@ -341,6 +390,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           </div>
         )}
       </div>
+      </div>
     );
   }
 
@@ -355,6 +405,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     });
 
     return (
+      <div className="space-y-2">
+        {showDebug && debugInfo && (
+          <div className="rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-600 p-3 text-xs font-mono space-y-1">
+            <div className="font-bold text-amber-800 dark:text-amber-200">Calendar Debug</div>
+            <div>Device: {debugInfo.device} | Base: {debugInfo.baseEvents} | Recurring: {debugInfo.withRecurring} | Expanded: {debugInfo.expandedCount}</div>
+            {debugInfo.rlsHint && (
+              <div className="font-bold text-red-700 dark:text-red-400">⚠️ RLS blocking — run supabase db push</div>
+            )}
+          </div>
+        )}
       <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
         <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
           <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
@@ -402,6 +462,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             );
           })}
         </div>
+      </div>
       </div>
     );
   }

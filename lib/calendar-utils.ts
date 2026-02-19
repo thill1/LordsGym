@@ -72,12 +72,20 @@ function toLocalDateKey(d: Date): string {
 
 /**
  * Normalize raw days_of_week from DB for use with JS getDay() in expansion.
- * Accepts unknown[] (Postgres may return string numbers), filters invalid values.
+ * Handles: number[], string[], JSON string, or null/undefined. PostgREST returns
+ * arrays as JSON arrays, but edge cases (e.g. mobile Safari) may parse differently.
  */
-export function normalizeDaysForExpand(raw: unknown[]): number[] {
-  return raw
+export function normalizeDaysForExpand(raw: unknown): number[] {
+  let arr: unknown[] = [];
+  if (Array.isArray(raw)) arr = raw;
+  else if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw) as unknown[]; } catch { arr = []; }
+  } else if (raw != null && typeof raw === 'object' && !Array.isArray(raw)) {
+    arr = []; // might be mis-parsed object
+  }
+  return arr
     .map(d => toJsDay(Number(d)))
-    .filter(d => d >= 0 && d <= 6);
+    .filter(d => !Number.isNaN(d) && d >= 0 && d <= 6);
 }
 
 /**
@@ -152,7 +160,7 @@ export function expandRecurringEvents(
         d.setDate(d.getDate() + interval);
       }
     } else if (pattern.pattern_type === 'weekly') {
-      const days = normalizeDaysForExpand(pattern.days_of_week || []);
+      const days = normalizeDaysForExpand(pattern.days_of_week ?? []);
       if (days.length === 0) {
         result.push(event);
         continue;
