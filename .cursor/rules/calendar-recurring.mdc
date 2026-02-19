@@ -1,0 +1,32 @@
+---
+description: Calendar recurring events – avoid duplicate dots/events on mobile
+alwaysApply: false
+globs: lib/calendar-utils.ts,context/CalendarContext.tsx,components/CalendarView.tsx,lib/recurring-events.ts
+---
+
+# Calendar Recurring Events – Duplicate Guard
+
+When changing recurring calendar logic, **never introduce duplicate events per date**.
+
+## Root cause (fixed 2025-02)
+
+The DB returns both **template** events (recurring seed) and **materialized** events (per-occurrence rows). Expanding materialized events produced cascading duplicates—each materialized event was treated as a template and expanded again.
+
+## Required safeguards
+
+1. **expandRecurringEvents** (`lib/calendar-utils.ts`)
+   - **Always expand from the template** (original DB entry)—never use materialized events for display
+   - The template's `start_time` defines the canonical day and time; recur from that
+   - If `days_of_week` is empty for weekly, derive from `baseDate.getDay()` (template's day)
+   - Deduplicate by `(recurring_pattern_id, dateKey)` before returning
+
+2. **getEventsForDate**
+   - Deduplicate recurring events per date before returning
+   - Ensures display layer never shows duplicate dots regardless of upstream
+
+3. **New logic**
+   - If adding expansion or recurrence handling, always deduplicate by `(recurring_pattern_id, toLocalDateKey(start_time))` for events with `recurring_pattern_id`
+
+## Test on mobile/iPhone
+
+Recurring bugs often appear only on mobile (Safari, timezone). Add `?debug=calendar` to verify base/expanded counts.

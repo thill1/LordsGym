@@ -112,7 +112,9 @@ export function expandRecurringEvents(
   start.setHours(0, 0, 0, 0);
   end.setHours(23, 59, 59, 999);
 
-  // Group recurring events by pattern: use materialized when present, else expand template
+  // Group recurring events by pattern. Always expand from the template (original DB entry)
+  // so dates align to the user's original day—never use materialized events for display,
+  // as they may have been generated with different date logic (UTC vs local).
   const byPattern = new Map<string, CalendarEvent[]>();
   for (const event of events) {
     if (!event.recurring_pattern_id || !event.recurring_pattern) {
@@ -125,20 +127,11 @@ export function expandRecurringEvents(
   }
 
   for (const [, patternEvents] of byPattern) {
-    const materialized = patternEvents.filter((e) => e.is_recurring_generated);
+    // Template = original entry (is_recurring_generated false), or earliest start_time
     const templates = patternEvents.filter((e) => !e.is_recurring_generated);
-    // Use materialized when present—never expand them (would cause cascading duplicates).
-    // Expand template only when there are no materialized events (sync hasn't run yet).
-    const useMaterialized = materialized.length > 0;
-
-    if (useMaterialized) {
-      for (const event of materialized) {
-        result.push(event);
-      }
-      continue;
-    }
-
-    const event = templates[0] ?? patternEvents[0];
+    const event = templates.length > 0
+      ? templates.reduce((a, b) => (new Date(a.start_time) < new Date(b.start_time) ? a : b))
+      : patternEvents.reduce((a, b) => (new Date(a.start_time) < new Date(b.start_time) ? a : b));
     if (!event.recurring_pattern) continue;
     const pattern = event.recurring_pattern;
     const exceptionDates = getEx(event);
@@ -190,13 +183,10 @@ export function expandRecurringEvents(
       }
     } else if (pattern.pattern_type === 'weekly') {
       const days = normalizeDaysForExpand(pattern.days_of_week ?? []);
-      if (days.length === 0) {
-        result.push(event);
-        continue;
-      }
+      const daysToUse = days.length > 0 ? days : [baseDate.getDay()];
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         if (d < baseDate || (patternEnd && d > patternEnd)) continue;
-        if (!days.includes(d.getDay())) continue;
+        if (!daysToUse.includes(d.getDay())) continue;
         const weeksSince = Math.floor((d.getTime() - baseDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
         if (weeksSince % interval !== 0) continue;
         const dateStr = toLocalDateKey(d);
