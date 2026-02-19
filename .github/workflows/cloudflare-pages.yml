@@ -97,6 +97,9 @@ jobs:
           VITE_BASE_PATH: /
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_ADMIN_ALLOWLIST_EMAILS: ${{ secrets.VITE_ADMIN_ALLOWLIST_EMAILS }}
+          VITE_BREAK_GLASS_ADMIN_EMAIL: ${{ secrets.VITE_BREAK_GLASS_ADMIN_EMAIL }}
+          VITE_ADMIN_OAUTH_REDIRECT_URL: ${{ secrets.VITE_ADMIN_OAUTH_REDIRECT_URL }}
           NODE_ENV: ${{ github.event.inputs.environment || 'production' }}
           DEBUG: ${{ github.event.inputs.debug && '*' || '' }}
         run: |

@@ -46,6 +46,9 @@ const REPO = 'LordsGym';
 const token = process.env.GITHUB_TOKEN;
 const cfToken = process.env.CLOUDFLARE_API_TOKEN;
 const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+const adminAllowlist = process.env.VITE_ADMIN_ALLOWLIST_EMAILS;
+const breakGlassEmail = process.env.VITE_BREAK_GLASS_ADMIN_EMAIL;
+const oauthRedirectUrl = process.env.VITE_ADMIN_OAUTH_REDIRECT_URL;
 
 // Help debug: show what was loaded (not values)
 const found = fs.existsSync(envPath);
@@ -55,6 +58,9 @@ console.log('Keys parsed from file:', parsedKeys.length ? parsedKeys.join(', ') 
 console.log('GITHUB_TOKEN:', token ? 'set' : 'NOT SET');
 console.log('CLOUDFLARE_API_TOKEN:', cfToken ? 'set' : 'NOT SET');
 console.log('CLOUDFLARE_ACCOUNT_ID:', cfAccountId ? 'set' : 'NOT SET');
+console.log('VITE_ADMIN_ALLOWLIST_EMAILS:', adminAllowlist ? 'set' : 'NOT SET (optional)');
+console.log('VITE_BREAK_GLASS_ADMIN_EMAIL:', breakGlassEmail ? 'set' : 'NOT SET (optional)');
+console.log('VITE_ADMIN_OAUTH_REDIRECT_URL:', oauthRedirectUrl ? 'set' : 'NOT SET (optional)');
 
 if (!token) {
   console.error('\nError: GITHUB_TOKEN is required (PAT with repo + Actions: write secrets).');
@@ -122,17 +128,20 @@ async function main() {
     return sodium.to_base64(enc, sodium.base64_variants.ORIGINAL);
   }
 
-  await api('PUT', `/repos/${OWNER}/${REPO}/actions/secrets/CLOUDFLARE_API_TOKEN`, {
-    encrypted_value: encrypt(cfToken),
-    key_id,
-  });
-  console.log('Set CLOUDFLARE_API_TOKEN');
+  async function setSecret(name, value) {
+    await api('PUT', `/repos/${OWNER}/${REPO}/actions/secrets/${name}`, {
+      encrypted_value: encrypt(value),
+      key_id,
+    });
+    console.log(`Set ${name}`);
+  }
 
-  await api('PUT', `/repos/${OWNER}/${REPO}/actions/secrets/CLOUDFLARE_ACCOUNT_ID`, {
-    encrypted_value: encrypt(cfAccountId),
-    key_id,
-  });
-  console.log('Set CLOUDFLARE_ACCOUNT_ID');
+  await setSecret('CLOUDFLARE_API_TOKEN', cfToken);
+  await setSecret('CLOUDFLARE_ACCOUNT_ID', cfAccountId);
+
+  if (adminAllowlist) await setSecret('VITE_ADMIN_ALLOWLIST_EMAILS', adminAllowlist);
+  if (breakGlassEmail) await setSecret('VITE_BREAK_GLASS_ADMIN_EMAIL', breakGlassEmail);
+  if (oauthRedirectUrl) await setSecret('VITE_ADMIN_OAUTH_REDIRECT_URL', oauthRedirectUrl);
 
   console.log('Done. Re-run the failed workflow or push to trigger deploy.');
 }

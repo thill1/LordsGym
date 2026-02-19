@@ -40,6 +40,7 @@ const mockClient = {
   auth: {
     getUser: async () => ({ data: { user: null }, error: null }),
     signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: 'Supabase not configured' } } as any),
+    signInWithOAuth: async () => ({ data: { provider: 'google', url: null }, error: { message: 'Supabase not configured' } } as any),
     signOut: async () => ({ error: null }),
     resetPasswordForEmail: async () => ({ error: { message: 'Supabase not configured' } } as any),
     updateUser: async () => ({ data: { user: null }, error: { message: 'Supabase not configured' } } as any),

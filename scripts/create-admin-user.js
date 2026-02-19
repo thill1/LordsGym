@@ -2,8 +2,8 @@
 
 /**
  * Create admin user for Lord's Gym admin page
- * Email: lordsgymoutreach@gmail.com
- * Password: auto-generated, unique
+ * Email: VITE_BREAK_GLASS_ADMIN_EMAIL (or fallback)
+ * Password: auto-generated, unique when service role key is available
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -43,18 +43,49 @@ function generatePassword(length = 16) {
 const env = { ...process.env, ...loadEnv() };
 const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+const anonKey = env.VITE_SUPABASE_ANON_KEY;
 
-const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
+const ADMIN_EMAIL = (
+  env.VITE_BREAK_GLASS_ADMIN_EMAIL ||
+  env.BREAK_GLASS_ADMIN_EMAIL ||
+  'lordsgymoutreach@gmail.com'
+).trim();
 
 async function main() {
   console.log('🔐 Create Admin User for Lord\'s Gym\n');
   console.log('   Email:', ADMIN_EMAIL);
 
   if (!serviceRoleKey) {
-    console.error('\n❌ SUPABASE_SERVICE_ROLE_KEY is required.');
-    console.error('   Add to .env.local or run: SUPABASE_SERVICE_ROLE_KEY=xxx node scripts/create-admin-user.js');
-    console.error('   Get it from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api\n');
-    process.exit(1);
+    if (!anonKey) {
+      console.error('\n❌ SUPABASE_SERVICE_ROLE_KEY is required to rotate/create the break-glass user.');
+      console.error('   Add to .env.local or run: SUPABASE_SERVICE_ROLE_KEY=xxx node scripts/create-admin-user.js');
+      console.error('   Get it from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api\n');
+      process.exit(1);
+    }
+
+    console.log('\n⚠️  SUPABASE_SERVICE_ROLE_KEY is not set. Falling back to password reset email flow...');
+    const resetRes = await fetch(`${supabaseUrl}/auth/v1/recover`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: ADMIN_EMAIL,
+        redirect_to: 'https://lordsgymoutreach.com/#/admin',
+      }),
+    });
+
+    const resetData = await resetRes.json().catch(() => ({}));
+    if (!resetRes.ok) {
+      console.error('\n❌ Failed to trigger reset email:', resetData.msg || resetData.message || resetRes.statusText);
+      process.exit(1);
+    }
+
+    console.log('\n✅ Password reset email triggered.');
+    console.log('   Check inbox for:', ADMIN_EMAIL);
+    console.log('   Complete reset, then sign in at: https://lordsgymoutreach.com/#/admin\n');
+    return;
   }
 
   const password = generatePassword(16);

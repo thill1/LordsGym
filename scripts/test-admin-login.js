@@ -6,7 +6,7 @@
 
 const SUPABASE_URL = 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
-const PASSWORD = process.argv[2] || 'Az$b9SKkvNL8D4mF';
+const PASSWORD = process.argv[2] || process.env.ADMIN_BREAK_GLASS_PASSWORD || '';
 
 // Anon key is public - used by the client for signIn
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
@@ -23,6 +23,30 @@ async function testLogin() {
     console.error('   Get from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
     console.error('   Run: VITE_SUPABASE_ANON_KEY=your_anon_key node scripts/test-admin-login.js [password]\n');
     process.exit(1);
+  }
+
+  if (!PASSWORD) {
+    console.log('\n⚠️  No admin password provided. Running auth endpoint smoke check only...');
+    const smokeRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        apikey: ANON_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: ADMIN_EMAIL,
+        password: `invalid-${Date.now()}`,
+      }),
+    });
+    const smokeData = await smokeRes.json();
+    const msg = String(smokeData?.error_description || smokeData?.msg || smokeData?.message || '').toLowerCase();
+    if (msg.includes('invalid api key') || msg.includes('apikey') || msg.includes('jwt')) {
+      console.error('❌ Auth endpoint smoke failed due to API key/config issue:', smokeData.error_description || smokeData.msg || smokeData.message);
+      process.exit(1);
+    }
+    console.log('✅ Auth endpoint is reachable and rejects invalid credentials as expected.');
+    console.log('   For full login verification, provide password arg or ADMIN_BREAK_GLASS_PASSWORD.\n');
+    return;
   }
 
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {

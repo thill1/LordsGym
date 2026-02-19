@@ -33,7 +33,7 @@ This runs the setup script to verify prerequisites and build.
 ## 3. GitHub Secrets (required for deploy)
 
 1. Repo: **Settings** → **Secrets and variables** → **Actions**
-2. Add **Repository secrets** (not only environment-specific): **New repository secret** for each (all 5 required):
+2. Add **Repository secrets** (not only environment-specific): **New repository secret** for each:
 
 | Secret | Value | Used for |
 |--------|-------|----------|
@@ -42,6 +42,9 @@ This runs the setup script to verify prerequisites and build.
 | `VITE_SUPABASE_URL` | `https://mrptukahxloqpdqiaxkb.supabase.co` | Build (admin auth) |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key from [API settings](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api) | Build (admin auth) |
 | `GITHUB_TOKEN` | *(auto-provided)* | Deploy status |
+| `VITE_ADMIN_ALLOWLIST_EMAILS` | `owner@gmail.com,ops@gmail.com` | Google admin allowlist |
+| `VITE_BREAK_GLASS_ADMIN_EMAIL` | `admin@lordsgym.com` | Password emergency login policy |
+| `VITE_ADMIN_OAUTH_REDIRECT_URL` | `https://lordsgymoutreach.com/#/admin` | Optional OAuth callback override |
 
 **Token permissions:** The Cloudflare API token must have **Account** → **Cloudflare Pages** → **Edit**. If deploy fails with 403, create a new token with that permission.
 

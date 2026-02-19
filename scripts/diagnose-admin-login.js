@@ -6,7 +6,7 @@
  */
 
 const SUPABASE_URL = 'https://mrptukahxloqpdqiaxkb.supabase.co';
-const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
+const ADMIN_EMAIL = (process.env.VITE_BREAK_GLASS_ADMIN_EMAIL || process.env.BREAK_GLASS_ADMIN_EMAIL || 'lordsgymoutreach@gmail.com').trim();
 const PASSWORD = process.argv[2];
 
 async function main() {
