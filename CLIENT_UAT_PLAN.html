@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lord's Gym - Phase 1 UAT Plan</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 20mm 15mm 30mm 15mm;
+            }
+            
+            .no-print { display: none; }
+            
+            body { 
+                margin: 0; 
+                padding: 0;
+                background: white;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+            
+            .header {
+                margin: 0 0 20px 0;
+                padding: 15px;
+                page-break-after: avoid;
+            }
+            
+            .contact-info {
+                margin-bottom: 20px;
+                page-break-after: avoid;
+            }
+            
+            .intro {
+                margin-bottom: 20px;
+                page-break-after: avoid;
+            }
+            
+            h2 {
+                page-break-after: avoid;
+                page-break-inside: avoid;
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+            
+            h3 {
+                page-break-after: avoid;
+                margin-top: 15px;
+                margin-bottom: 8px;
+            }
+            
+            .section { 
+                page-break-inside: avoid;
+                margin-bottom: 15px;
+            }
+            
+            .test-item {
+                page-break-inside: avoid;
+                margin: 12px 0;
+                padding: 12px;
+                border-left-width: 2px;
+            }
+            
+            .test-item:last-child {
+                page-break-after: auto;
+            }
+            
+            /* Prevent breaking test items across pages */
+            .test-item ul {
+                page-break-inside: avoid;
+            }
+            
+            .test-item .checkbox-group {
+                page-break-inside: avoid;
+            }
+            
+            .notes {
+                page-break-inside: avoid;
+                min-height: 35px;
+            }
+            
+            .sign-off { 
+                page-break-before: always;
+                page-break-inside: avoid;
+                margin-top: 0;
+            }
+            
+            .form-field {
+                page-break-inside: avoid;
+            }
+            
+            .summary-grid {
+                page-break-inside: avoid;
+            }
+            
+            .approval-status {
+                page-break-inside: avoid;
+            }
+            
+            /* Ensure proper spacing */
+            ul {
+                margin: 8px 0;
+                padding-left: 20px;
+            }
+            
+            li {
+                margin: 4px 0;
+            }
+            
+            .watermark {
+                position: fixed;
+                bottom: 15mm;
+                left: 50%;
+                transform: translateX(-50%);
+                color: #999;
+                font-size: 9px;
+                opacity: 0.4;
+            }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: transparent;
+            color: #333;
+            padding: 20px;
+            margin: -20px -20px 30px -20px;
+            text-align: center;
+            border-bottom: 2px solid #d4af37;
+        }
+        
+        .contact-info {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .contact-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ccc;
+            font-size: 10px;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #d4af37;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            border-left: 4px solid #d4af37;
+            padding-left: 10px;
+        }
+        
+        h3 {
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-left: 3px solid #e0e0e0;
+            border-radius: 3px;
+        }
+        
+        .test-item:hover {
+            border-left-color: #d4af37;
+        }
+        
+        .checkbox-group {
+            margin: 10px 0;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-item label {
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .approved { color: #28a745; }
+        .unapproved { color: #dc3545; }
+        .discuss { color: #ffc107; }
+        
+        .notes {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            border-radius: 3px;
+            width: 100%;
+            min-height: 40px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        
+        .sign-off {
+            background: white;
+            padding: 30px;
+            margin-top: 40px;
+            border: 2px solid #d4af37;
+            border-radius: 5px;
+        }
+        
+        .form-field {
+            margin: 10px 0;
+        }
+        
+        .form-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .form-field input[type="text"],
+        .form-field input[type="email"],
+        .form-field input[type="tel"],
+        .form-field input[type="date"],
+        .form-field textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .intro {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .intro ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        button {
+            background: #d4af37;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        
+        button:hover {
+            background: #b8941f;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .summary-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 3px;
+        }
+        
+        .summary-item input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        
+        .approval-status {
+            margin: 20px 0;
+        }
+        
+        .approval-status label {
+            display: block;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        .approval-status input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        
+        .issues-list textarea {
+            min-height: 60px;
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">Lord's Gym - Phase 1 Project Report | Confidential</div>
+    
+    <div class="header">
+        <h1>Lord's Gym Website - Phase 1 User Acceptance Testing Plan</h1>
+    </div>
+    
+    <div class="contact-info">
+        <p><strong>Project Manager:</strong> Troy Hill</p>
+        <p><strong>Company:</strong> Sentient Partners</p>
+        <p><strong>Phone:</strong> 415-504-2757</p>
+        <p><strong>Email:</strong> troyhill@sentientparters.ai</p>
+    </div>
+    
+    <div class="intro">
+        <h2>Introduction</h2>
+        <p>This User Acceptance Testing (UAT) plan is designed for you to review and approve all Phase 1 functionalities and the general appearance of the Lord's Gym website. Please test each item below and mark your approval status using the checkboxes provided.</p>
+        
+        <h3>How to Use This Document:</h3>
+        <ul>
+            <li>Test each item on the website</li>
+            <li>Mark one checkbox per item: <strong>Approved</strong>, <strong>Unapproved</strong>, or <strong>Discuss</strong></li>
+            <li>Add notes in the provided spaces if needed</li>
+            <li>Complete the sign-off page at the end</li>
+            <li>Click "Print / Save as PDF" when finished</li>
+            <li>Email the completed PDF back</li>
+        </ul>
+    </div>
+    
+    <div class="no-print button-group">
+        <button onclick="window.print()">Print / Save as PDF</button>
+        <button onclick="clearAll()">Clear All Checkboxes</button>
+    </div>
+    
+    <div class="content"></div><div class="section"><h2>1. Home Page</h2><div class="test-item">
+        <h3>1.1 Visual Appearance & Layout</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_0_approved" id="test_0_approved">
+                <label for="test_0_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_0_unapproved" id="test_0_unapproved">
+                <label for="test_0_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_0_discuss" id="test_0_discuss">
+                <label for="test_0_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Hero section displays correctly with headline, subheadline, and call-to-action button</li><li>Background image displays properly</li><li>Values section shows three statistics with labels</li><li>Featured products section displays correctly</li><li>Overall layout and spacing looks professional</li></ul><textarea class="notes" name="test_0_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>1.2 Navigation & Functionality</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_1_approved" id="test_1_approved">
+                <label for="test_1_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_1_unapproved" id="test_1_unapproved">
+                <label for="test_1_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_1_discuss" id="test_1_discuss">
+                <label for="test_1_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Navigation menu works correctly</li><li>All menu links navigate to correct pages</li><li>Logo links back to home page</li><li>Footer displays contact information correctly</li></ul><textarea class="notes" name="test_1_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>1.3 Dark Mode Toggle</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_2_approved" id="test_2_approved">
+                <label for="test_2_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_2_unapproved" id="test_2_unapproved">
+                <label for="test_2_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_2_discuss" id="test_2_discuss">
+                <label for="test_2_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Dark mode toggle button is visible and accessible</li><li>Switching to dark mode works smoothly</li><li>All text remains readable in dark mode</li><li>Images display correctly in both modes</li><li>Theme preference persists when navigating pages</li></ul><textarea class="notes" name="test_2_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>1.4 Responsive Design (Mobile)</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_3_approved" id="test_3_approved">
+                <label for="test_3_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_3_unapproved" id="test_3_unapproved">
+                <label for="test_3_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_3_discuss" id="test_3_discuss">
+                <label for="test_3_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page displays correctly on mobile devices</li><li>Navigation menu converts to hamburger menu on mobile</li><li>Text is readable and appropriately sized</li><li>Buttons are touch-friendly (large enough to tap)</li><li>Images scale appropriately</li><li>No horizontal scrolling required</li></ul><textarea class="notes" name="test_3_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>2. Membership Page</h2><div class="test-item">
+        <h3>1.5 Responsive Design (Tablet)</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_4_approved" id="test_4_approved">
+                <label for="test_4_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_4_unapproved" id="test_4_unapproved">
+                <label for="test_4_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_4_discuss" id="test_4_discuss">
+                <label for="test_4_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page displays correctly on tablet devices</li><li>Layout adapts appropriately for tablet screen size</li><li>Navigation works well on tablet</li></ul><textarea class="notes" name="test_4_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>2.1 Membership Tiers Display</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_5_approved" id="test_5_approved">
+                <label for="test_5_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_5_unapproved" id="test_5_unapproved">
+                <label for="test_5_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_5_discuss" id="test_5_discuss">
+                <label for="test_5_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>All three membership tiers display correctly:</li><li>Regular Monthly Membership ($39/month + $39 setup fee)</li><li>Student Monthly Membership ($29/month + $39 setup fee)</li><li>Annual Membership ($360/year + $39 setup fee)</li><li>Pricing information is accurate and clearly displayed</li><li>Membership cards are visually appealing</li><li>Facility photos display correctly</li></ul><textarea class="notes" name="test_5_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>2.2 Membership Features & FAQ</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_6_approved" id="test_6_approved">
+                <label for="test_6_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_6_unapproved" id="test_6_unapproved">
+                <label for="test_6_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_6_discuss" id="test_6_discuss">
+                <label for="test_6_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Feature lists for each membership tier are accurate</li><li>FAQ section displays all questions and answers</li><li>FAQ content is helpful and accurate</li></ul><textarea class="notes" name="test_6_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>2.3 Add to Cart Functionality</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_7_approved" id="test_7_approved">
+                <label for="test_7_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_7_unapproved" id="test_7_unapproved">
+                <label for="test_7_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_7_discuss" id="test_7_discuss">
+                <label for="test_7_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>"Join Now" buttons work correctly</li><li>Clicking "Join Now" adds membership to cart</li><li>Setup fee is automatically included</li><li>Cart drawer opens showing correct items and total</li></ul><textarea class="notes" name="test_7_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>3. Online Shop</h2><div class="test-item">
+        <h3>2.4 Visual Appearance</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_8_approved" id="test_8_approved">
+                <label for="test_8_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_8_unapproved" id="test_8_unapproved">
+                <label for="test_8_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_8_discuss" id="test_8_discuss">
+                <label for="test_8_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page layout looks professional</li><li>Colors and branding are consistent</li><li>Typography is clear and readable</li><li>Images are high quality and appropriate</li></ul><textarea class="notes" name="test_8_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>3.1 Product Catalog Display</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_9_approved" id="test_9_approved">
+                <label for="test_9_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_9_unapproved" id="test_9_unapproved">
+                <label for="test_9_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_9_discuss" id="test_9_discuss">
+                <label for="test_9_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Product grid displays all products correctly</li><li>Product images load properly</li><li>Product titles and descriptions are accurate</li><li>Prices display correctly</li><li>Product cards are visually appealing</li></ul><textarea class="notes" name="test_9_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>3.2 Category Filtering</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_10_approved" id="test_10_approved">
+                <label for="test_10_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_10_unapproved" id="test_10_unapproved">
+                <label for="test_10_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_10_discuss" id="test_10_discuss">
+                <label for="test_10_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Category filter buttons work correctly</li><li>"All Products" shows all products</li><li>Filtering by category (Men's, Women's, Accessories) works</li><li>Products filter correctly when category selected</li></ul><textarea class="notes" name="test_10_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>3.3 Product Details</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_11_approved" id="test_11_approved">
+                <label for="test_11_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_11_unapproved" id="test_11_unapproved">
+                <label for="test_11_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_11_discuss" id="test_11_discuss">
+                <label for="test_11_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Clicking a product shows product details</li><li>Product images display correctly</li><li>Product descriptions are complete and accurate</li><li>Size/variant selection works (if applicable)</li><li>Inventory status displays correctly</li></ul><textarea class="notes" name="test_11_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>3.4 Shopping Cart Functionality</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_12_approved" id="test_12_approved">
+                <label for="test_12_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_12_unapproved" id="test_12_unapproved">
+                <label for="test_12_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_12_discuss" id="test_12_discuss">
+                <label for="test_12_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>"Add to Cart" button works correctly</li><li>Cart drawer opens when item added</li><li>Items appear correctly in cart with image, title, and price</li><li>Quantity can be increased/decreased</li><li>Items can be removed from cart</li><li>Cart total calculates correctly</li><li>Cart persists when navigating between pages</li></ul><textarea class="notes" name="test_12_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>4. Calendar & Events</h2><div class="test-item">
+        <h3>3.5 Checkout Process</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_13_approved" id="test_13_approved">
+                <label for="test_13_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_13_unapproved" id="test_13_unapproved">
+                <label for="test_13_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_13_discuss" id="test_13_discuss">
+                <label for="test_13_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Checkout page loads correctly</li><li>Contact information form accepts input</li><li>Billing address form works correctly</li><li>Form validation works (required fields)</li><li>Order summary displays correctly</li><li>Payment form is ready (Stripe integration)</li><li>Order confirmation page displays after submission</li></ul><textarea class="notes" name="test_13_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>4.1 Calendar Display - Month View</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_14_approved" id="test_14_approved">
+                <label for="test_14_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_14_unapproved" id="test_14_unapproved">
+                <label for="test_14_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_14_discuss" id="test_14_discuss">
+                <label for="test_14_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Calendar grid displays correctly</li><li>Current month shows properly</li><li>Events appear on correct dates</li><li>Event titles are visible</li><li>Navigation (previous/next month) works</li><li>"Today" button works correctly</li></ul><textarea class="notes" name="test_14_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>4.2 Calendar View Switching</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_15_approved" id="test_15_approved">
+                <label for="test_15_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_15_unapproved" id="test_15_unapproved">
+                <label for="test_15_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_15_discuss" id="test_15_discuss">
+                <label for="test_15_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Week view displays correctly</li><li>Day view displays correctly</li><li>List view displays correctly</li><li>Switching between views works smoothly</li><li>Events display appropriately in each view</li></ul><textarea class="notes" name="test_15_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>4.3 Event Details & Information</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_16_approved" id="test_16_approved">
+                <label for="test_16_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_16_unapproved" id="test_16_unapproved">
+                <label for="test_16_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_16_discuss" id="test_16_discuss">
+                <label for="test_16_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Clicking an event opens event details modal</li><li>Event title, description, and time display correctly</li><li>Instructor information displays correctly</li><li>Class type indicators are clear (Strength, Cardio, Recovery, Community)</li><li>Capacity information displays correctly</li><li>Event duration is accurate</li></ul><textarea class="notes" name="test_16_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>4.4 Event Search & Filtering</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_17_approved" id="test_17_approved">
+                <label for="test_17_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_17_unapproved" id="test_17_unapproved">
+                <label for="test_17_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_17_discuss" id="test_17_discuss">
+                <label for="test_17_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Search functionality works correctly</li><li>Events filter by search keyword</li><li>Search results are accurate</li></ul><textarea class="notes" name="test_17_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>4.5 Calendar Export</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_18_approved" id="test_18_approved">
+                <label for="test_18_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_18_unapproved" id="test_18_unapproved">
+                <label for="test_18_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_18_discuss" id="test_18_discuss">
+                <label for="test_18_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>"Export Calendar" button works</li><li>Calendar exports as .ics file</li><li>Exported file can be imported into personal calendar (Google Calendar, Outlook, Apple Calendar)</li><li>Events import with correct dates, times, and details</li></ul><textarea class="notes" name="test_18_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>5. Training & Programs Pages</h2><div class="test-item">
+        <h3>4.6 Event Booking (if logged in)</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_19_approved" id="test_19_approved">
+                <label for="test_19_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_19_unapproved" id="test_19_unapproved">
+                <label for="test_19_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_19_discuss" id="test_19_discuss">
+                <label for="test_19_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Booking form displays for logged-in users</li><li>Booking submission works correctly</li><li>Booking confirmation displays</li><li>Booking appears in user's booking history</li></ul><textarea class="notes" name="test_19_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>5.1 Training Page</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_20_approved" id="test_20_approved">
+                <label for="test_20_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_20_unapproved" id="test_20_unapproved">
+                <label for="test_20_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_20_discuss" id="test_20_discuss">
+                <label for="test_20_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page displays correctly</li><li>Program listings are accurate</li><li>Program descriptions are complete</li><li>Images display correctly</li><li>Mindbody widget integration works (if applicable)</li></ul><textarea class="notes" name="test_20_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>6. Outreach Page</h2><div class="test-item">
+        <h3>5.2 Programs Page</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_21_approved" id="test_21_approved">
+                <label for="test_21_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_21_unapproved" id="test_21_unapproved">
+                <label for="test_21_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_21_discuss" id="test_21_discuss">
+                <label for="test_21_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page displays correctly</li><li>Program details are accurate</li><li>Feature highlights are clear</li><li>Professional coaching information is accurate</li></ul><textarea class="notes" name="test_21_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>6.1 Content & Information</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_22_approved" id="test_22_approved">
+                <label for="test_22_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_22_unapproved" id="test_22_unapproved">
+                <label for="test_22_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_22_discuss" id="test_22_discuss">
+                <label for="test_22_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Hero section displays correctly</li><li>Mission content is accurate and well-written</li><li>Photo gallery displays correctly</li><li>Outreach program descriptions are accurate:</li><li>Food and essentials distribution</li><li>Encampment outreach</li><li>Recovery ministry</li><li>Faith-based 12-step programs</li></ul><textarea class="notes" name="test_22_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>6.2 Donation Integration</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_23_approved" id="test_23_approved">
+                <label for="test_23_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_23_unapproved" id="test_23_unapproved">
+                <label for="test_23_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_23_discuss" id="test_23_discuss">
+                <label for="test_23_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Donation buttons/links work correctly</li><li>Square payment links function properly:</li><li>$25 donation link (hygiene kits)</li><li>$50 donation link (recovery materials)</li><li>$100 donation link (gas for outreach truck)</li><li>Custom donation amount option</li><li>Donation process is clear and user-friendly</li></ul><textarea class="notes" name="test_23_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>7. Community Page</h2><div class="test-item">
+        <h3>6.3 Visual Appearance</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_24_approved" id="test_24_approved">
+                <label for="test_24_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_24_unapproved" id="test_24_unapproved">
+                <label for="test_24_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_24_discuss" id="test_24_discuss">
+                <label for="test_24_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page layout is professional</li><li>Images are appropriate and high quality</li><li>Content is well-organized</li></ul><textarea class="notes" name="test_24_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>7.1 Community Initiatives</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_25_approved" id="test_25_approved">
+                <label for="test_25_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_25_unapproved" id="test_25_unapproved">
+                <label for="test_25_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_25_discuss" id="test_25_discuss">
+                <label for="test_25_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>The Lord's Table information displays correctly</li><li>Gloves Up, Guns Down program information is accurate</li><li>Volunteer opportunities are clearly presented</li><li>Partnership information is accurate</li></ul><textarea class="notes" name="test_25_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>8. About Page</h2><div class="test-item">
+        <h3>7.2 Call-to-Actions</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_26_approved" id="test_26_approved">
+                <label for="test_26_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_26_unapproved" id="test_26_unapproved">
+                <label for="test_26_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_26_discuss" id="test_26_discuss">
+                <label for="test_26_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Volunteer sign-up links work correctly</li><li>Sponsorship opportunity links work</li><li>Contact form links work</li></ul><textarea class="notes" name="test_26_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>9. Contact Page</h2><div class="test-item">
+        <h3>8.1 Content & Information</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_27_approved" id="test_27_approved">
+                <label for="test_27_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_27_unapproved" id="test_27_unapproved">
+                <label for="test_27_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_27_discuss" id="test_27_discuss">
+                <label for="test_27_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Organization overview is accurate</li><li>Mission and values are clearly presented</li><li>Contact information displays correctly</li><li>Call-to-action buttons work correctly</li></ul><textarea class="notes" name="test_27_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>9.1 Contact Form</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_28_approved" id="test_28_approved">
+                <label for="test_28_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_28_unapproved" id="test_28_unapproved">
+                <label for="test_28_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_28_discuss" id="test_28_discuss">
+                <label for="test_28_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Contact form displays correctly</li><li>All form fields accept input:</li><li>Name field</li><li>Email field</li><li>Phone field (optional)</li><li>Message textarea</li><li>Form validation works (required fields)</li><li>Form submission works correctly</li><li>Success message displays after submission</li><li>Form integrates with Go High Level correctly</li></ul><textarea class="notes" name="test_28_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>9.2 Contact Information Display</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_29_approved" id="test_29_approved">
+                <label for="test_29_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_29_unapproved" id="test_29_unapproved">
+                <label for="test_29_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_29_discuss" id="test_29_discuss">
+                <label for="test_29_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Physical address displays correctly: 258 Elm Ave, Auburn, CA 95603</li><li>Phone number displays correctly: 530-537-2105</li><li>Email address displays correctly: lordsgymoutreach@gmail.com</li><li>Operating hours display correctly:</li><li>Member access: 24 hours / 7 days</li><li>Staffed hours: Monday-Friday 7am-7pm, Saturday 8am-12pm, Sunday closed</li></ul><textarea class="notes" name="test_29_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>10. Overall Website Experience</h2><div class="test-item">
+        <h3>9.3 Google Maps Integration</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_30_approved" id="test_30_approved">
+                <label for="test_30_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_30_unapproved" id="test_30_unapproved">
+                <label for="test_30_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_30_discuss" id="test_30_discuss">
+                <label for="test_30_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Google Maps displays correctly</li><li>Map shows correct location</li><li>Map is interactive (can zoom, pan)</li></ul><textarea class="notes" name="test_30_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>10.1 Cross-Browser Compatibility</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_31_approved" id="test_31_approved">
+                <label for="test_31_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_31_unapproved" id="test_31_unapproved">
+                <label for="test_31_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_31_discuss" id="test_31_discuss">
+                <label for="test_31_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Website works correctly in Chrome</li><li>Website works correctly in Firefox</li><li>Website works correctly in Safari</li><li>Website works correctly in Edge</li><li>Website works correctly on mobile browsers</li></ul><textarea class="notes" name="test_31_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>10.2 Performance & Loading Speed</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_32_approved" id="test_32_approved">
+                <label for="test_32_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_32_unapproved" id="test_32_unapproved">
+                <label for="test_32_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_32_discuss" id="test_32_discuss">
+                <label for="test_32_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Pages load quickly (< 3 seconds)</li><li>Images load progressively</li><li>No broken links</li><li>No error messages</li></ul><textarea class="notes" name="test_32_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>10.3 SEO & Meta Information</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_33_approved" id="test_33_approved">
+                <label for="test_33_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_33_unapproved" id="test_33_unapproved">
+                <label for="test_33_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_33_discuss" id="test_33_discuss">
+                <label for="test_33_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Page titles are appropriate and descriptive</li><li>Meta descriptions are accurate</li><li>Social media sharing works correctly (Open Graph tags)</li></ul><textarea class="notes" name="test_33_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>10.4 Accessibility</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_34_approved" id="test_34_approved">
+                <label for="test_34_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_34_unapproved" id="test_34_unapproved">
+                <label for="test_34_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_34_discuss" id="test_34_discuss">
+                <label for="test_34_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Website is navigable using keyboard only</li><li>Images have appropriate alt text</li><li>Text contrast is sufficient for readability</li><li>Forms have proper labels</li></ul><textarea class="notes" name="test_34_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>11. Admin Dashboard (Content Management)</h2><div class="test-item">
+        <h3>10.5 Brand Consistency</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_35_approved" id="test_35_approved">
+                <label for="test_35_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_35_unapproved" id="test_35_unapproved">
+                <label for="test_35_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_35_discuss" id="test_35_discuss">
+                <label for="test_35_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Colors are consistent throughout the site</li><li>Typography is consistent</li><li>Logo usage is consistent</li><li>Overall brand identity is maintained</li></ul><textarea class="notes" name="test_35_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.1 Admin Login</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_36_approved" id="test_36_approved">
+                <label for="test_36_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_36_unapproved" id="test_36_unapproved">
+                <label for="test_36_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_36_discuss" id="test_36_discuss">
+                <label for="test_36_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Login page displays correctly</li><li>Login with valid credentials works</li><li>Invalid credentials show appropriate error</li><li>Session persists correctly</li><li>Logout works correctly</li></ul><textarea class="notes" name="test_36_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.2 Dashboard Overview</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_37_approved" id="test_37_approved">
+                <label for="test_37_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_37_unapproved" id="test_37_unapproved">
+                <label for="test_37_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_37_discuss" id="test_37_discuss">
+                <label for="test_37_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Dashboard loads correctly</li><li>Key metrics display (products, pages, events)</li><li>Quick access links work</li><li>Activity feed displays recent actions</li><li>Navigation sidebar works correctly</li></ul><textarea class="notes" name="test_37_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.3 Home Content Editor</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_38_approved" id="test_38_approved">
+                <label for="test_38_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_38_unapproved" id="test_38_unapproved">
+                <label for="test_38_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_38_discuss" id="test_38_discuss">
+                <label for="test_38_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Home content editor loads correctly</li><li>Hero section can be edited (headline, subheadline, CTA, background image)</li><li>Values section can be edited (three stats and labels)</li><li>Changes save correctly</li><li>Changes appear on live website immediately</li></ul><textarea class="notes" name="test_38_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.4 Page Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_39_approved" id="test_39_approved">
+                <label for="test_39_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_39_unapproved" id="test_39_unapproved">
+                <label for="test_39_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_39_discuss" id="test_39_discuss">
+                <label for="test_39_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can create new pages</li><li>Can edit existing pages</li><li>Rich text editor works correctly</li><li>Can set SEO metadata (title, description)</li><li>Can publish/unpublish pages</li><li>Page slugs work correctly</li></ul><textarea class="notes" name="test_39_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.5 Media Library</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_40_approved" id="test_40_approved">
+                <label for="test_40_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_40_unapproved" id="test_40_unapproved">
+                <label for="test_40_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_40_discuss" id="test_40_discuss">
+                <label for="test_40_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can upload images to media library</li><li>Upload progress indicator works</li><li>Images appear in library after upload</li><li>Can add/edit alt text for images</li><li>Can search/filter media library</li><li>Image URLs can be copied</li></ul><textarea class="notes" name="test_40_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.6 Product Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_41_approved" id="test_41_approved">
+                <label for="test_41_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_41_unapproved" id="test_41_unapproved">
+                <label for="test_41_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_41_discuss" id="test_41_discuss">
+                <label for="test_41_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can create new products</li><li>Can edit existing products</li><li>Can set product details (title, price, description, category, images)</li><li>Can manage inventory</li><li>Can mark products as featured</li><li>Products appear correctly in shop</li></ul><textarea class="notes" name="test_41_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.7 Calendar Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_42_approved" id="test_42_approved">
+                <label for="test_42_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_42_unapproved" id="test_42_unapproved">
+                <label for="test_42_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_42_discuss" id="test_42_discuss">
+                <label for="test_42_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can create new calendar events</li><li>Can edit existing events</li><li>Can set event details (title, description, time, instructor, capacity)</li><li>Can create recurring events</li><li>Can manage recurring event exceptions</li><li>Events appear correctly on public calendar</li></ul><textarea class="notes" name="test_42_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.8 Testimonials Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_43_approved" id="test_43_approved">
+                <label for="test_43_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_43_unapproved" id="test_43_unapproved">
+                <label for="test_43_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_43_discuss" id="test_43_discuss">
+                <label for="test_43_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can add new testimonials</li><li>Can edit existing testimonials</li><li>Can delete testimonials</li><li>Can reorder testimonials</li><li>Testimonials display correctly on website</li></ul><textarea class="notes" name="test_43_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>11.9 Settings Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_44_approved" id="test_44_approved">
+                <label for="test_44_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_44_unapproved" id="test_44_unapproved">
+                <label for="test_44_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_44_discuss" id="test_44_discuss">
+                <label for="test_44_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can update site name</li><li>Can update contact information (email, phone, address)</li><li>Can configure Google Analytics ID</li><li>Can manage announcement bar</li><li>Settings save correctly</li><li>Changes appear on website</li></ul><textarea class="notes" name="test_44_notes" placeholder="Notes..."></textarea>
+    </div></div><div class="section"><h2>12. General Feedback</h2><div class="test-item">
+        <h3>11.10 SEO Management</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_45_approved" id="test_45_approved">
+                <label for="test_45_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_45_unapproved" id="test_45_unapproved">
+                <label for="test_45_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_45_discuss" id="test_45_discuss">
+                <label for="test_45_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Can set site-wide SEO settings</li><li>Can set page-specific SEO</li><li>Can manage schema markup</li><li>SEO settings save correctly</li></ul><textarea class="notes" name="test_45_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>12.1 Overall Design & Appearance</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_46_approved" id="test_46_approved">
+                <label for="test_46_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_46_unapproved" id="test_46_unapproved">
+                <label for="test_46_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_46_discuss" id="test_46_discuss">
+                <label for="test_46_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Overall design meets expectations</li><li>Visual appearance is professional</li><li>Layout is user-friendly</li></ul><textarea class="notes" name="test_46_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>12.2 User Experience</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_47_approved" id="test_47_approved">
+                <label for="test_47_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_47_unapproved" id="test_47_unapproved">
+                <label for="test_47_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_47_discuss" id="test_47_discuss">
+                <label for="test_47_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>Website is easy to navigate</li><li>Information is easy to find</li><li>Forms are easy to complete</li><li>Call-to-action buttons are clear</li></ul><textarea class="notes" name="test_47_notes" placeholder="Notes..."></textarea>
+    </div><div class="test-item">
+        <h3>12.3 Content Accuracy</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_48_approved" id="test_48_approved">
+                <label for="test_48_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_48_unapproved" id="test_48_unapproved">
+                <label for="test_48_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_48_discuss" id="test_48_discuss">
+                <label for="test_48_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>All content is accurate</li><li>Contact information is correct</li><li>Pricing information is correct</li><li>Program descriptions are accurate</li></ul><textarea class="notes" name="test_48_notes" placeholder="Notes..."></textarea>
+    </div>
+    
+    <div class="test-item">
+        <h3>12.4 Functionality</h3>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_49_approved" id="test_49_approved">
+                <label for="test_49_approved" class="approved">Approved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_49_unapproved" id="test_49_unapproved">
+                <label for="test_49_unapproved" class="unapproved">Unapproved</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" name="test_49_discuss" id="test_49_discuss">
+                <label for="test_49_discuss" class="discuss">Discuss</label>
+            </div>
+        </div><ul><li>All features work as expected</li><li>No broken functionality</li><li>Integrations work correctly</li></ul><textarea class="notes" name="test_49_notes" placeholder="Notes..."></textarea>
+    </div></div>
+    <div class="sign-off">
+        <h2>13. Sign-Off & Approval</h2>
+        
+        <div class="form-field">
+            <label>Tester Name: *</label>
+            <input type="text" name="tester_name" required>
+        </div>
+        
+        <div class="form-field">
+            <label>Title/Role:</label>
+            <input type="text" name="tester_title">
+        </div>
+        
+        <div class="form-field">
+            <label>Company:</label>
+            <input type="text" name="tester_company">
+        </div>
+        
+        <div class="form-field">
+            <label>Date of Testing: *</label>
+            <input type="date" name="test_date" required>
+        </div>
+        
+        <div class="form-field">
+            <label>Email:</label>
+            <input type="email" name="tester_email">
+        </div>
+        
+        <div class="form-field">
+            <label>Phone:</label>
+            <input type="tel" name="tester_phone">
+        </div>
+        
+        <div class="summary-grid">
+            <div class="summary-item">
+                <label>Total Items Tested:</label>
+                <input type="text" name="total_tested">
+            </div>
+            <div class="summary-item">
+                <label>Items Approved:</label>
+                <input type="text" name="total_approved">
+            </div>
+            <div class="summary-item">
+                <label>Items Unapproved:</label>
+                <input type="text" name="total_unapproved">
+            </div>
+            <div class="summary-item">
+                <label>Items Requiring Discussion:</label>
+                <input type="text" name="total_discuss">
+            </div>
+        </div>
+        
+        <div class="approval-status">
+            <h3>Overall Approval Status</h3>
+            <label>
+                <input type="radio" name="approval_status" value="approved">
+                APPROVED - Website is ready for launch as-is
+            </label>
+            <label>
+                <input type="radio" name="approval_status" value="approved_minor">
+                APPROVED WITH MINOR ISSUES - Website is approved but minor issues should be addressed post-launch
+            </label>
+            <label>
+                <input type="radio" name="approval_status" value="conditional">
+                CONDITIONAL APPROVAL - Website approved pending resolution of specific issues
+            </label>
+            <label>
+                <input type="radio" name="approval_status" value="not_approved">
+                NOT APPROVED - Major issues must be resolved before approval
+            </label>
+        </div>
+        
+        <div class="form-field">
+            <label>Critical Issues:</label>
+            <textarea name="critical_issues" placeholder="List critical issues here..."></textarea>
+        </div>
+        
+        <div class="form-field">
+            <label>Important Issues:</label>
+            <textarea name="important_issues" placeholder="List important issues here..."></textarea>
+        </div>
+        
+        <div class="form-field">
+            <label>Minor Issues:</label>
+            <textarea name="minor_issues" placeholder="List minor issues here..."></textarea>
+        </div>
+        
+        <div class="form-field">
+            <label>Additional Comments:</label>
+            <textarea name="additional_comments" placeholder="Any additional comments..."></textarea>
+        </div>
+        
+        <div class="form-field">
+            <label>Signature: *</label>
+            <input type="text" name="signature" required>
+        </div>
+        
+        <div class="form-field">
+            <label>Date: *</label>
+            <input type="date" name="signature_date" required>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+            <h3>Contact for Questions</h3>
+            <p><strong>Troy Hill</strong><br>
+            Sentient Partners<br>
+            Phone: 415-504-2757<br>
+            Email: troyhill@sentientparters.ai</p>
+        </div>
+    </div>
+    
+    <script>
+        // Ensure only one checkbox per group is selected
+        document.querySelectorAll('.checkbox-group').forEach(group => {
+            const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        checkboxes.forEach(cb => {
+                            if (cb !== this) cb.checked = false;
+                        });
+                    }
+                });
+            });
+        });
+        
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all checkboxes?')) {
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                document.querySelectorAll('textarea').forEach(ta => ta.value = '');
+                document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"]').forEach(inp => inp.value = '');
+                document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+            }
+        }
+    </script>
+</body>
+</html>

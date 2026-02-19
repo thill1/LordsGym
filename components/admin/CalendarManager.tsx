@@ -501,6 +501,17 @@ const CalendarManager: React.FC = () => {
     return new Map(instructors.map((item) => [item.id, item.name]));
   }, [instructors]);
 
+  const [sortColumn, setSortColumn] = useState<'title' | 'class_type' | 'start_time'>('start_time');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 15;
+
+  const handleSort = (col: 'title' | 'class_type' | 'start_time') => {
+    if (sortColumn === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortColumn(col); setSortDir('asc'); }
+    setPage(0);
+  };
+
   const allowedTypes = ['community', 'outreach', 'fundraisers', 'self_help', 'holiday'];
   const tableEvents = (baseEvents.length > 0 ? baseEvents : events)
     .filter((event) => !event.is_recurring_generated || event.is_recurring_preserved || event.class_type === 'holiday');
@@ -512,7 +523,69 @@ const CalendarManager: React.FC = () => {
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         event.description?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesClassType && matchesSearch;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      if (sortColumn === 'title') cmp = a.title.localeCompare(b.title);
+      else if (sortColumn === 'class_type') cmp = (a.class_type || '').localeCompare(b.class_type || '');
+      else cmp = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+      return sortDir === 'asc' ? cmp : -cmp;
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredEvents.length / PAGE_SIZE));
+  const pagedEvents = filteredEvents.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const timeValidationError = useMemo(() => {
+    if (!formData.start_time || !formData.end_time) return null;
+    const s = new Date(formData.start_time);
+    const e = new Date(formData.end_time);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return null;
+    if (e <= s) return 'End time must be after start time';
+    return null;
+  }, [formData.start_time, formData.end_time]);
+
+  const recurringPreviewDates = useMemo(() => {
+    if (!formData.isRecurring || !formData.start_time) return [];
+    if (formData.pattern_type === 'weekly' && formData.days_of_week.length === 0) return [];
+    const startsOn = formData.start_time.split('T')[0];
+    const startDate = new Date(startsOn + 'T00:00:00Z');
+    if (Number.isNaN(startDate.getTime())) return [];
+    const endLimit = formData.end_date
+      ? new Date(formData.end_date + 'T23:59:59Z')
+      : new Date(startDate.getTime() + 60 * 86400000);
+    const interval = Math.max(1, formData.interval || 1);
+    const dates: string[] = [];
+    if (formData.pattern_type === 'daily') {
+      for (let d = new Date(startDate); d <= endLimit && dates.length < 8; d.setUTCDate(d.getUTCDate() + 1)) {
+        const diff = Math.floor((d.getTime() - startDate.getTime()) / 86400000);
+        if (diff >= 0 && diff % interval === 0) dates.push(d.toISOString().split('T')[0]);
+      }
+    } else if (formData.pattern_type === 'weekly') {
+      for (let d = new Date(startDate); d <= endLimit && dates.length < 8; d.setUTCDate(d.getUTCDate() + 1)) {
+        if (!formData.days_of_week.includes(d.getUTCDay())) continue;
+        const diff = Math.floor((d.getTime() - startDate.getTime()) / 86400000);
+        if (diff < 0) continue;
+        const wd = Math.floor(diff / 7);
+        if (wd % interval !== 0) continue;
+        dates.push(d.toISOString().split('T')[0]);
+      }
+    } else {
+      const sd = startDate.getUTCDate();
+      for (let c = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1));
+        c <= endLimit && dates.length < 8; c.setUTCMonth(c.getUTCMonth() + 1)) {
+        const md = (c.getUTCFullYear() - startDate.getUTCFullYear()) * 12 + (c.getUTCMonth() - startDate.getUTCMonth());
+        if (md < 0 || md % interval !== 0) continue;
+        const mx = new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() + 1, 0)).getUTCDate();
+        const t = new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth(), Math.min(sd, mx)));
+        if (t >= startDate && t <= endLimit) dates.push(t.toISOString().split('T')[0]);
+      }
+    }
+    return dates;
+  }, [formData.isRecurring, formData.start_time, formData.end_date, formData.pattern_type, formData.days_of_week, formData.interval]);
+
+  const SortIcon: React.FC<{ col: 'title' | 'class_type' | 'start_time' }> = ({ col }) => (
+    <span className="ml-1 inline-block opacity-50">{sortColumn === col ? (sortDir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4'}</span>
+  );
 
   return (
     <div className="space-y-8 fade-in">
@@ -619,34 +692,38 @@ const CalendarManager: React.FC = () => {
                 <table className="w-full text-left">
                   <thead className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
                     <tr>
-                      <th className="p-4 font-bold text-sm dark:text-white">Title</th>
-                      <th className="p-4 font-bold text-sm dark:text-white">Type</th>
+                      <th className="p-4 font-bold text-sm dark:text-white cursor-pointer select-none hover:text-brand-red" onClick={() => handleSort('title')}>
+                        Title<SortIcon col="title" />
+                      </th>
+                      <th className="p-4 font-bold text-sm dark:text-white cursor-pointer select-none hover:text-brand-red" onClick={() => handleSort('class_type')}>
+                        Type<SortIcon col="class_type" />
+                      </th>
                       <th className="p-4 font-bold text-sm dark:text-white">Instructor</th>
-                      <th className="p-4 font-bold text-sm dark:text-white">Start Time</th>
-                      <th className="p-4 font-bold text-sm dark:text-white">End Time</th>
+                      <th className="p-4 font-bold text-sm dark:text-white cursor-pointer select-none hover:text-brand-red" onClick={() => handleSort('start_time')}>
+                        Date & Time<SortIcon col="start_time" />
+                      </th>
                       <th className="p-4 font-bold text-sm dark:text-white">Capacity</th>
                       <th className="p-4 font-bold text-sm text-right dark:text-white">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                    {filteredEvents.length === 0 ? (
+                    {pagedEvents.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="p-8 text-center text-neutral-500">
+                        <td colSpan={6} className="p-8 text-center text-neutral-500">
                           {tableEvents.length === 0
                             ? 'No events found. Create your first event to get started.'
                             : 'No events match your filters.'}
                         </td>
                       </tr>
                     ) : (
-                      filteredEvents.map((event) => {
+                      pagedEvents.map((event) => {
                         const isHoliday = event.class_type === 'holiday';
                         return (
                           <tr key={event.id} className={`hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors ${isHoliday ? 'opacity-75' : ''}`}>
                             <td className="p-4 font-bold text-sm dark:text-white">
                               {event.title}
-                              {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto-generated)</span>}
+                              {isHoliday && <span className="ml-2 text-xs text-neutral-400">(Auto)</span>}
                               {event.recurring_pattern_id && <span className="ml-2 text-xs font-normal text-brand-red">(Recurring)</span>}
-                              {event.is_recurring_preserved && <span className="ml-2 text-xs font-normal text-amber-600">(Preserved)</span>}
                             </td>
                             <td className="p-4">
                               <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-neutral-100 dark:bg-neutral-900 dark:text-white">
@@ -657,32 +734,19 @@ const CalendarManager: React.FC = () => {
                               {event.instructor_id ? instructorNameById.get(event.instructor_id) || 'Unknown' : '—'}
                             </td>
                             <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                              {new Date(event.start_time).toLocaleString()}
-                            </td>
-                            <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                              {new Date(event.end_time).toLocaleString()}
+                              <div>{new Date(event.start_time).toLocaleDateString()}</div>
+                              <div className="text-xs">{new Date(event.start_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {new Date(event.end_time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div>
                             </td>
                             <td className="p-4 text-sm dark:text-white">
                               {event.capacity || 'Unlimited'}
                             </td>
                             <td className="p-4 text-right space-x-3">
-                              {!isHoliday && (
+                              {!isHoliday ? (
                                 <>
-                                  <button
-                                    onClick={() => openModal(event)}
-                                    className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })}
-                                    className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors"
-                                  >
-                                    Delete
-                                  </button>
+                                  <button onClick={() => openModal(event)} className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors">Edit</button>
+                                  <button onClick={() => setDeleteConfirm({ isOpen: true, eventId: event.id })} className="text-red-500 font-bold text-xs uppercase hover:text-red-700 transition-colors">Delete</button>
                                 </>
-                              )}
-                              {isHoliday && (
+                              ) : (
                                 <span className="text-xs text-neutral-400 italic">Read-only</span>
                               )}
                             </td>
@@ -693,186 +757,153 @@ const CalendarManager: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-neutral-700">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} &middot; Page {page + 1} of {totalPages}
+                  </p>
+                  <div className="flex gap-1">
+                    <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="px-3 py-1 text-xs font-bold rounded border border-neutral-300 dark:border-neutral-600 disabled:opacity-30 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors dark:text-white">Prev</button>
+                    <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="px-3 py-1 text-xs font-bold rounded border border-neutral-300 dark:border-neutral-600 disabled:opacity-30 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors dark:text-white">Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-6 dark:text-white">
-              {editingEvent ? 'Edit Event' : 'Add New Event'}
-            </h2>
-            <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-neutral-800 w-full sm:rounded-xl sm:max-w-lg sm:mx-4 rounded-t-xl shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div className="sticky top-0 z-10 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-5 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold dark:text-white">
+                {editingEvent ? 'Edit Event' : 'Add New Event'}
+              </h2>
+              <button type="button" onClick={() => setIsModalOpen(false)} aria-label="Close" className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
+                <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleSave} className="p-5 space-y-5">
+              {/* Section: Event Details */}
+              <fieldset className="space-y-3">
+                <legend className="text-xs font-bold uppercase text-neutral-400 dark:text-neutral-500 mb-2">Event Details</legend>
                 <div>
-                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Start Time</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formData.start_time}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                    className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                  />
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Title</label>
+                  <input type="text" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End Time</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formData.end_time}
-                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                    className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                  />
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Description</label>
+                  <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} className="w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
                 </div>
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
+                    <select value={formData.class_type} onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' | 'fundraisers' | 'self_help' })} className="w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+                      {classTypes.map((type) => (<option key={type.value} value={type.value}>{type.label}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Instructor</label>
+                    <select value={formData.instructor_id} onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })} className="w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+                      <option value="">Unassigned</option>
+                      {instructors.map((i) => (<option key={i.id} value={i.id}>{i.name}</option>))}
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
-                  <select
-                    value={formData.class_type}
-                    onChange={(e) => setFormData({ ...formData, class_type: e.target.value as 'community' | 'outreach' | 'fundraisers' | 'self_help' })}
-                    className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                  >
-                    {classTypes.map((type) => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
+              {/* Section: Schedule */}
+              <fieldset className="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                <legend className="text-xs font-bold uppercase text-neutral-400 dark:text-neutral-500 mb-2">Schedule</legend>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Start Time</label>
+                    <input type="datetime-local" required value={formData.start_time} onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} className={`w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : ''}`} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End Time</label>
+                    <input type="datetime-local" required value={formData.end_time} onChange={(e) => setFormData({ ...formData, end_time: e.target.value })} className={`w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none ${timeValidationError ? 'border-red-400' : ''}`} />
+                  </div>
                 </div>
+                {timeValidationError && (
+                  <p className="text-xs text-red-500 font-medium">{timeValidationError}</p>
+                )}
                 <div>
                   <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Capacity</label>
-                  <input
-                    type="number"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    placeholder="Unlimited"
-                    className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                  />
+                  <input type="number" min={1} value={formData.capacity} onChange={(e) => setFormData({ ...formData, capacity: e.target.value })} placeholder="Leave blank for unlimited" className="w-full p-2.5 border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
                 </div>
-              </div>
+              </fieldset>
 
-              <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Instructor</label>
-                <select
-                  value={formData.instructor_id}
-                  onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
-                  className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                >
-                  <option value="">Unassigned</option>
-                  {instructors.map((instructor) => (
-                    <option key={instructor.id} value={instructor.id}>
-                      {instructor.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+              {/* Section: Recurring Settings */}
               {isSupabaseConfigured() && (
-                <div className="space-y-3 pt-4 border-t dark:border-neutral-700">
+                <fieldset className="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                  <legend className="text-xs font-bold uppercase text-neutral-400 dark:text-neutral-500 mb-2">Recurring Settings</legend>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.isRecurring}
-                      onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
-                      className="rounded border-neutral-300"
-                    />
-                    <span className="text-sm font-bold dark:text-neutral-300">Recurring event</span>
+                    <input type="checkbox" checked={formData.isRecurring} onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })} className="rounded border-neutral-300 text-brand-red focus:ring-brand-red" />
+                    <span className="text-sm font-bold dark:text-neutral-300">Make this a recurring event</span>
                   </label>
                   {formData.isRecurring && (
-                    <div className="space-y-3 pl-6 border-l-2 border-brand-red/30">
-                      <div>
-                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Repeats</label>
-                        <select
-                          value={formData.pattern_type}
-                          onChange={(e) => setFormData({ ...formData, pattern_type: e.target.value as 'daily' | 'weekly' | 'monthly' })}
-                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                        >
-                          <option value="daily">Daily</option>
-                          <option value="weekly">Weekly</option>
-                          <option value="monthly">Monthly</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Every</label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={formData.interval}
-                          onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value, 10) || 1 })}
-                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                        />
+                    <div className="space-y-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-lg p-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold mb-1 dark:text-neutral-300">Pattern</label>
+                          <select value={formData.pattern_type} onChange={(e) => setFormData({ ...formData, pattern_type: e.target.value as 'daily' | 'weekly' | 'monthly' })} className="w-full p-2 text-sm border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold mb-1 dark:text-neutral-300">Every N {formData.pattern_type === 'daily' ? 'day(s)' : formData.pattern_type === 'weekly' ? 'week(s)' : 'month(s)'}</label>
+                          <input type="number" min={1} value={formData.interval} onChange={(e) => setFormData({ ...formData, interval: parseInt(e.target.value, 10) || 1 })} className="w-full p-2 text-sm border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
+                        </div>
                       </div>
                       {formData.pattern_type === 'weekly' && (
                         <div>
-                          <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Days</label>
-                          <div className="flex flex-wrap gap-2">
+                          <label className="block text-xs font-bold mb-2 dark:text-neutral-300">Days of Week</label>
+                          <div className="flex flex-wrap gap-1.5">
                             {DAYS.map((day, index) => (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleDayOfWeek(index)}
-                                className={`px-2 py-1 rounded text-sm font-bold ${
-                                  formData.days_of_week.includes(index)
-                                    ? 'bg-brand-red text-white'
-                                    : 'bg-neutral-200 dark:bg-neutral-700 dark:text-white'
-                                }`}
-                              >
+                              <button key={day} type="button" onClick={() => toggleDayOfWeek(index)} className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${formData.days_of_week.includes(index) ? 'bg-brand-red text-white shadow-sm' : 'bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 dark:text-white hover:border-brand-red'}`}>
                                 {day.slice(0, 3)}
                               </button>
                             ))}
                           </div>
+                          {formData.days_of_week.length === 0 && (
+                            <p className="text-xs text-amber-600 mt-1">Select at least one day</p>
+                          )}
                         </div>
                       )}
                       <div>
-                        <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End date (optional)</label>
-                        <input
-                          type="date"
-                          value={formData.end_date}
-                          onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                          className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
-                        />
+                        <label className="block text-xs font-bold mb-1 dark:text-neutral-300">End Date (optional)</label>
+                        <input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} className="w-full p-2 text-sm border rounded-lg dark:bg-neutral-900 dark:border-neutral-700 dark:text-white focus:ring-2 focus:ring-brand-red focus:outline-none" />
                       </div>
+                      {/* Recurring preview */}
+                      {recurringPreviewDates.length > 0 && (
+                        <div className="bg-white dark:bg-neutral-800 rounded-lg p-3 border border-neutral-200 dark:border-neutral-700">
+                          <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400 mb-2">Preview (first {recurringPreviewDates.length} occurrences)</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {recurringPreviewDates.map(d => (
+                              <span key={d} className="text-[11px] px-2 py-0.5 rounded-full bg-brand-red/10 text-brand-red dark:bg-brand-red/20 font-medium">
+                                {new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
+                </fieldset>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
-                >
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2.5 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors text-sm font-bold">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Save Event
+                <button type="submit" disabled={!!timeValidationError} className="px-4 py-2.5 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+                  {editingEvent ? 'Save Changes' : 'Create Event'}
                 </button>
               </div>
             </form>
