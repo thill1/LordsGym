@@ -20,6 +20,8 @@ interface CalendarContextType {
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'lords_gym_calendar_events';
+// Production can be behind on DB migrations; detect and fall back gracefully.
+let RECURRENCE_COLUMNS_SUPPORTED: boolean | null = null;
 
 const sortByStartTime = (items: CalendarEvent[]): CalendarEvent[] => {
   return [...items].sort((a, b) => {
@@ -45,10 +47,10 @@ interface CalendarEventJoinRow {
   class_type: string;
   capacity: number | null;
   recurring_pattern_id: string | null;
-  occurrence_date: string | null;
-  is_recurring_generated: boolean;
-  is_recurring_preserved: boolean;
-  recurring_series_id: string | null;
+  occurrence_date?: string | null;
+  is_recurring_generated?: boolean | null;
+  is_recurring_preserved?: boolean | null;
+  recurring_series_id?: string | null;
   recurring_pattern?: RecurringPatternJoinRow | RecurringPatternJoinRow[] | null;
 }
 
@@ -84,10 +86,10 @@ function toCalendarEvent(row: CalendarEventJoinRow): CalendarEvent {
     capacity: row.capacity ?? null,
     booked_count: 0,
     recurring_pattern_id: row.recurring_pattern_id || null,
-    occurrence_date: row.occurrence_date || null,
-    is_recurring_generated: row.is_recurring_generated || false,
-    is_recurring_preserved: row.is_recurring_preserved || false,
-    recurring_series_id: row.recurring_series_id || null,
+    occurrence_date: row.occurrence_date ?? null,
+    is_recurring_generated: !!row.is_recurring_generated,
+    is_recurring_preserved: !!row.is_recurring_preserved,
+    recurring_series_id: row.recurring_series_id ?? null,
     recurring_pattern: toRecurringPattern(row.recurring_pattern)
   };
 }
@@ -107,12 +109,47 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const loadSupabaseEvents = useCallback(async (): Promise<CalendarEvent[]> => {
-    const { data: eventRows, error: eventsError } = await supabase
-      .from('calendar_events')
-      .select('id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id, occurrence_date, is_recurring_generated, is_recurring_preserved, recurring_series_id, recurring_pattern:calendar_recurring_patterns(id, pattern_type, interval, days_of_week, end_date)')
-      .order('start_time', { ascending: true });
+    const missingColumn = (err: any): boolean => {
+      const msg = String(err?.message || '').toLowerCase();
+      return msg.includes('does not exist') && (
+        msg.includes('occurrence_date') ||
+        msg.includes('is_recurring_generated') ||
+        msg.includes('is_recurring_preserved') ||
+        msg.includes('recurring_series_id')
+      );
+    };
 
-    if (eventsError) throw eventsError;
+    const selectWithRecurrence =
+      'id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id, occurrence_date, is_recurring_generated, is_recurring_preserved, recurring_series_id, recurring_pattern:calendar_recurring_patterns(id, pattern_type, interval, days_of_week, end_date)';
+    const selectLegacy =
+      'id, title, description, start_time, end_time, instructor_id, class_type, capacity, recurring_pattern_id, recurring_pattern:calendar_recurring_patterns(id, pattern_type, interval, days_of_week, end_date)';
+
+    let eventRows: any[] | null = null;
+
+    if (RECURRENCE_COLUMNS_SUPPORTED !== false) {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select(selectWithRecurrence)
+        .order('start_time', { ascending: true });
+
+      if (!error) {
+        RECURRENCE_COLUMNS_SUPPORTED = true;
+        eventRows = data as any[];
+      } else if (missingColumn(error)) {
+        RECURRENCE_COLUMNS_SUPPORTED = false;
+      } else {
+        throw error;
+      }
+    }
+
+    if (!eventRows) {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select(selectLegacy)
+        .order('start_time', { ascending: true });
+      if (error) throw error;
+      eventRows = data as any[];
+    }
 
     const eventsFromDb = (eventRows ?? []).map((row) => toCalendarEvent(row as CalendarEventJoinRow));
     if (eventsFromDb.length === 0) return [];
@@ -169,22 +206,27 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
     if (isSupabaseConfigured()) {
       try {
+        const canWriteRecurrenceCols = RECURRENCE_COLUMNS_SUPPORTED === true;
+        const payload: Record<string, unknown> = {
+          title: event.title,
+          description: event.description,
+          start_time: event.start_time,
+          end_time: event.end_time,
+          instructor_id: event.instructor_id,
+          class_type: event.class_type,
+          capacity: event.capacity,
+          recurring_pattern_id: event.recurring_pattern_id || null,
+        };
+        if (canWriteRecurrenceCols) {
+          payload.occurrence_date = event.occurrence_date || null;
+          payload.is_recurring_generated = event.is_recurring_generated || false;
+          payload.is_recurring_preserved = event.is_recurring_preserved || false;
+          payload.recurring_series_id = event.recurring_series_id || event.recurring_pattern_id || null;
+        }
+
         const { error: insertErr } = await supabase
           .from('calendar_events')
-          .insert({
-            title: event.title,
-            description: event.description,
-            start_time: event.start_time,
-            end_time: event.end_time,
-            instructor_id: event.instructor_id,
-            class_type: event.class_type,
-            capacity: event.capacity,
-            recurring_pattern_id: event.recurring_pattern_id || null,
-            occurrence_date: event.occurrence_date || null,
-            is_recurring_generated: event.is_recurring_generated || false,
-            is_recurring_preserved: event.is_recurring_preserved || false,
-            recurring_series_id: event.recurring_series_id || event.recurring_pattern_id || null,
-          })
+          .insert(payload)
         if (insertErr) throw insertErr;
         await loadEvents();
         return;
@@ -205,6 +247,7 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateEvent = async (id: string, updates: Partial<CalendarEvent>) => {
     if (isSupabaseConfigured()) {
       try {
+        const canWriteRecurrenceCols = RECURRENCE_COLUMNS_SUPPORTED === true;
         const updatePayload: Record<string, unknown> = {};
         if (updates.title !== undefined) updatePayload.title = updates.title;
         if (updates.description !== undefined) updatePayload.description = updates.description;
@@ -214,10 +257,12 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (updates.class_type !== undefined) updatePayload.class_type = updates.class_type;
         if (updates.capacity !== undefined) updatePayload.capacity = updates.capacity;
         if (updates.recurring_pattern_id !== undefined) updatePayload.recurring_pattern_id = updates.recurring_pattern_id;
-        if (updates.occurrence_date !== undefined) updatePayload.occurrence_date = updates.occurrence_date;
-        if (updates.is_recurring_generated !== undefined) updatePayload.is_recurring_generated = updates.is_recurring_generated;
-        if (updates.is_recurring_preserved !== undefined) updatePayload.is_recurring_preserved = updates.is_recurring_preserved;
-        if (updates.recurring_series_id !== undefined) updatePayload.recurring_series_id = updates.recurring_series_id;
+        if (canWriteRecurrenceCols) {
+          if (updates.occurrence_date !== undefined) updatePayload.occurrence_date = updates.occurrence_date;
+          if (updates.is_recurring_generated !== undefined) updatePayload.is_recurring_generated = updates.is_recurring_generated;
+          if (updates.is_recurring_preserved !== undefined) updatePayload.is_recurring_preserved = updates.is_recurring_preserved;
+          if (updates.recurring_series_id !== undefined) updatePayload.recurring_series_id = updates.recurring_series_id;
+        }
 
         if (Object.keys(updatePayload).length === 0) {
           return;

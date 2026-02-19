@@ -1,0 +1,12 @@
+---
+description: Proceed with planned changes without asking for confirmation
+alwaysApply: true
+---
+
+# Auto-Execute Mode
+
+When the user asks you to do something, proceed directly and execute the changes without asking for confirmation.
+
+- Run commands, apply edits, and deploy as needed to complete the task
+- Do not pause to ask "Should I proceed?" or "Do you want me to run this?"
+- If something requires user credentials, provide clear instructions instead of blocking
