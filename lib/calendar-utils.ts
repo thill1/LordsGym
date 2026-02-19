@@ -234,13 +234,18 @@ export const getDaysInMonth = (date: Date): Date[] => {
 };
 
 /**
- * Get events for a specific date
+ * Get events for a specific date.
+ * Uses local date components (not UTC) to avoid timezone shift—toISOString() would
+ * convert to UTC and can shift dates (e.g. Jan 15 PST midnight → Dec 14 UTC), which
+ * caused recurring events to not appear on mobile in some timezones.
  */
 export const getEventsForDate = (events: CalendarEvent[], date: Date): CalendarEvent[] => {
-  const dateStr = date.toISOString().split('T')[0];
+  const dYear = date.getFullYear();
+  const dMonth = date.getMonth();
+  const dDay = date.getDate();
   return events.filter(event => {
-    const eventDate = new Date(event.start_time).toISOString().split('T')[0];
-    return eventDate === dateStr;
+    const ev = new Date(event.start_time);
+    return ev.getFullYear() === dYear && ev.getMonth() === dMonth && ev.getDate() === dDay;
   });
 };
 
@@ -252,6 +257,41 @@ export const getEventsForRange = (events: CalendarEvent[], start: Date, end: Dat
     const eventDate = new Date(event.start_time);
     return eventDate >= start && eventDate <= end;
   });
+};
+
+/**
+ * Detect all-day events (holidays) where time is midnight-to-midnight or irrelevant.
+ */
+export const isAllDayEvent = (event: CalendarEvent): boolean => {
+  if (event.class_type === 'holiday') return true;
+  const s = new Date(event.start_time);
+  const e = new Date(event.end_time);
+  return s.getHours() === 0 && s.getMinutes() === 0 && e.getHours() === 0 && e.getMinutes() === 0;
+};
+
+/**
+ * Format time for display. Returns "All Day" for all-day events.
+ */
+export const formatTimeOrAllDay = (event: CalendarEvent): string => {
+  if (isAllDayEvent(event)) return 'All Day';
+  const s = new Date(event.start_time);
+  const e = new Date(event.end_time);
+  const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return `${fmt(s)} - ${fmt(e)}`;
+};
+
+/**
+ * Get the dot color class for a class type (used for compact month view).
+ */
+export const getClassTypeDotColor = (classType: string): string => {
+  const colors: Record<string, string> = {
+    community: 'bg-amber-500',
+    outreach: 'bg-purple-500',
+    fundraisers: 'bg-rose-500',
+    self_help: 'bg-teal-500',
+    holiday: 'bg-green-500',
+  };
+  return colors[classType] || 'bg-neutral-400';
 };
 
 /**
