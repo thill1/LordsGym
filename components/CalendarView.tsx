@@ -247,13 +247,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   )}
                 </div>
 
-                {/* Mobile: colored dots */}
+                {/* Mobile: colored dots (2x2 for visibility on iPhone) */}
                 {hasEvents && (
-                  <div className="flex gap-0.5 flex-wrap sm:hidden justify-center mt-0.5">
+                  <div className="flex gap-1 flex-wrap sm:hidden justify-center mt-0.5">
                     {dayEvents.slice(0, 4).map(ev => (
-                      <span key={ev.id} className={`w-1.5 h-1.5 rounded-full ${getClassTypeDotColor(ev.class_type)}`} />
+                      <span key={ev.id} className={`w-2 h-2 rounded-full ${getClassTypeDotColor(ev.class_type)}`} aria-hidden />
                     ))}
-                    {dayEvents.length > 4 && <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />}
+                    {dayEvents.length > 4 && <span className="w-2 h-2 rounded-full bg-neutral-400" aria-hidden />}
                   </div>
                 )}
 

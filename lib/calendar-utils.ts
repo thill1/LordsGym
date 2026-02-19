@@ -62,6 +62,14 @@ export function toJsDay(dbDay: number): number {
   return dbDay === 7 ? 0 : dbDay;
 }
 
+/** Get local date as YYYY-MM-DD. Use this instead of toISOString().split('T')[0] to avoid UTC shift (e.g. PST midnight → previous day in UTC). */
+function toLocalDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /**
  * Normalize raw days_of_week from DB for use with JS getDay() in expansion.
  * Accepts unknown[] (Postgres may return string numbers), filters invalid values.
@@ -100,7 +108,18 @@ export function expandRecurringEvents(
     const templateEnd = new Date(event.end_time);
     const baseDate = new Date(templateStart);
     baseDate.setHours(0, 0, 0, 0);
-    const patternEnd = pattern.end_date ? new Date(pattern.end_date) : null;
+    const patternEnd = pattern.end_date
+      ? (() => {
+          const m = pattern.end_date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (m) {
+            const [, y, mo, da] = m.map(Number);
+            const end = new Date(y, mo - 1, da);
+            end.setHours(23, 59, 59, 999);
+            return end;
+          }
+          return new Date(pattern.end_date);
+        })()
+      : null;
     const interval = pattern.interval || 1;
     const exceptionDates = getEx(event);
 
@@ -117,7 +136,7 @@ export function expandRecurringEvents(
           d.setDate(d.getDate() + interval);
           continue;
         }
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = toLocalDateKey(d);
         if (!exceptionDates.has(dateStr)) {
           const occStart = new Date(d);
           occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
@@ -143,7 +162,7 @@ export function expandRecurringEvents(
         if (!days.includes(d.getDay())) continue;
         const weeksSince = Math.floor((d.getTime() - baseDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
         if (weeksSince % interval !== 0) continue;
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = toLocalDateKey(d);
         if (exceptionDates.has(dateStr)) continue;
         const occStart = new Date(d);
         occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
@@ -168,7 +187,7 @@ export function expandRecurringEvents(
         if (d >= baseDate && d >= start && d <= end && (!patternEnd || d <= patternEnd)) {
           const monthsSince = (y - baseDate.getFullYear()) * 12 + (m - baseDate.getMonth());
           if (monthsSince % interval === 0) {
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = toLocalDateKey(d);
             if (!exceptionDates.has(dateStr)) {
               const occStart = new Date(d);
               occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
@@ -254,18 +273,13 @@ export const getDaysInMonth = (date: Date): Date[] => {
 
 /**
  * Get events for a specific date.
- * Uses local date components (not UTC) to avoid timezone shift—toISOString() would
- * convert to UTC and can shift dates (e.g. Jan 15 PST midnight → Dec 14 UTC), which
- * caused recurring events to not appear on mobile in some timezones.
+ * Uses local date key (YYYY-MM-DD) to avoid timezone shift—toISOString() would
+ * convert to UTC and can shift dates (e.g. Jan 15 PST midnight → previous day in UTC),
+ * which caused recurring events to not appear on mobile/Safari in western timezones.
  */
 export const getEventsForDate = (events: CalendarEvent[], date: Date): CalendarEvent[] => {
-  const dYear = date.getFullYear();
-  const dMonth = date.getMonth();
-  const dDay = date.getDate();
-  return events.filter(event => {
-    const ev = new Date(event.start_time);
-    return ev.getFullYear() === dYear && ev.getMonth() === dMonth && ev.getDate() === dDay;
-  });
+  const dateKey = toLocalDateKey(date);
+  return events.filter(event => toLocalDateKey(new Date(event.start_time)) === dateKey);
 };
 
 /**
