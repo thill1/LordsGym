@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import Section from '../components/Section';
 import CalendarView from '../components/CalendarView';
 import CalendarEventModal from '../components/CalendarEventModal';
-import { CalendarView as ViewType } from '../lib/calendar-utils';
+import { CalendarView as ViewType, getClassTypeDotColor, formatClassType } from '../lib/calendar-utils';
 import { downloadICal, ICalEvent } from '../lib/ical-export';
 import { useCalendar } from '../context/CalendarContext';
 
@@ -24,14 +24,38 @@ const Calendar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleExportCalendar = () => {
-    const icalEvents: ICalEvent[] = events.map(event => ({
-      uid: `lords-gym-${event.id}@lordsgym.com`,
-      summary: event.title,
-      description: event.description || undefined,
-      start: new Date(event.start_time),
-      end: new Date(event.end_time),
-      url: `${window.location.origin}/calendar`
-    }));
+    const DAY_CODES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+    const buildRrule = (pat: { pattern_type: string; interval: number; days_of_week: number[] | null; end_date: string | null }) => {
+      const interval = Math.max(1, pat.interval || 1);
+      if (pat.pattern_type === 'daily') {
+        return { rrule: `FREQ=DAILY;INTERVAL=${interval}`, until: pat.end_date ? new Date(pat.end_date + 'T23:59:59Z') : undefined };
+      }
+      if (pat.pattern_type === 'weekly') {
+        const days = (pat.days_of_week || []).map(d => (d === 7 ? 0 : d)).filter(d => d >= 0 && d <= 6);
+        const byday = days.length ? `;BYDAY=${days.map(d => DAY_CODES[d]).join(',')}` : '';
+        return { rrule: `FREQ=WEEKLY;INTERVAL=${interval}${byday}`, until: pat.end_date ? new Date(pat.end_date + 'T23:59:59Z') : undefined };
+      }
+      if (pat.pattern_type === 'monthly') {
+        return { rrule: `FREQ=MONTHLY;INTERVAL=${interval}`, until: pat.end_date ? new Date(pat.end_date + 'T23:59:59Z') : undefined };
+      }
+      return {};
+    };
+    const icalEvents: ICalEvent[] = events.map(event => {
+      const base: ICalEvent = {
+        uid: `lords-gym-${event.id}@lordsgym.com`,
+        summary: event.title,
+        description: event.description || undefined,
+        start: new Date(event.start_time),
+        end: new Date(event.end_time),
+        url: `${window.location.origin}/calendar`
+      };
+      if (event.recurring_pattern) {
+        const { rrule, until } = buildRrule(event.recurring_pattern);
+        if (rrule) base.rrule = rrule;
+        if (until) base.until = until;
+      }
+      return base;
+    });
     downloadICal(icalEvents, 'lords-gym-calendar.ics');
   };
 
@@ -84,7 +108,7 @@ const Calendar: React.FC = () => {
 
               {/* Navigation */}
               {view !== 'list' && (
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                   <button
                     onClick={() => navigate(-1)}
                     aria-label="Previous"
@@ -105,6 +129,16 @@ const Calendar: React.FC = () => {
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </button>
+                  <input
+                    type="date"
+                    value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v) setCurrentDate(new Date(v));
+                    }}
+                    aria-label="Jump to date"
+                    className="px-2 py-1.5 text-xs sm:text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                  />
                 </div>
               )}
             </div>
@@ -129,11 +163,21 @@ const Calendar: React.FC = () => {
               </div>
               <button
                 onClick={handleExportCalendar}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-bold rounded-lg border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Export
+                <span className="hidden sm:inline">Export</span>
               </button>
+            </div>
+
+            {/* Row 3: Event type legend (collapsible on mobile via overflow-x) */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-700 text-[10px] sm:text-xs" role="list" aria-label="Event type legend">
+              {['community', 'outreach', 'fundraisers', 'self_help', 'holiday'].map((type) => (
+                <div key={type} className="flex items-center gap-1.5" role="listitem">
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getClassTypeDotColor(type)}`} aria-hidden />
+                  <span className="text-neutral-500 dark:text-neutral-400">{formatClassType(type)}</span>
+                </div>
+              ))}
             </div>
           </div>
 

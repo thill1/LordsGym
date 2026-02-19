@@ -8,6 +8,10 @@ export interface ICalEvent {
   start: Date;
   end: Date;
   url?: string;
+  /** RRULE string for recurring events (e.g. "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE") */
+  rrule?: string;
+  /** End date for recurring series (UTC) */
+  until?: Date;
 }
 
 /**
@@ -44,7 +48,14 @@ export const generateICal = (events: ICalEvent[]): string => {
     if (event.url) {
       ical += `URL:${event.url}\r\n`;
     }
-    
+
+    if (event.rrule) {
+      ical += `RRULE:${event.rrule}\r\n`;
+      if (event.until) {
+        ical += `UNTIL:${formatDate(event.until)}\r\n`;
+      }
+    }
+
     ical += `DTSTAMP:${formatDate(new Date())}\r\n`;
     ical += `END:VEVENT\r\n`;
     

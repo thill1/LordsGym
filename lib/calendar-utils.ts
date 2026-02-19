@@ -29,6 +29,25 @@ export interface CalendarEvent {
 }
 
 /**
+ * Parse recurring instance ID (baseId-YYYY-MM-DD) into base ID and occurrence date.
+ * Returns null if the ID is not a composite recurring instance ID.
+ */
+export function parseRecurringEventId(eventId: string): { baseId: string; occurrenceDate: string } | null {
+  const match = eventId.match(/^(.+)-(\d{4}-\d{2}-\d{2})$/);
+  if (!match) return null;
+  const [, baseId, occurrenceDate] = match;
+  return { baseId, occurrenceDate };
+}
+
+/**
+ * Get base event ID for lookup/booking. Strips occurrence suffix from recurring instance IDs.
+ */
+export function getBaseEventId(eventId: string): string {
+  const parsed = parseRecurringEventId(eventId);
+  return parsed ? parsed.baseId : eventId;
+}
+
+/**
  * Convert JS getDay() (0=Sun, 1=Mon, ..., 6=Sat) to DB/ISO format (7=Sun, 1=Mon, ..., 6=Sat).
  */
 export function toDbDay(jsDay: number): number {

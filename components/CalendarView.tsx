@@ -29,9 +29,18 @@ const DAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const EventCard: React.FC<{ event: CalendarEvent; onClick?: () => void; compact?: boolean }> = ({ event, onClick, compact }) => {
   const allDay = isAllDayEvent(event);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+      onKeyDown={handleKeyDown}
       className={`rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all ${getClassTypeColor(event.class_type)} ${compact ? 'p-2' : 'p-3'}`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -49,26 +58,65 @@ const EventCard: React.FC<{ event: CalendarEvent; onClick?: () => void; compact?
 
 const DayPopover: React.FC<{ date: Date; events: CalendarEvent[]; onEventClick?: (id: string) => void; onClose: () => void }> = ({ date, events, onEventClick, onClose }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    prevFocusRef.current = document.activeElement as HTMLElement | null;
+    const firstFocusable = ref.current?.querySelector<HTMLElement>('button[aria-label="Close"]');
+    firstFocusable?.focus();
+    return () => {
+      prevFocusRef.current?.focus?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, [onClose]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !ref.current) return;
+      const focusables = ref.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-0 sm:absolute sm:inset-auto sm:p-0" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-0 sm:absolute sm:inset-auto sm:p-0"
+      onClick={onClose}
+      onPointerDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Events for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`}
+    >
       <div
         ref={ref}
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         className="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-700 w-full max-w-sm sm:w-72 overflow-hidden z-50"
       >
         <div className="bg-brand-charcoal text-white px-4 py-3 flex items-center justify-between">
@@ -105,6 +153,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 }) => {
   const { events, isLoading } = useCalendar();
   const [popoverDate, setPopoverDate] = useState<Date | null>(null);
+  const [listShowPast, setListShowPast] = useState(false);
 
   const expandedEvents = useMemo(() => {
     const rangeStart = new Date(currentDate);
@@ -122,9 +171,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return event.title.toLowerCase().includes(q) || event.description?.toLowerCase().includes(q);
   }), [expandedEvents, searchQuery]);
 
-  const handleDayClick = useCallback((day: Date) => {
+  const handleDayClick = useCallback((day: Date, isCurrentMonth: boolean) => {
     setPopoverDate(day);
-    onDateChange(day);
+    if (isCurrentMonth) onDateChange(day);
   }, [onDateChange]);
 
   const closePopover = useCallback(() => setPopoverDate(null), []);
@@ -173,7 +222,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             return (
               <div
                 key={index}
-                onClick={() => handleDayClick(day)}
+                onClick={() => handleDayClick(day, isCurrentMonth)}
                 className={`relative bg-white dark:bg-neutral-800 min-h-[52px] sm:min-h-[100px] p-1 sm:p-2 transition-colors cursor-pointer ${
                   !isCurrentMonth ? 'opacity-30' : ''
                 } ${isPopoverOpen ? 'ring-2 ring-inset ring-brand-red z-10' : ''} ${
@@ -241,24 +290,39 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   // ──── LIST VIEW ────
   if (view === 'list') {
-    const upcomingEvents = sortEventsByTime(
-      filteredEvents.filter(event => new Date(event.start_time) >= new Date())
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const listEvents = sortEventsByTime(
+      listShowPast
+        ? filteredEvents
+        : filteredEvents.filter(event => new Date(event.start_time) >= now)
     );
     const grouped: Record<string, CalendarEvent[]> = {};
-    for (const ev of upcomingEvents.slice(0, 50)) {
+    for (const ev of listEvents.slice(0, 50)) {
       const key = new Date(ev.start_time).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       (grouped[key] ??= []).push(ev);
     }
 
     return (
       <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
-          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">Upcoming Events</h2>
+        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
+            {listShowPast ? 'All Events' : 'Upcoming Events'}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setListShowPast(!listShowPast)}
+            className="text-xs font-bold uppercase tracking-wider text-white/80 hover:text-white transition-colors self-start sm:self-auto"
+          >
+            {listShowPast ? 'Show upcoming only' : 'Show past events'}
+          </button>
         </div>
-        {upcomingEvents.length === 0 ? (
+        {listEvents.length === 0 ? (
           <div className="p-12 text-center">
             <svg className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            <p className="text-neutral-500 dark:text-neutral-400">No upcoming events scheduled.</p>
+            <p className="text-neutral-500 dark:text-neutral-400">
+              {listShowPast ? 'No events found.' : 'No upcoming events scheduled.'}
+            </p>
           </div>
         ) : (
           <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
