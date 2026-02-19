@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
-import { CalendarEvent, formatClassType } from '../../lib/calendar-utils';
+import { CalendarEvent, formatClassType, toDbDay, toJsDay } from '../../lib/calendar-utils';
 import { logEventAction } from '../../lib/activity-logger';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { syncRecurringPattern } from '../../lib/recurring-events';
