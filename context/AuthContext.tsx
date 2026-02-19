@@ -93,10 +93,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await signInWithGoogle();
       setIsLoading(false);
       if (error) {
-        setAuthError(error.message || 'Google sign-in failed');
         const pendingAuthError = consumeAdminAuthError();
+        const message = pendingAuthError?.message || error.message || 'Google sign-in failed';
+        setAuthError(message);
         setAuthErrorCode(pendingAuthError?.code || null);
-        return { success: false, error: error.message || 'Google sign-in failed' };
+        return { success: false, error: message };
       }
       setAuthError(null);
       setAuthErrorCode(null);

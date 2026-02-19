@@ -40,10 +40,16 @@ const resolveAuthMethod = (user: {
 
 const getGoogleRedirectUrl = (): string => {
   if (ADMIN_OAUTH_REDIRECT_URL_ENV.trim()) return ADMIN_OAUTH_REDIRECT_URL_ENV.trim();
-  if (typeof window === 'undefined') return '/#/admin';
+  if (typeof window === 'undefined') return '/admin';
   const base = import.meta.env.BASE_URL || '/';
   const normalizedBase = base.endsWith('/') ? base : `${base}/`;
-  return `${window.location.origin}${normalizedBase}#/admin`;
+  // Use a path-based callback for OAuth. Hash fragments are not reliable redirect URIs.
+  return `${window.location.origin}${normalizedBase}admin`;
+};
+
+const isGoogleProviderNotEnabledError = (message: string): boolean => {
+  const msg = String(message || '').trim().toLowerCase();
+  return msg.includes('unsupported provider') || msg.includes('provider is not enabled');
 };
 
 const toAuthUser = (user: {
@@ -129,13 +135,28 @@ export const signInWithGoogle = async (): Promise<{ error: Error | null }> => {
       },
     });
     if (error) {
-      setAuthError('google_oauth_start_failed', error.message || 'Could not start Google sign-in');
+      if (isGoogleProviderNotEnabledError(error.message)) {
+        setAuthError(
+          'google_provider_not_enabled',
+          `Google sign-in is not enabled for this Supabase project. Enable it in Supabase Dashboard -> Authentication -> Providers -> Google, and add this redirect URL: ${redirectTo}`
+        );
+      } else {
+        setAuthError('google_oauth_start_failed', error.message || 'Could not start Google sign-in');
+      }
     } else {
       clearAuthError();
     }
     return { error: error || null };
   } catch (error) {
-    setAuthError('google_oauth_start_failed', (error as Error).message || 'Could not start Google sign-in');
+    const message = (error as Error).message || 'Could not start Google sign-in';
+    if (isGoogleProviderNotEnabledError(message)) {
+      setAuthError(
+        'google_provider_not_enabled',
+        `Google sign-in is not enabled for this Supabase project. Enable it in Supabase Dashboard -> Authentication -> Providers -> Google, and add this redirect URL: ${getGoogleRedirectUrl()}`
+      );
+    } else {
+      setAuthError('google_oauth_start_failed', message);
+    }
     return { error: error as Error };
   }
 };

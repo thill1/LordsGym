@@ -49,7 +49,10 @@ const App: React.FC = () => {
   // When visiting /admin via pathname, fix URL to /#/admin for consistency
   useEffect(() => {
     const p = window.location.pathname;
-    if ((p === '/admin' || p.endsWith('/admin')) && !window.location.hash) {
+    // IMPORTANT: If we are landing from an OAuth callback, the URL will contain
+    // query params (e.g. ?code=...), and Supabase needs them to complete login.
+    // Only normalize to hash routing when there are no query params.
+    if ((p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) && !window.location.hash && !window.location.search) {
       const base = import.meta.env.BASE_URL || '/';
       window.history.replaceState(null, '', base + '#/admin');
     }

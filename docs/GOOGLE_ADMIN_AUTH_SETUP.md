@@ -8,8 +8,8 @@ This project uses Google OAuth as the primary admin sign-in flow with a break-gl
 2. Go to **Authentication → Providers → Google**.
 3. Enable Google provider and add Google OAuth Client ID + Secret.
 4. Add redirect URLs:
-   - `http://localhost:5173/#/admin`
-   - `https://lordsgymoutreach.com/#/admin`
+   - `http://localhost:5173/admin`
+   - `https://lordsgymoutreach.com/admin`
 
 You can also automate this with:
 
@@ -26,14 +26,14 @@ Set these values in `.env.local` (local) and GitHub Actions secrets (production 
 
 - `VITE_ADMIN_ALLOWLIST_EMAILS` (comma-separated Gmail allowlist)
 - `VITE_BREAK_GLASS_ADMIN_EMAIL` (single emergency account email)
-- `VITE_ADMIN_OAUTH_REDIRECT_URL` (optional override; defaults to `<origin>/#/admin`)
+- `VITE_ADMIN_OAUTH_REDIRECT_URL` (optional override; defaults to `<origin>/admin`)
 
 Example:
 
 ```env
 VITE_ADMIN_ALLOWLIST_EMAILS=owner@gmail.com,ops@gmail.com
 VITE_BREAK_GLASS_ADMIN_EMAIL=admin@lordsgym.com
-VITE_ADMIN_OAUTH_REDIRECT_URL=https://lordsgymoutreach.com/#/admin
+VITE_ADMIN_OAUTH_REDIRECT_URL=https://lordsgymoutreach.com/admin
 ```
 
 ## 3) Break-Glass Account

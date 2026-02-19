@@ -44,7 +44,7 @@ This runs the setup script to verify prerequisites and build.
 | `GITHUB_TOKEN` | *(auto-provided)* | Deploy status |
 | `VITE_ADMIN_ALLOWLIST_EMAILS` | `owner@gmail.com,ops@gmail.com` | Google admin allowlist |
 | `VITE_BREAK_GLASS_ADMIN_EMAIL` | `admin@lordsgym.com` | Password emergency login policy |
-| `VITE_ADMIN_OAUTH_REDIRECT_URL` | `https://lordsgymoutreach.com/#/admin` | Optional OAuth callback override |
+| `VITE_ADMIN_OAUTH_REDIRECT_URL` | `https://lordsgymoutreach.com/admin` | Optional OAuth callback override |
 
 **Token permissions:** The Cloudflare API token must have **Account** → **Cloudflare Pages** → **Edit**. If deploy fails with 403, create a new token with that permission.
 

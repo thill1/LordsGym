@@ -72,7 +72,7 @@ async function main() {
       },
       body: JSON.stringify({
         email: ADMIN_EMAIL,
-        redirect_to: 'https://lordsgymoutreach.com/#/admin',
+        redirect_to: 'https://lordsgymoutreach.com/admin',
       }),
     });
 
@@ -84,7 +84,7 @@ async function main() {
 
     console.log('\n✅ Password reset email triggered.');
     console.log('   Check inbox for:', ADMIN_EMAIL);
-    console.log('   Complete reset, then sign in at: https://lordsgymoutreach.com/#/admin\n');
+    console.log('   Complete reset, then sign in at: https://lordsgymoutreach.com/admin\n');
     return;
   }
 

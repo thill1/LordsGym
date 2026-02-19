@@ -71,7 +71,7 @@ async function testLogin() {
     console.log('\n   The password works. If the site still fails, check:');
     console.log('   1. Production build has VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY baked in');
     console.log('   2. Supabase Auth → URL Configuration has Site URL and Redirect URLs set');
-    console.log('   3. Use https://lordsgymoutreach.com/#/admin (hash routing)\n');
+    console.log('   3. Use https://lordsgymoutreach.com/admin (then app normalizes to /#/admin)\n');
   } else {
     console.error('❌ Login failed:', data.error_description || data.msg || data.message || res.statusText);
     console.error('   Error:', data.error);

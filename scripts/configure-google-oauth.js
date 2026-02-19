@@ -38,8 +38,8 @@ const isCheckOnly = process.argv.includes('--check');
 const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const PROJECT_REF = env.SUPABASE_PROJECT_REF || new URL(SUPABASE_URL).hostname.split('.')[0];
 
-const PROD_REDIRECT = 'https://lordsgymoutreach.com/#/admin';
-const LOCAL_REDIRECT = 'http://localhost:5173/#/admin';
+const PROD_REDIRECT = 'https://lordsgymoutreach.com/admin';
+const LOCAL_REDIRECT = 'http://localhost:5173/admin';
 
 function parseCsv(value) {
   return String(value || '')

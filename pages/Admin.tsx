@@ -82,6 +82,16 @@ const Admin: React.FC = () => {
     })();
   }, [isAuthenticated, user?.id, user?.email, user?.authMethod]);
 
+  const isSupabaseConfigIssue = (message?: string): boolean => {
+    const value = (message || '').toLowerCase();
+    return (
+      value.includes('not configured') ||
+      value.includes('invalid supabase') ||
+      value.includes('invalid api key') ||
+      value.includes('github secrets')
+    );
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -96,7 +106,7 @@ const Admin: React.FC = () => {
     if (!result.success) {
       setError(result.error || 'Invalid email or password');
       setConfigSaved(false);
-      if (result.error?.includes('not configured') || result.error?.includes('Invalid Supabase') || result.error?.includes('GitHub Secrets')) {
+      if (isSupabaseConfigIssue(result.error)) {
         setShowAnonKeyConfig(true);
         setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
       }
@@ -108,7 +118,13 @@ const Admin: React.FC = () => {
     clearAuthError();
     const result = await loginWithGoogle();
     if (!result.success) {
-      setError(result.error || 'Unable to start Google sign-in');
+      const message = result.error || 'Unable to start Google sign-in';
+      setError(message);
+      setConfigSaved(false);
+      if (isSupabaseConfigIssue(message)) {
+        setShowAnonKeyConfig(true);
+        setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
+      }
       return;
     }
     const { logActivity } = await import('../lib/activity-logger');
@@ -281,6 +297,8 @@ const Admin: React.FC = () => {
   if (!isAuthenticated) {
     const effectiveError = error || authError;
     const allowlistDenied = authErrorCode === 'allowlist_denied' || effectiveError?.toLowerCase().includes('allowlisted');
+    const needsSupabaseConfigHelp = authErrorCode === 'supabase_not_configured' || isSupabaseConfigIssue(effectiveError || '');
+    const displayAnonKeyConfig = showAnonKeyConfig || (needsSupabaseConfigHelp && !configSaved);
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-charcoal">
@@ -311,6 +329,49 @@ const Admin: React.FC = () => {
                     This Google account authenticated, but admin access is blocked by the email allowlist.
                   </p>
                 )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="w-full text-left text-sm font-bold text-neutral-600 hover:text-brand-charcoal"
+              onClick={() => {
+                setShowAnonKeyConfig((open) => !open);
+                setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
+              }}
+            >
+              {displayAnonKeyConfig ? 'Hide Supabase key setup' : 'Having trouble signing in? Add Supabase anon key'}
+            </button>
+
+            {displayAnonKeyConfig && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded space-y-2">
+                <p className="text-amber-800 dark:text-amber-200 text-sm font-bold">Add Supabase anon key (one-time)</p>
+                <p className="text-amber-700 dark:text-amber-300 text-xs">Get it from Supabase &rarr; Project &rarr; Settings &rarr; API &rarr; anon public</p>
+                <input
+                  type="password"
+                  className="w-full p-2 border border-amber-300 dark:border-amber-700 rounded text-sm dark:bg-neutral-800 dark:text-white"
+                  value={anonKeyInput}
+                  onChange={(e) => setAnonKeyInput(e.target.value)}
+                  placeholder="Paste anon key (eyJ...)"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSupabaseAnonKey(anonKeyInput);
+                      resetSupabaseClient();
+                      setConfigSaved(true);
+                      setError('');
+                      clearAuthError();
+                      setShowAnonKeyConfig(false);
+                    }}
+                  >
+                    Save & retry
+                  </Button>
+                </div>
+                {configSaved && <p className="text-green-600 dark:text-green-400 text-xs">Key saved. Sign in above.</p>}
               </div>
             )}
 
@@ -354,26 +415,6 @@ const Admin: React.FC = () => {
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
                       <p className="text-blue-700 dark:text-blue-300 font-bold mb-1">Dev Mode:</p>
                       <p className="text-blue-600 dark:text-blue-400 text-xs">Use any email with password: <code className="font-mono bg-blue-100 dark:bg-blue-800 px-1 rounded">dev</code></p>
-                    </div>
-                  )}
-                  {showAnonKeyConfig && (
-                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded space-y-2">
-                      <p className="text-amber-800 dark:text-amber-200 text-sm font-bold">Add Supabase anon key (one-time)</p>
-                      <p className="text-amber-700 dark:text-amber-300 text-xs">Get it from Supabase → Project → Settings → API → anon public</p>
-                      <input
-                        type="password"
-                        className="w-full p-2 border border-amber-300 dark:border-amber-700 rounded text-sm dark:bg-neutral-800 dark:text-white"
-                        value={anonKeyInput}
-                        onChange={(e) => setAnonKeyInput(e.target.value)}
-                        placeholder="Paste anon key (eyJ...)"
-                      />
-                      <div className="flex gap-2">
-                        <Button type="button" size="sm" variant="outline" onClick={() => { setSupabaseAnonKey(anonKeyInput); resetSupabaseClient(); setConfigSaved(true); setError(''); setShowAnonKeyConfig(false); }}>
-                          Save & retry
-                        </Button>
-                        <button type="button" onClick={() => setShowAnonKeyConfig(false)} className="text-sm text-amber-600 dark:text-amber-400">Hide</button>
-                      </div>
-                      {configSaved && <p className="text-green-600 dark:text-green-400 text-xs">Key saved. Sign in above.</p>}
                     </div>
                   )}
                   <Button fullWidth type="submit" disabled={isLoading}>

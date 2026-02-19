@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lord's Gym — Auburn, CA</title>
   <script>
-    // SPA fallback: redirect to root so hash router can load
-    // Works for both Cloudflare Pages (base /) and GitHub Pages (base /LordsGym/)
+    // SPA fallback: redirect to the app root while preserving:
+    // - query string (needed for OAuth callbacks like ?code=...)
+    // - route path (converted to hash routing for static hosts like GitHub Pages)
     const base = window.location.pathname.includes('/LordsGym') ? '/LordsGym/' : '/';
-    window.location.replace(base + (window.location.hash || ''));
+    const baseNoTrailingSlash = base.endsWith('/') ? base.slice(0, -1) : base;
+    const pathname = window.location.pathname;
+    const relativePath = pathname.startsWith(baseNoTrailingSlash)
+      ? pathname.slice(baseNoTrailingSlash.length) || '/'
+      : '/';
+    const routeHash = window.location.hash || ('#' + relativePath);
+    window.location.replace(base + (window.location.search || '') + routeHash);
   </script>
 </head>
 <body>
