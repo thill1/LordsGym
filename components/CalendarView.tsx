@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useCalendar } from '../context/CalendarContext';
 import {
   getDaysInMonth,
@@ -7,10 +7,13 @@ import {
   formatTime,
   isSameDay,
   getClassTypeColor,
-  getEventTypeIcon,
+  getClassTypeDotColor,
   formatClassType,
+  formatTimeOrAllDay,
+  isAllDayEvent,
   sortEventsByTime,
-  CalendarView as ViewType
+  CalendarView as ViewType,
+  CalendarEvent
 } from '../lib/calendar-utils';
 
 interface CalendarViewProps {
@@ -22,6 +25,76 @@ interface CalendarViewProps {
 }
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const EventCard: React.FC<{ event: CalendarEvent; onClick?: () => void; compact?: boolean }> = ({ event, onClick, compact }) => {
+  const allDay = isAllDayEvent(event);
+  return (
+    <div
+      onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+      className={`rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all ${getClassTypeColor(event.class_type)} ${compact ? 'p-2' : 'p-3'}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className={`font-bold truncate ${compact ? 'text-xs' : 'text-sm'}`}>{event.title}</span>
+        <span className={`flex-shrink-0 font-bold ${compact ? 'text-[10px]' : 'text-xs'} opacity-80`}>
+          {allDay ? 'All Day' : formatTime(event.start_time)}
+        </span>
+      </div>
+      {!compact && event.description && (
+        <p className="text-xs opacity-70 mt-1 line-clamp-2">{event.description}</p>
+      )}
+    </div>
+  );
+};
+
+const DayPopover: React.FC<{ date: Date; events: CalendarEvent[]; onEventClick?: (id: string) => void; onClose: () => void }> = ({ date, events, onEventClick, onClose }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/30 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-0 sm:absolute sm:inset-auto sm:p-0" onClick={onClose}>
+      <div
+        ref={ref}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-700 w-full max-w-sm sm:w-72 overflow-hidden z-50"
+      >
+        <div className="bg-brand-charcoal text-white px-4 py-3 flex items-center justify-between">
+          <div>
+            <p className="font-bold text-sm">
+              {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </p>
+            <p className="text-xs text-neutral-400">{events.length} {events.length === 1 ? 'event' : 'events'}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-neutral-400 hover:text-white transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
+          {events.length === 0 ? (
+            <p className="text-sm text-neutral-400 text-center py-4">No events</p>
+          ) : (
+            sortEventsByTime(events).map(ev => (
+              <EventCard key={ev.id} event={ev} compact onClick={() => onEventClick?.(ev.id)} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CalendarView: React.FC<CalendarViewProps> = ({
   view,
@@ -31,7 +104,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   searchQuery = ''
 }) => {
   const { events, isLoading } = useCalendar();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [popoverDate, setPopoverDate] = useState<Date | null>(null);
 
   const expandedEvents = useMemo(() => {
     const rangeStart = new Date(currentDate);
@@ -43,17 +116,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return expandRecurringEvents(events, rangeStart, rangeEnd);
   }, [events, currentDate]);
 
-  const filteredEvents = expandedEvents.filter(event => {
-    const matchesSearch = searchQuery === '' || 
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredEvents = useMemo(() => expandedEvents.filter(event => {
+    if (searchQuery === '') return true;
+    const q = searchQuery.toLowerCase();
+    return event.title.toLowerCase().includes(q) || event.description?.toLowerCase().includes(q);
+  }), [expandedEvents, searchQuery]);
 
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-    onDateChange(date);
-  };
+  const handleDayClick = useCallback((day: Date) => {
+    setPopoverDate(day);
+    onDateChange(day);
+  }, [onDateChange]);
+
+  const closePopover = useCallback(() => setPopoverDate(null), []);
 
   if (isLoading) {
     return (
@@ -63,87 +137,100 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     );
   }
 
+  // ──── MONTH VIEW ────
   if (view === 'month') {
     const days = getDaysInMonth(currentDate);
     const today = new Date();
 
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        {/* Calendar Header */}
-        <div className="bg-brand-charcoal text-white p-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-display font-bold uppercase tracking-wider">
-              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </h2>
-            <p className="text-neutral-400 text-sm">Class Schedule</p>
-          </div>
+      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+        {/* Month header */}
+        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
+            {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </h2>
         </div>
 
-        {/* Days Header */}
-        <div className="grid grid-cols-7 bg-neutral-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
-          {DAYS_OF_WEEK.map(day => (
-            <div key={day} className="py-3 text-center text-xs font-bold uppercase text-neutral-500 dark:text-neutral-400">
-              {day}
+        {/* Days-of-week header */}
+        <div className="grid grid-cols-7 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+          {DAYS_OF_WEEK.map((day, i) => (
+            <div key={day} className="py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold uppercase text-neutral-500 dark:text-neutral-400">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{DAYS_SHORT[i]}</span>
             </div>
           ))}
         </div>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 auto-rows-fr bg-neutral-200 dark:bg-neutral-700 gap-px">
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 bg-neutral-200 dark:bg-neutral-700 gap-px">
           {days.map((day, index) => {
             const dayEvents = getEventsForDate(filteredEvents, day);
             const isToday = isSameDay(day, today);
             const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-            const isSelected = selectedDate && isSameDay(day, selectedDate);
+            const hasEvents = dayEvents.length > 0;
+            const isPopoverOpen = popoverDate && isSameDay(day, popoverDate);
 
             return (
               <div
                 key={index}
-                onClick={() => handleDateClick(day)}
-                className={`bg-white dark:bg-neutral-800 min-h-[120px] p-2 transition-colors cursor-pointer group relative ${
-                  !isCurrentMonth ? 'opacity-40' : ''
-                } ${isSelected ? 'ring-2 ring-inset ring-brand-red' : ''} ${
-                  isToday ? 'bg-red-50 dark:bg-red-900/10' : ''
+                onClick={() => handleDayClick(day)}
+                className={`relative bg-white dark:bg-neutral-800 min-h-[52px] sm:min-h-[100px] p-1 sm:p-2 transition-colors cursor-pointer ${
+                  !isCurrentMonth ? 'opacity-30' : ''
+                } ${isPopoverOpen ? 'ring-2 ring-inset ring-brand-red z-10' : ''} ${
+                  isToday && !isPopoverOpen ? 'bg-red-50/80 dark:bg-red-900/10' : ''
                 } hover:bg-neutral-50 dark:hover:bg-neutral-700/50`}
               >
-                <div className="flex justify-between items-start mb-2">
+                {/* Date number */}
+                <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                   <span
-                    className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full ${
+                    className={`text-xs sm:text-sm font-bold w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full transition-colors ${
                       isToday
-                        ? 'bg-brand-red text-white'
+                        ? 'bg-brand-red text-white shadow-sm'
                         : 'text-neutral-700 dark:text-neutral-300'
                     }`}
                   >
                     {day.getDate()}
                   </span>
-                  {dayEvents.length > 0 && (
-                    <span className="text-[10px] text-neutral-400 font-mono hidden sm:inline-block">
-                      {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
+                  {hasEvents && (
+                    <span className="hidden sm:inline text-[10px] text-neutral-400 font-mono">
+                      {dayEvents.length}
                     </span>
                   )}
                 </div>
 
-                <div className="space-y-1">
+                {/* Mobile: colored dots */}
+                {hasEvents && (
+                  <div className="flex gap-0.5 flex-wrap sm:hidden justify-center mt-0.5">
+                    {dayEvents.slice(0, 4).map(ev => (
+                      <span key={ev.id} className={`w-1.5 h-1.5 rounded-full ${getClassTypeDotColor(ev.class_type)}`} />
+                    ))}
+                    {dayEvents.length > 4 && <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" />}
+                  </div>
+                )}
+
+                {/* Desktop: event pills */}
+                <div className="hidden sm:flex flex-col gap-0.5">
                   {sortEventsByTime(dayEvents).slice(0, 3).map(event => (
                     <div
                       key={event.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onEventClick) onEventClick(event.id);
-                      }}
-                      className={`text-[10px] px-1.5 py-1 rounded truncate border-l-2 flex items-center gap-1 ${getClassTypeColor(event.class_type)}`}
+                      onClick={(e) => { e.stopPropagation(); onEventClick?.(event.id); }}
+                      className={`text-[11px] leading-tight px-1.5 py-0.5 rounded truncate border-l-2 ${getClassTypeColor(event.class_type)}`}
                     >
-                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
-                      <span className="font-bold mr-1">{formatTime(event.start_time)}</span>
-                      <span className="truncate">{event.title}</span>
+                      <span className="font-bold mr-1">
+                        {isAllDayEvent(event) ? '' : formatTime(event.start_time)}
+                      </span>
+                      {event.title}
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
-                    <div className="text-[10px] text-neutral-400 pl-1 italic">
-                      + {dayEvents.length - 3} more
-                    </div>
+                    <div className="text-[10px] text-neutral-400 pl-1">+ {dayEvents.length - 3} more</div>
                   )}
                 </div>
+
+                {/* Popover */}
+                {isPopoverOpen && (
+                  <DayPopover date={day} events={dayEvents} onEventClick={onEventClick} onClose={closePopover} />
+                )}
               </div>
             );
           })}
@@ -152,65 +239,48 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     );
   }
 
+  // ──── LIST VIEW ────
   if (view === 'list') {
     const upcomingEvents = sortEventsByTime(
       filteredEvents.filter(event => new Date(event.start_time) >= new Date())
-    ).slice(0, 20);
+    );
+    const grouped: Record<string, CalendarEvent[]> = {};
+    for (const ev of upcomingEvents.slice(0, 50)) {
+      const key = new Date(ev.start_time).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      (grouped[key] ??= []).push(ev);
+    }
 
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="bg-brand-charcoal text-white p-6">
-          <h2 className="text-2xl font-display font-bold uppercase tracking-wider">
-            Upcoming Events
-          </h2>
+      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">Upcoming Events</h2>
         </div>
-        <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
-          {upcomingEvents.length === 0 ? (
-            <div className="p-12 text-center text-neutral-500">
-              No upcoming events scheduled.
-            </div>
-          ) : (
-            upcomingEvents.map(event => (
-              <div
-                key={event.id}
-                onClick={() => onEventClick && onEventClick(event.id)}
-                className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-grow">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
-                      <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
-                        {formatClassType(event.class_type)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
-                      {new Date(event.start_time).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <p className="text-sm font-bold text-brand-red">
-                      {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                    </p>
-                    {event.description && (
-                      <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-2">
-                        {event.description}
-                      </p>
-                    )}
-                  </div>
+        {upcomingEvents.length === 0 ? (
+          <div className="p-12 text-center">
+            <svg className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <p className="text-neutral-500 dark:text-neutral-400">No upcoming events scheduled.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
+            {Object.entries(grouped).map(([dateLabel, evts]) => (
+              <div key={dateLabel}>
+                <div className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900/50 sticky top-0">
+                  <p className="text-xs font-bold uppercase text-neutral-500 dark:text-neutral-400">{dateLabel}</p>
+                </div>
+                <div className="p-3 space-y-2">
+                  {evts.map(event => (
+                    <EventCard key={event.id} event={event} onClick={() => onEventClick?.(event.id)} />
+                  ))}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
+  // ──── WEEK VIEW ────
   if (view === 'week') {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
@@ -221,53 +291,46 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     });
 
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="bg-brand-charcoal text-white p-6">
-          <h2 className="text-2xl font-display font-bold uppercase tracking-wider">
+      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
             Week of {startOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
           </h2>
         </div>
-        <div className="divide-y divide-neutral-200 dark:divide-neutral-700">
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
           {weekDays.map(day => {
             const dayEvents = sortEventsByTime(getEventsForDate(filteredEvents, day));
             const isToday = isSameDay(day, new Date());
-            
+
             return (
-              <div key={day.toISOString()} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className={`w-12 h-12 flex items-center justify-center rounded-full font-bold ${
-                    isToday ? 'bg-brand-red text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
+              <div key={day.toISOString()} className={`p-3 sm:p-4 transition-colors ${isToday ? 'bg-red-50/50 dark:bg-red-900/5' : ''}`}>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full font-bold text-sm ${
+                    isToday ? 'bg-brand-red text-white shadow-sm' : 'bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
                   }`}>
                     {day.getDate()}
                   </div>
-                  <div>
-                    <h3 className="font-bold dark:text-white">{DAYS_OF_WEEK[day.getDay()]}</h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm dark:text-white">
+                      {day.toLocaleDateString('en-US', { weekday: 'long' })}
+                      {isToday && <span className="ml-2 text-xs text-brand-red font-normal">Today</span>}
+                    </h3>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {day.toLocaleDateString('en-US', { month: 'short' })}
+                      {day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                   {dayEvents.length > 0 && (
-                    <span className="ml-auto text-xs text-neutral-500 dark:text-neutral-400">
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
                       {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'}
                     </span>
                   )}
                 </div>
-                <div className="space-y-2 ml-16">
+                <div className="space-y-2 ml-[52px] sm:ml-[56px]">
                   {dayEvents.length === 0 ? (
-                    <p className="text-sm text-neutral-400 italic">No events scheduled</p>
+                    <p className="text-sm text-neutral-300 dark:text-neutral-600 italic">No events</p>
                   ) : (
                     dayEvents.map(event => (
-                      <div
-                        key={event.id}
-                        onClick={() => onEventClick && onEventClick(event.id)}
-                        className={`p-2 rounded border-l-4 cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2 ${getClassTypeColor(event.class_type)}`}
-                      >
-                        <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
-                        <div className="flex items-center justify-between flex-grow">
-                          <span className="font-bold text-sm">{event.title}</span>
-                          <span className="text-xs font-bold">{formatTime(event.start_time)}</span>
-                        </div>
-                      </div>
+                      <EventCard key={event.id} event={event} compact onClick={() => onEventClick?.(event.id)} />
                     ))
                   )}
                 </div>
@@ -279,56 +342,45 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     );
   }
 
+  // ──── DAY VIEW ────
   if (view === 'day') {
     const dayEvents = sortEventsByTime(getEventsForDate(filteredEvents, currentDate));
     const isToday = isSameDay(currentDate, new Date());
 
     return (
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl overflow-hidden border border-neutral-200 dark:border-neutral-700">
-        <div className="bg-brand-charcoal text-white p-6">
-          <h2 className="text-2xl font-display font-bold uppercase tracking-wider">
-            {currentDate.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric',
-              year: 'numeric'
-            })}
+      <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden border border-neutral-200 dark:border-neutral-700">
+        <div className="bg-brand-charcoal text-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-wider">
+            {currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </h2>
-          {isToday && (
-            <p className="text-sm text-neutral-300 mt-1">Today</p>
-          )}
+          {isToday && <p className="text-xs text-brand-red mt-1 font-bold">Today</p>}
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {dayEvents.length === 0 ? (
-            <div className="text-center py-12 text-neutral-500">
-              <p className="text-lg mb-2">No events scheduled for this day</p>
-              <p className="text-sm">Check other days or create a new event in the admin panel</p>
+            <div className="text-center py-12">
+              <svg className="w-12 h-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <p className="text-neutral-500 dark:text-neutral-400">No events scheduled for this day</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {dayEvents.map(event => (
                 <div
                   key={event.id}
-                  onClick={() => onEventClick && onEventClick(event.id)}
-                  className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-shadow ${getClassTypeColor(event.class_type)}`}
+                  onClick={() => onEventClick?.(event.id)}
+                  className={`p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all ${getClassTypeColor(event.class_type)}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex-shrink-0">{getEventTypeIcon(event.class_type)}</span>
-                      <h3 className="font-bold text-lg dark:text-white">{event.title}</h3>
-                    </div>
-                    <span className="text-sm font-bold text-brand-red">
-                      {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                  <div className="flex items-start justify-between gap-3 mb-1">
+                    <h3 className="font-bold text-base dark:text-white">{event.title}</h3>
+                    <span className="text-sm font-bold text-brand-red flex-shrink-0">
+                      {formatTimeOrAllDay(event)}
                     </span>
                   </div>
                   {event.description && (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-2">
-                      {event.description}
-                    </p>
+                    <p className="text-sm opacity-70 mt-1">{event.description}</p>
                   )}
-                  <div className="mt-3 flex items-center gap-2">
-<span className={`px-2 py-1 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
-                        {formatClassType(event.class_type)}
+                  <div className="mt-3 flex items-center gap-2 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${getClassTypeColor(event.class_type)}`}>
+                      {formatClassType(event.class_type)}
                     </span>
                     {event.capacity && (
                       <span className="text-xs text-neutral-500 dark:text-neutral-400">
