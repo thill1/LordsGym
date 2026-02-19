@@ -2,6 +2,10 @@
 
 Use this when **pushes to `main` don’t show up as new production deployments** on Cloudflare (lords-gym / lordsgymoutreach.com).
 
+**Check first:** In Cloudflare → Workers & Pages → lords-gym → **Deployments**, look at new runs. If they say **Preview** instead of **Production**, the workflow’s `--branch` is wrong (use `--branch=main`). That single mismatch causes “build passed” but the live site never updating.
+
+**Why it's confusing:** GitHub Actions run numbers (e.g. Deploy to Cloudflare Pages #18, #19…) go up every time the workflow runs and can all be green. That only means "build and deploy step succeeded." It does *not* mean the production URL updated — those runs were creating **Preview** deployments. To confirm the live site updated, check Cloudflare Deployments and that the latest run is **Production**, not Preview.
+
 ---
 
 ## 1. How the pipeline works
@@ -10,7 +14,7 @@ Use this when **pushes to `main` don’t show up as new production deployments**
 |------|-------------------------------|
 | **Trigger** | Push to `main` or PR to `main` (or manual “Run workflow”). |
 | **Build job** | Checkout → `npm ci` → `npm run build` (needs `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Uploads `dist` as artifact. |
-| **Deploy job** | Runs only when **not** a PR (or PR from same repo). Uses GitHub **environment** `production`. Downloads `dist` → runs `wrangler pages deploy dist --project-name=lords-gym --branch=production`. |
+| **Deploy job** | Runs only when **not** a PR (or PR from same repo). Uses GitHub **environment** `production`. Downloads `dist` → runs `wrangler pages deploy dist --project-name=lords-gym --branch=main`. |
 
 If the deploy job never runs, or runs but doesn’t reach the “Deploy to Cloudflare Pages” step, nothing will appear on Cloudflare.
 
@@ -44,9 +48,9 @@ If the deploy job never runs, or runs but doesn’t reach the “Deploy to Cloud
 
 ### E. Is the deploy going to the right place?
 
-- Workflow uses: `--project-name=lords-gym --branch=production`.
+- Workflow uses: `--project-name=lords-gym --branch=main`.
 - **Project:** Must match the Cloudflare Pages project name (e.g. **lords-gym** in Workers & Pages). If it was wrong (e.g. `lords-gym-auburn`), deploys would go to a different project and you wouldn’t see them on lordsgymoutreach.com.
-- **Branch:** For **Direct Upload** projects, production is often the branch named `production`. So `--branch=production` sends the deploy to **Production**. If your project’s production branch is `main`, change the workflow to `--branch=main`.
+- **Branch (critical):** `--branch` must match the project production branch in Cloudflare (here: **main**). Wrong branch makes deploys show as Preview; live site never updates. So `--branch=main` sends the deploy to **Production**. If your project’s production branch is `main`, change the workflow to `--branch=main`.
 
 ---
 
@@ -54,12 +58,30 @@ If the deploy job never runs, or runs but doesn’t reach the “Deploy to Cloud
 
 | Issue | Cause | Fix |
 |-------|--------|-----|
-| No new deploy on Cloudflare for 15+ hours | 1) Workflow was deploying to **wrong project** (`lords-gym-auburn` instead of **lords-gym**). 2) Without `--branch=production`, `wrangler pages deploy` can create only **preview** deployments, so Production never updated. | Use `--project-name=lords-gym` and `--branch=production` in the deploy command. |
-| Deploy job green but nothing on Cloudflare | Deploy job might be **waiting for environment approval** and the “Deploy to Cloudflare Pages” step never ran. | Approve the deployment in **Environments → production** or disable Required reviewers. |
-| Deploy step fails with 403 / auth error | Missing or invalid `CLOUDFLARE_API_TOKEN` or `CLOUDFLARE_ACCOUNT_ID`; or token lacks permission. | Add as **Repository secrets** (Settings → Secrets and variables → Actions). Create token with **Account** → **Cloudflare Pages** → **Edit**. |
-| "CLOUDFLARE_API_TOKEN is not set" (fail-fast) | Secret not added or only added to an environment. | Add both `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as **Repository secrets** in Settings → Secrets and variables → Actions. |
-| Deploy step fails: project not found | Project name in workflow doesn’t match Cloudflare (e.g. typo or different project). | Set `--project-name=lords-gym` to match the project in the dashboard. |
+| **Deployments show “Preview” and prod URL never updates** | `--branch` in wrangler didn’t match the project’s **production branch**. This repo’s project uses **main** as production; we had `--branch=main`, so every deploy went to a “production” branch and showed as Preview. | Use `--branch=main` in the deploy command. **First thing to check when “build passed” but prod didn’t: Cloudflare Deployments tab — are new runs Preview or Production?** |
+| No new deploy on Cloudflare for 15+ hours | Workflow was deploying to **wrong project** (`lords-gym-auburn` instead of **lords-gym**). | Use `--project-name=lords-gym` to match the dashboard project. |
+| Deploy job green but nothing on Cloudflare | Deploy job might be **waiting for environment approval**; or deploy went to Preview (wrong `--branch`). | Approve in **Environments → production**; or fix `--branch=main`. |
+| Deploy step fails with 403 / auth error | Missing or invalid `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`; or token lacks permission. | Add as **Repository secrets**. Token needs **Account** → **Cloudflare Pages** → **Edit**. |
+| "CLOUDFLARE_API_TOKEN is not set" (fail-fast) | Secret not added or only in environment. | Add both as **Repository secrets**. Use `npm run set:cloudflare-secrets` with `.env.local` (exact `KEY=value`, no spaces around `=`). |
+| Deploy step fails: project not found | Project name in workflow doesn’t match Cloudflare. | Set `--project-name=lords-gym` to match the dashboard. |
 | Build fails | Often missing Supabase env at build time. | Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in repo Secrets. |
+| Admin “Invalid email or password” with hardcoded login | Password comparison was strict (no trim); or Supabase anon key UI showed and confused. | Trim password in auth; allow backup password `dev`; hide anon key section unless login fails with “not configured”. |
+
+---
+
+## 3b. What we should have checked sooner
+
+1. **“Build passed” but production didn’t update**  
+   → Open **Cloudflare → Workers & Pages → [project] → Deployments** and look at **Environment source**. If new deployments are **Preview**, the workflow’s `--branch` does not match the project’s production branch. Fix the workflow (e.g. `--branch=main`) before debugging secrets or project name.
+
+2. **Project name vs branch**  
+   Wrong **project** = deploys go to a different project. Wrong **branch** = deploys succeed but show as Preview and the production URL never changes. Both must match the Cloudflare project setup.
+
+3. **Secrets and .env.local**  
+   Use **Repository** secrets for Actions. For the set-secrets script, `.env.local` must be `KEY=value` with no spaces around `=`. If “Keys parsed from file” shows only some keys, fix the file format (and support `export` and BOM if needed).
+
+4. **Hardcoded admin + Supabase UI**  
+   If the app supports a hardcoded fallback login, don’t show “Add Supabase anon key” by default; only show it after a login error that indicates Supabase is required. Trim password and allow a backup password to avoid paste/space issues.
 
 ---
 

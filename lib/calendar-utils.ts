@@ -20,6 +20,10 @@ export interface CalendarEvent {
   capacity: number | null;
   booked_count?: number;
   recurring_pattern_id?: string | null;
+  occurrence_date?: string | null;
+  is_recurring_generated?: boolean;
+  is_recurring_preserved?: boolean;
+  recurring_series_id?: string | null;
   /** Inline pattern when loaded from Supabase with join */
   recurring_pattern?: RecurringPattern | null;
 }

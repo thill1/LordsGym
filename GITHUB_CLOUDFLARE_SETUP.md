@@ -12,6 +12,8 @@ This runs the setup script to verify prerequisites and build.
 
 ---
 
+**Exact steps:** See **[docs/CLOUDFLARE_SECRETS_STEPS.md](docs/CLOUDFLARE_SECRETS_STEPS.md)** for click-by-click Cloudflare token + Account ID and where to put secrets.
+
 ## 1. Cloudflare API Token
 
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
@@ -44,6 +46,15 @@ This runs the setup script to verify prerequisites and build.
 **Token permissions:** The Cloudflare API token must have **Account** → **Cloudflare Pages** → **Edit**. If deploy fails with 403, create a new token with that permission.
 
 **If deploy fails:** Check all 5 secrets exist under **Actions** (repository secrets). Redeploy after adding.
+
+**Set Cloudflare secrets via API (no UI):** Add to `.env.local`: `GITHUB_TOKEN` (PAT with repo + Actions secrets), `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Then run:
+
+```bash
+npm install
+npm run set:cloudflare-secrets
+```
+
+This uses the GitHub REST API to create/update the two repository secrets. Then re-run the failed workflow or push to trigger deploy.
 
 ---
 

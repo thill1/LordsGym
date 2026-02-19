@@ -227,6 +227,10 @@ export interface Database {
           class_type: string
           capacity: number | null
           recurring_pattern_id: string | null
+          occurrence_date: string | null
+          is_recurring_generated: boolean
+          is_recurring_preserved: boolean
+          recurring_series_id: string | null
           created_at: string
           updated_at: string
         }
@@ -240,6 +244,10 @@ export interface Database {
           class_type: string
           capacity?: number | null
           recurring_pattern_id?: string | null
+          occurrence_date?: string | null
+          is_recurring_generated?: boolean
+          is_recurring_preserved?: boolean
+          recurring_series_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -253,6 +261,10 @@ export interface Database {
           class_type?: string
           capacity?: number | null
           recurring_pattern_id?: string | null
+          occurrence_date?: string | null
+          is_recurring_generated?: boolean
+          is_recurring_preserved?: boolean
+          recurring_series_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -264,15 +276,39 @@ export interface Database {
           interval: number
           days_of_week: number[] | null
           end_date: string | null
+          title: string
+          description: string | null
+          class_type: string
+          instructor_id: string | null
+          capacity: number | null
+          starts_on: string
+          start_time_local: string
+          end_time_local: string
+          timezone: string
+          is_active: boolean
+          generation_horizon_days: number
+          last_materialized_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           pattern_type: string
-          interval: number
+          interval?: number
           days_of_week?: number[] | null
           end_date?: string | null
+          title?: string
+          description?: string | null
+          class_type?: string
+          instructor_id?: string | null
+          capacity?: number | null
+          starts_on?: string
+          start_time_local?: string
+          end_time_local?: string
+          timezone?: string
+          is_active?: boolean
+          generation_horizon_days?: number
+          last_materialized_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -282,8 +318,43 @@ export interface Database {
           interval?: number
           days_of_week?: number[] | null
           end_date?: string | null
+          title?: string
+          description?: string | null
+          class_type?: string
+          instructor_id?: string | null
+          capacity?: number | null
+          starts_on?: string
+          start_time_local?: string
+          end_time_local?: string
+          timezone?: string
+          is_active?: boolean
+          generation_horizon_days?: number
+          last_materialized_at?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      calendar_recurring_exceptions: {
+        Row: {
+          id: string
+          recurring_pattern_id: string
+          exception_date: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recurring_pattern_id: string
+          exception_date: string
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recurring_pattern_id?: string
+          exception_date?: string
+          reason?: string | null
+          created_at?: string
         }
       }
       calendar_bookings: {

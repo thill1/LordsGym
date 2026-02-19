@@ -172,7 +172,7 @@ const CalendarManager: React.FC = () => {
     }
 
     try {
-      deleteEvent(id);
+      await deleteEvent(id);
       if (event) await logEventAction('delete', id, event.title);
       showSuccess('Event deleted successfully!');
       setDeleteConfirm({ isOpen: false, eventId: null });
