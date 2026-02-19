@@ -297,142 +297,166 @@ const Admin: React.FC = () => {
   if (!isAuthenticated) {
     const effectiveError = error || authError;
     const allowlistDenied = authErrorCode === 'allowlist_denied' || effectiveError?.toLowerCase().includes('allowlisted');
+    const providerDisabled = authErrorCode === 'google_provider_not_enabled' || effectiveError?.toLowerCase().includes('provider is not enabled');
     const needsSupabaseConfigHelp = authErrorCode === 'supabase_not_configured' || isSupabaseConfigIssue(effectiveError || '');
     const displayAnonKeyConfig = showAnonKeyConfig || (needsSupabaseConfigHelp && !configSaved);
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-charcoal">
-        <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-display font-bold text-brand-charcoal mb-2">Admin Portal</h2>
-            <p className="text-neutral-500">Authorized personnel only.</p>
-          </div>
-          <div className="space-y-4">
-            <Button
-              fullWidth
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Starting Google sign-in...' : 'Sign in with Google'}
-            </Button>
+      <div className="min-h-screen bg-brand-charcoal px-4 py-10 sm:px-6">
+        <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-2xl border border-neutral-700 shadow-2xl">
+          <div className="grid md:grid-cols-[1.15fr_0.85fr]">
+            <section className="bg-white p-8 sm:p-10">
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-neutral-500">Admin Portal</p>
+              <h2 className="mt-3 text-3xl font-display font-bold text-brand-charcoal">Secure admin sign-in</h2>
+              <p className="mt-3 text-sm text-neutral-600">
+                Use your allowlisted Google account for normal access. Emergency password login is available from the panel on the right.
+              </p>
 
-            <p className="text-xs text-neutral-500 text-center">
-              Use your allowlisted Gmail account to access admin tools.
-            </p>
-
-            {effectiveError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-700 text-sm font-bold">{effectiveError}</p>
-                {allowlistDenied && (
-                  <p className="text-red-600 text-xs mt-1">
-                    This Google account authenticated, but admin access is blocked by the email allowlist.
-                  </p>
-                )}
-              </div>
-            )}
-
-            <button
-              type="button"
-              className="w-full text-left text-sm font-bold text-neutral-600 hover:text-brand-charcoal"
-              onClick={() => {
-                setShowAnonKeyConfig((open) => !open);
-                setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
-              }}
-            >
-              {displayAnonKeyConfig ? 'Hide Supabase key setup' : 'Having trouble signing in? Add Supabase anon key'}
-            </button>
-
-            {displayAnonKeyConfig && (
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded space-y-2">
-                <p className="text-amber-800 dark:text-amber-200 text-sm font-bold">Add Supabase anon key (one-time)</p>
-                <p className="text-amber-700 dark:text-amber-300 text-xs">Get it from Supabase &rarr; Project &rarr; Settings &rarr; API &rarr; anon public</p>
-                <input
-                  type="password"
-                  className="w-full p-2 border border-amber-300 dark:border-amber-700 rounded text-sm dark:bg-neutral-800 dark:text-white"
-                  value={anonKeyInput}
-                  onChange={(e) => setAnonKeyInput(e.target.value)}
-                  placeholder="Paste anon key (eyJ...)"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSupabaseAnonKey(anonKeyInput);
-                      resetSupabaseClient();
-                      setConfigSaved(true);
-                      setError('');
-                      clearAuthError();
-                      setShowAnonKeyConfig(false);
-                    }}
-                  >
-                    Save & retry
-                  </Button>
-                </div>
-                {configSaved && <p className="text-green-600 dark:text-green-400 text-xs">Key saved. Sign in above.</p>}
-              </div>
-            )}
-
-            <div className="pt-4 border-t border-neutral-100">
               <button
                 type="button"
-                className="w-full text-left text-sm font-bold text-neutral-600 hover:text-brand-charcoal"
-                onClick={() => setShowEmergencyAccess((open) => !open)}
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+                className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-neutral-300 bg-white px-5 py-3 text-sm font-bold text-neutral-800 transition-colors hover:border-neutral-500 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {showEmergencyAccess ? 'Hide emergency access' : 'Emergency access (break-glass password sign-in)'}
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.2-.9 2.2-1.9 3l3 2.3c1.7-1.6 2.7-3.9 2.7-6.8 0-.7-.1-1.5-.2-2.2H12z" />
+                    <path fill="#4285F4" d="M12 22c2.7 0 4.9-.9 6.5-2.5l-3-2.3c-.8.6-1.9 1-3.5 1-2.7 0-4.9-1.8-5.7-4.2l-3.1 2.4C4.9 19.9 8.2 22 12 22z" />
+                    <path fill="#FBBC05" d="M6.3 14c-.2-.6-.3-1.2-.3-2s.1-1.4.3-2L3.2 7.6C2.4 9.1 2 10.5 2 12s.4 2.9 1.2 4.4L6.3 14z" />
+                    <path fill="#34A853" d="M12 5.8c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.9 2.9 14.7 2 12 2 8.2 2 4.9 4.1 3.2 7.6L6.3 10C7.1 7.6 9.3 5.8 12 5.8z" />
+                  </svg>
+                </span>
+                <span>{isLoading ? 'Starting Google sign-in...' : 'Continue with Google'}</span>
               </button>
 
-              {showEmergencyAccess && (
-                <form onSubmit={handleLogin} className="space-y-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-bold mb-2">Break-glass Email</label>
-                    <input
-                      type="email"
-                      className="w-full p-3 border border-neutral-300 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={breakGlassEmailHint}
-                      required
-                    />
-                    <p className="text-xs text-neutral-500 mt-1">
-                      Only the designated break-glass account can use password sign-in.
+              <p className="mt-3 text-xs text-neutral-500">
+                Access is restricted to allowlisted admin emails.
+              </p>
+
+              {effectiveError && (
+                <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm font-bold text-red-700">{effectiveError}</p>
+                  {allowlistDenied && (
+                    <p className="mt-2 text-xs text-red-600">
+                      Your Google account authenticated, but this email is not on the admin allowlist.
                     </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold mb-2">Password</label>
-                    <input
-                      type="password"
-                      className="w-full p-3 border border-neutral-300 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter emergency password..."
-                      required
-                    />
-                  </div>
-                  {import.meta.env.DEV && (
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
-                      <p className="text-blue-700 dark:text-blue-300 font-bold mb-1">Dev Mode:</p>
-                      <p className="text-blue-600 dark:text-blue-400 text-xs">Use any email with password: <code className="font-mono bg-blue-100 dark:bg-blue-800 px-1 rounded">dev</code></p>
+                  )}
+                  {providerDisabled && (
+                    <p className="mt-2 text-xs text-red-600">
+                      Google OAuth must be enabled in Supabase for this project before login can start.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-8 border-t border-neutral-200 pt-6">
+                <a
+                  href="#/"
+                  onClick={handleBackToSite}
+                  className="inline-flex items-center gap-2 text-sm font-bold text-neutral-500 transition-colors hover:text-brand-charcoal"
+                >
+                  &larr; Back to Website
+                </a>
+              </div>
+            </section>
+
+            <aside className="bg-neutral-950 p-6 text-neutral-100 sm:p-8">
+              <h3 className="text-lg font-bold">Need help signing in?</h3>
+              <p className="mt-2 text-sm text-neutral-300">
+                Use these tools for setup troubleshooting or emergency admin access.
+              </p>
+
+              <div className="mt-6 space-y-4">
+                <div className="rounded-lg border border-neutral-700 bg-neutral-900/60">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-neutral-100"
+                    onClick={() => {
+                      setShowAnonKeyConfig((open) => !open);
+                      setAnonKeyInput(getSupabaseAnonKeyFromStorage() || '');
+                    }}
+                  >
+                    <span>Supabase key setup</span>
+                    <span className="text-xs text-neutral-400">{displayAnonKeyConfig ? 'Hide' : 'Show'}</span>
+                  </button>
+                  {displayAnonKeyConfig && (
+                    <div className="space-y-3 border-t border-neutral-700 px-4 py-4">
+                      <p className="text-xs text-neutral-300">
+                        Paste your Supabase anon key (Project &rarr; Settings &rarr; API &rarr; anon public).
+                      </p>
+                      <input
+                        type="password"
+                        className="w-full rounded border border-neutral-600 bg-neutral-950 p-2 text-sm text-white outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
+                        value={anonKeyInput}
+                        onChange={(e) => setAnonKeyInput(e.target.value)}
+                        placeholder="Paste anon key (eyJ...)"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        fullWidth
+                        onClick={() => {
+                          setSupabaseAnonKey(anonKeyInput);
+                          resetSupabaseClient();
+                          setConfigSaved(true);
+                          setError('');
+                          clearAuthError();
+                          setShowAnonKeyConfig(false);
+                        }}
+                      >
+                        Save key
+                      </Button>
+                      {configSaved && <p className="text-xs text-green-400">Key saved. Try Google sign-in again.</p>}
                     </div>
                   )}
-                  <Button fullWidth type="submit" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign in with password'}
-                  </Button>
-                </form>
-              )}
-            </div>
+                </div>
 
-            <div className="text-center pt-4 border-t border-neutral-100 mt-4">
-              <a
-                href="#/"
-                onClick={handleBackToSite}
-                className="text-neutral-500 hover:text-brand-charcoal text-sm font-bold flex items-center justify-center gap-2"
-              >
-                &larr; Back to Website
-              </a>
-            </div>
+                <div className="rounded-lg border border-neutral-700 bg-neutral-900/60">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-bold text-neutral-100"
+                    onClick={() => setShowEmergencyAccess((open) => !open)}
+                  >
+                    <span>Emergency access</span>
+                    <span className="text-xs text-neutral-400">{showEmergencyAccess ? 'Hide' : 'Show'}</span>
+                  </button>
+                  {showEmergencyAccess && (
+                    <form onSubmit={handleLogin} className="space-y-3 border-t border-neutral-700 px-4 py-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-300">Break-glass Email</label>
+                        <input
+                          type="email"
+                          className="w-full rounded border border-neutral-600 bg-neutral-950 p-2.5 text-sm text-white outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder={breakGlassEmailHint}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-neutral-300">Password</label>
+                        <input
+                          type="password"
+                          className="w-full rounded border border-neutral-600 bg-neutral-950 p-2.5 text-sm text-white outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Enter emergency password..."
+                          required
+                        />
+                      </div>
+                      {import.meta.env.DEV && (
+                        <p className="rounded border border-blue-700 bg-blue-950/40 p-2 text-xs text-blue-200">
+                          Dev mode: use any email with password <code className="rounded bg-blue-900 px-1">dev</code>
+                        </p>
+                      )}
+                      <Button fullWidth type="submit" disabled={isLoading}>
+                        {isLoading ? 'Signing in...' : 'Sign in with password'}
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
       </div>
