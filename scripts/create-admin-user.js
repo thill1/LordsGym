@@ -55,9 +55,23 @@ const ADMIN_EMAIL = (
 const FIXED_PASSWORD = (env.ADMIN_PASSWORD || env.ADMIN_FIXED_PASSWORD || '').trim();
 const shouldForcePasswordChange = FIXED_PASSWORD ? false : true;
 
+function validateFixedPassword(value) {
+  if (!value) return;
+  if (value.length < 8) {
+    console.error('\n❌ ADMIN_PASSWORD is set but too short (min 8 characters).');
+    process.exit(1);
+  }
+  if (/\s/.test(value)) {
+    console.error('\n❌ ADMIN_PASSWORD must not contain spaces.');
+    process.exit(1);
+  }
+}
+
 async function main() {
   console.log('🔐 Create Admin User for Lord\'s Gym\n');
   console.log('   Email:', ADMIN_EMAIL);
+  if (FIXED_PASSWORD) console.log('   Password: (fixed via ADMIN_PASSWORD)');
+  validateFixedPassword(FIXED_PASSWORD);
 
   if (!serviceRoleKey) {
     if (!anonKey) {
@@ -68,6 +82,10 @@ async function main() {
     }
 
     console.log('\n⚠️  SUPABASE_SERVICE_ROLE_KEY is not set. Falling back to password reset email flow...');
+    if (FIXED_PASSWORD) {
+      console.log('   Note: ADMIN_PASSWORD cannot be applied without SUPABASE_SERVICE_ROLE_KEY.');
+      console.log('   The reset email flow will let you set a password manually in the browser.\n');
+    }
     const resetRes = await fetch(`${supabaseUrl}/auth/v1/recover`, {
       method: 'POST',
       headers: {
