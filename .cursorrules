@@ -19,9 +19,9 @@
 
 ## Home Page Hero H1
 
-**DO NOT change the hero headline to anything other than:**
-- `Train with Purpose.\nLive with Faith.`
-- Two lines, title case, period between phrases. **No** `./` or slash between.
+**DO NOT use `\n` in the hero headline.**
+- Use: `Train with Purpose. Live with Faith.` (single line, no line break)
+- Title case, period between phrases. **No** `\n` or slash between.
 
 Default locations: `pages/Home.tsx`, `context/StoreContext.tsx`, `components/admin/HomeContentEditor.tsx` placeholder.
 

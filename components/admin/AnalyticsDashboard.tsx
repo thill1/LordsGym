@@ -19,6 +19,25 @@ function getPathTitle(path: string): string {
   return PATH_TITLES[path] || path || 'Other';
 }
 
+const TRAFFIC_SOURCE_INFO: Record<string, { label: string; description: string }> = {
+  Direct: {
+    label: 'Direct',
+    description: 'Visitors who typed your URL, used a bookmark, or arrived with no referrer (e.g., from email links, PDFs, or private/incognito browsing).'
+  },
+  Search: {
+    label: 'Search',
+    description: 'Traffic from search engines: Google, Bing, Yahoo, DuckDuckGo. Indicates organic discovery and SEO effectiveness.'
+  },
+  'Social Media': {
+    label: 'Social Media',
+    description: 'Visitors from social platforms: Facebook, Twitter/X, Instagram, LinkedIn, TikTok. Reflects engagement from your social posts and shares.'
+  },
+  Referral: {
+    label: 'Referral',
+    description: 'Traffic from other websites that link to you (partners, press, directories, forums). Excludes search and social platforms.'
+  }
+};
+
 function categorizeReferrer(referrer: string | null): string {
   if (!referrer) return 'Direct';
   try {
@@ -36,6 +55,15 @@ function categorizeReferrer(referrer: string | null): string {
   }
 }
 
+function parseDevice(userAgent: string | null): 'Mobile' | 'Tablet' | 'Desktop' | 'Unknown' {
+  if (!userAgent || typeof userAgent !== 'string') return 'Unknown';
+  const ua = userAgent.toLowerCase();
+  // Tablets first (iPad, Android tablets)
+  if (ua.includes('ipad') || (ua.includes('tablet') && !ua.includes('mobile')) || (ua.includes('android') && !ua.includes('mobile'))) return 'Tablet';
+  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipod') || ua.includes('blackberry') || ua.includes('windows phone') || ua.includes('webos')) return 'Mobile';
+  return 'Desktop';
+}
+
 function formatSessionDuration(seconds: number): string {
   if (seconds < 60) return `${Math.round(seconds)}s`;
   const m = Math.floor(seconds / 60);
@@ -51,6 +79,7 @@ const AnalyticsDashboard: React.FC = () => {
   const [avgSessionSeconds, setAvgSessionSeconds] = useState<number | null>(null);
   const [topPages, setTopPages] = useState<{ path: string; title: string; views: number }[]>([]);
   const [trafficSources, setTrafficSources] = useState<{ source: string; count: number; percentage: number }[]>([]);
+  const [deviceBreakdown, setDeviceBreakdown] = useState<{ device: string; count: number; percentage: number }[]>([]);
 
   useEffect(() => {
     const loadAnalytics = async () => {
@@ -67,7 +96,7 @@ const AnalyticsDashboard: React.FC = () => {
 
         const { data: views, error } = await supabase
           .from('page_views')
-          .select('path, referrer, session_id, created_at')
+          .select('path, referrer, session_id, created_at, user_agent')
           .gte('created_at', fromDate);
 
         if (error) throw error;
@@ -79,6 +108,7 @@ const AnalyticsDashboard: React.FC = () => {
           setAvgSessionSeconds(null);
           setTopPages([]);
           setTrafficSources([]);
+          setDeviceBreakdown([]);
           setIsLoading(false);
           return;
         }
@@ -135,6 +165,20 @@ const AnalyticsDashboard: React.FC = () => {
         }));
         sources.sort((a, b) => b.percentage - a.percentage);
         setTrafficSources(sources);
+
+        // Device breakdown from user_agent
+        const deviceCounts = views.reduce<Record<string, number>>((acc, v) => {
+          const device = parseDevice((v as { user_agent?: string }).user_agent ?? null);
+          acc[device] = (acc[device] || 0) + 1;
+          return acc;
+        }, {});
+        const deviceRows = Object.entries(deviceCounts).map(([device, count]) => ({
+          device,
+          count,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0
+        }));
+        deviceRows.sort((a, b) => b.percentage - a.percentage);
+        setDeviceBreakdown(deviceRows);
       } catch (error) {
         console.error('Error loading analytics:', error);
         setPageViews(0);
@@ -143,6 +187,7 @@ const AnalyticsDashboard: React.FC = () => {
         setAvgSessionSeconds(null);
         setTopPages([]);
         setTrafficSources([]);
+        setDeviceBreakdown([]);
       } finally {
         setIsLoading(false);
       }
@@ -238,20 +283,55 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Traffic Sources */}
       <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
         <h3 className="text-xl font-bold mb-4 dark:text-white">Traffic Sources</h3>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+          Where visitors come from, based on the HTTP referrer header. Helps prioritize marketing channels.
+        </p>
         {trafficSources.length === 0 ? (
           <p className="text-neutral-500 dark:text-neutral-400 text-sm">No traffic data yet.</p>
         ) : (
+          <div className="space-y-6">
+            {trafficSources.map((source) => {
+              const info = TRAFFIC_SOURCE_INFO[source.source] || { label: source.source, description: 'Traffic from this source.' };
+              return (
+                <div key={source.source} className="border-b border-neutral-200 dark:border-neutral-700 last:border-0 pb-4 last:pb-0">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-bold dark:text-white">{info.label}</span>
+                    <span className="text-sm font-bold dark:text-white">{source.count} views ({source.percentage}%)</span>
+                  </div>
+                  <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 mb-2">
+                    <div
+                      className="bg-brand-red h-2 rounded-full transition-all"
+                      style={{ width: `${source.percentage}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{info.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Device Breakdown */}
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+        <h3 className="text-xl font-bold mb-4 dark:text-white">Device Breakdown</h3>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+          Device type inferred from the browser user agent. Use this to optimize for mobile vs desktop.
+        </p>
+        {deviceBreakdown.length === 0 ? (
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm">No device data yet.</p>
+        ) : (
           <div className="space-y-4">
-            {trafficSources.map((source) => (
-              <div key={source.source}>
+            {deviceBreakdown.map((row) => (
+              <div key={row.device}>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-bold dark:text-white">{source.source}</span>
-                  <span className="text-sm font-bold dark:text-white">{source.percentage}%</span>
+                  <span className="text-sm font-bold dark:text-white">{row.device}</span>
+                  <span className="text-sm font-bold dark:text-white">{row.count} views ({row.percentage}%)</span>
                 </div>
                 <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
                   <div
                     className="bg-brand-red h-2 rounded-full transition-all"
-                    style={{ width: `${source.percentage}%` }}
+                    style={{ width: `${row.percentage}%` }}
                   />
                 </div>
               </div>
@@ -262,7 +342,8 @@ const AnalyticsDashboard: React.FC = () => {
 
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-blue-700 dark:text-blue-300 text-sm space-y-2">
         <p><strong>Real traffic data.</strong> All metrics are stored in the <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">page_views</code> table and computed from database records. Run the migration <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">005_page_views.sql</code> if the table does not exist.</p>
-        <p><strong>Phase 2 coming soon:</strong> Charts, member analytics, revenue tracking, attendance analytics, custom reports, export (CSV/PDF/Excel).</p>
+        <p><strong>What we capture:</strong> Path, referrer, session ID, user agent (for device type), timestamp. <strong>Region/location is not captured</strong> — adding it would require storing visitor IP and using a GeoIP lookup service.</p>
+        <p><strong>Phase 2 coming soon:</strong> Charts, member analytics, revenue tracking, attendance analytics, custom reports, export (CSV/PDF/Excel), optional region tracking via GeoIP.</p>
       </div>
     </div>
   );

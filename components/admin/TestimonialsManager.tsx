@@ -6,8 +6,11 @@ import { logTestimonialAction } from '../../lib/activity-logger';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
 
+const MAX_QUOTE_LENGTH = 200;
+
 const TestimonialsManager: React.FC = () => {
   const { testimonials, addTestimonial, updateTestimonial, deleteTestimonial } = useStore();
+  const manualTestimonials = testimonials.filter((t): t is Testimonial & { id: number } => typeof t.id === 'number');
   const { showSuccess, showError } = useToast();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,10 +21,13 @@ const TestimonialsManager: React.FC = () => {
   const openModal = (testimonial?: Testimonial) => {
     if (testimonial) {
       setEditingTestimonial(testimonial);
+      const quote = testimonial.quote.length > MAX_QUOTE_LENGTH
+        ? testimonial.quote.slice(0, MAX_QUOTE_LENGTH - 3).trim() + '...'
+        : testimonial.quote;
       setFormData({
         name: testimonial.name,
         role: testimonial.role,
-        quote: testimonial.quote
+        quote
       });
     } else {
       setEditingTestimonial(null);
@@ -41,18 +47,28 @@ const TestimonialsManager: React.FC = () => {
       showError('Please fill in all fields');
       return;
     }
+    if (formData.quote.length > MAX_QUOTE_LENGTH) {
+      showError(`Quote must be ${MAX_QUOTE_LENGTH} characters or less (currently ${formData.quote.length})`);
+      return;
+    }
 
     try {
-      if (editingTestimonial) {
-        await updateTestimonial(editingTestimonial.id, formData);
+      if (editingTestimonial && typeof editingTestimonial.id === 'number') {
+        const quote = formData.quote.slice(0, MAX_QUOTE_LENGTH).trim();
+        await updateTestimonial(editingTestimonial.id, {
+          name: formData.name.trim(),
+          role: formData.role.trim(),
+          quote
+        });
         await logTestimonialAction('update', editingTestimonial.id, formData.name);
         showSuccess('Testimonial updated successfully');
       } else {
+        const quote = formData.quote.slice(0, MAX_QUOTE_LENGTH).trim();
         const newTestimonial: Testimonial = {
-          id: Date.now(), // Simple ID generation
-          name: formData.name,
-          role: formData.role,
-          quote: formData.quote
+          id: Date.now(),
+          name: formData.name.trim(),
+          role: formData.role.trim(),
+          quote
         };
         await addTestimonial(newTestimonial);
         await logTestimonialAction('create', newTestimonial.id, formData.name);
@@ -66,7 +82,7 @@ const TestimonialsManager: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const testimonial = testimonials.find(t => t.id === id);
+    const testimonial = manualTestimonials.find(t => t.id === id);
     try {
       await deleteTestimonial(id);
       if (testimonial) await logTestimonialAction('delete', id, testimonial.name);
@@ -87,7 +103,7 @@ const TestimonialsManager: React.FC = () => {
         </Button>
       </div>
 
-      {testimonials.length === 0 ? (
+      {manualTestimonials.length === 0 ? (
         <div className="bg-white dark:bg-neutral-800 p-12 rounded-lg shadow-sm text-center">
           <p className="text-neutral-500 dark:text-neutral-400">No testimonials yet. Add your first one!</p>
         </div>
@@ -104,7 +120,7 @@ const TestimonialsManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
-                {testimonials.map((testimonial) => (
+                {manualTestimonials.map((testimonial) => (
                   <tr key={testimonial.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
                     <td className="p-4 font-bold text-sm dark:text-white">{testimonial.name}</td>
                     <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">{testimonial.role}</td>
@@ -164,15 +180,17 @@ const TestimonialsManager: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Quote</label>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Quote (max {MAX_QUOTE_LENGTH} characters)</label>
                 <textarea
                   rows={4}
                   required
+                  maxLength={MAX_QUOTE_LENGTH}
                   className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   value={formData.quote}
-                  onChange={(e) => setFormData({ ...formData, quote: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, quote: e.target.value.slice(0, MAX_QUOTE_LENGTH) })}
                   placeholder="This gym has changed my life..."
                 />
+                <p className="text-xs text-neutral-500 mt-1">{formData.quote.length}/{MAX_QUOTE_LENGTH}</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">

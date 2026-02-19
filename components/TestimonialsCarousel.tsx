@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Testimonial } from '../types';
 import Card from './Card';
+import { DEFAULT_MAX_QUOTE_LENGTH } from '../lib/google-reviews';
+
+const truncateQuote = (quote: string, maxLen: number = DEFAULT_MAX_QUOTE_LENGTH): string =>
+  quote.length > maxLen ? quote.slice(0, maxLen - 3).trim() + '...' : quote;
 
 interface TestimonialsCarouselProps {
   testimonials: Testimonial[];
@@ -141,7 +145,7 @@ const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
               <Card className="bg-neutral-800 border-neutral-700 h-full">
                 <div className="p-6 h-full flex flex-col">
                   <div className="mb-4 flex-grow">
-                    <p className="text-neutral-200 italic text-lg leading-relaxed">"{testimonial.quote}"</p>
+                    <p className="text-neutral-200 italic text-lg leading-relaxed">"{truncateQuote(testimonial.quote)}"</p>
                   </div>
                   <div className="border-t border-neutral-700 pt-4 mt-auto">
                     <div className="font-bold text-white text-lg">{testimonial.name}</div>

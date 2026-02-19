@@ -5,10 +5,12 @@ export interface NavItem {
 }
 
 export interface Testimonial {
-  id: number;
+  id: number | string;
   name: string;
   role: string;
   quote: string;
+  /** Optional source: 'manual' from DB, 'google' from Google Reviews */
+  source?: 'manual' | 'google';
 }
 
 export interface Program {
