@@ -2,7 +2,6 @@
 import React from 'react';
 import Section from '../components/Section';
 import Card from '../components/Card';
-import Button from '../components/Button';
 
 // Mindbody CRM URL for membership management
 const MINDBODY_URL = 'https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1';
@@ -26,12 +25,11 @@ const IMAGES = {
   fullFacility: getFacilityImage('gym-multi-station.png.png')
 };
 
-const Membership: React.FC = () => {
-  const handleJoin = () => {
-    // Redirect to Mindbody CRM for membership management
-    window.open(MINDBODY_URL, '_blank');
-  };
+// Join Now link styled as button - uses <a> instead of window.open to avoid desktop popup blockers
+const joinButtonClass =
+  'inline-flex items-center justify-center font-bold tracking-wider uppercase transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-95 touch-manipulation min-h-[44px] min-w-[44px] text-sm px-6 py-3 w-full bg-neutral-900 text-white border border-neutral-700 hover:bg-brand-red hover:border-brand-red hover:text-white shadow-lg';
 
+const Membership: React.FC = () => {
   return (
     <>
       <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-24">
@@ -71,7 +69,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_URL} target="_blank" rel="noopener noreferrer" className={`mt-6 block ${joinButtonClass}`}>Join Now</a>
             </div>
           </Card>
 
@@ -96,7 +94,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_URL} target="_blank" rel="noopener noreferrer" className={`mt-6 block ${joinButtonClass}`}>Join Now</a>
             </div>
           </Card>
 
@@ -121,7 +119,7 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">1 Year</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">No setup fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_URL} target="_blank" rel="noopener noreferrer" className={`mt-6 block ${joinButtonClass}`}>Join Now</a>
             </div>
           </Card>
         </div>
