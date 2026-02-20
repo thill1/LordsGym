@@ -6,6 +6,7 @@ import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import { usePageViewTracker } from './lib/page-view-tracker';
+import { getPathFromLocation } from './lib/router';
 import Home from './pages/Home';
 import Membership from './pages/Membership';
 import Shop from './pages/Shop';
@@ -20,17 +21,12 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Outreach from './pages/Outreach';
 
 const App: React.FC = () => {
-  // Simple Hash Router Implementation
-  // Support both /#/admin (hash) and /admin (pathname) for admin access
-  const getPath = () => {
-    const raw = window.location.hash.slice(1);
-    const path = raw ? raw.split('?')[0] : '';
-    if (path) return path;
-    // Support /admin and /LordsGym/admin (GitHub Pages base path)
-    const p = window.location.pathname;
-    if (p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) return '/admin';
-    return '/';
-  };
+  const getPath = () =>
+    getPathFromLocation(
+      window.location.pathname,
+      window.location.hash,
+      import.meta.env.BASE_URL || '/'
+    );
   const [currentPath, setCurrentPath] = useState(getPath());
 
   // Track page views for analytics (excludes /admin)
@@ -47,15 +43,25 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // When visiting /admin via pathname, fix URL to /#/admin for consistency
+  // When visiting via pathname (e.g. /membership, /admin), fix URL to hash routing for consistency
   useEffect(() => {
     const p = window.location.pathname;
     // IMPORTANT: If we are landing from an OAuth callback, the URL will contain
     // query params (e.g. ?code=...), and Supabase needs them to complete login.
     // Only normalize to hash routing when there are no query params.
-    if ((p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) && !window.location.hash && !window.location.search) {
+    if (!window.location.hash && !window.location.search) {
       const base = import.meta.env.BASE_URL || '/';
-      window.history.replaceState(null, '', base + '#/admin');
+      const baseNoTrailing = base.endsWith('/') ? base.slice(0, -1) : base;
+      const relative = baseNoTrailing && p.startsWith(baseNoTrailing)
+        ? p.slice(baseNoTrailing.length) || '/'
+        : p || '/';
+      const norm = relative.replace(/\/$/, '') || '/';
+      const pathnameRoutes: string[] = ['admin', 'membership', 'shop', 'training', 'programs', 'calendar', 'outreach', 'contact', 'about', 'checkout', 'order-confirmation'];
+      const pathSeg = norm === '/' ? '' : norm;
+      if (pathSeg && pathnameRoutes.some((r) => pathSeg === `/${r}` || pathSeg === r)) {
+        const hashPath = pathSeg.startsWith('/') ? pathSeg : '/' + pathSeg;
+        window.history.replaceState(null, '', base.replace(/\/$/, '') + '/#' + hashPath);
+      }
     }
   }, []);
 
