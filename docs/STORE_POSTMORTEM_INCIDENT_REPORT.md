@@ -149,3 +149,9 @@ We will:
 The store defects have been identified, fixed, and covered by automated tests. The client’s primary concern—that products deleted in the admin console were still visible on the customer-facing store—is resolved. Admin and store are now in sync at all times via Supabase as the single source of truth. We have used this incident to strengthen our quality practices: self-learning, explicit tests, and process improvements that prevent recurrence. These tests and processes are now part of our standard workflow and will help ensure similar issues do not reach production.
 
 If you have questions or would like more detail on any section, please reach out.
+
+---
+
+## Addendum: Product Delete Recurrence (Feb 2025)
+
+Deleted products (Faith Over Fear Tee, Scripture Wristbands) reappeared again—on mobile, after refresh, and in the public Store. Root cause: `syncProductsFromConstants` ran when Supabase was configured but the fetch failed, re-adding products from `ALL_PRODUCTS`. Fix: never run sync when `isSupabaseConfigured()`. A deterministic integration test (`e2e/admin-product-delete-persistence.spec.ts`) now verifies: create in DB → delete via UI → assert product gone from DB. See `docs/STORE_PRODUCT_DELETE_LESSONS.md` for full prevention strategy and architecture rules.

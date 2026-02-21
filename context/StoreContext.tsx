@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib
 import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
 import { syncProductsFromConstants } from '../lib/store-products';
+import { addToCart as addToCartOp, removeFromCart as removeFromCartOp, updateQuantity as updateQuantityOp, cartTotal as computeCartTotal, cartCount as computeCartCount } from '../lib/cart-operations';
 import { safeGet, safeSet } from '../lib/localStorage';
 
 // Initial Default State
@@ -356,13 +357,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadFromSupabase();
   }, [migrationRun]);
 
-  // Sync products: add only new products from constants when not using Supabase.
-  // When Supabase is source, do not add from constants (would re-add deleted products).
+  // Sync products: add only new products from constants when NOT using Supabase.
+  // When Supabase is configured, NEVER run sync — it would re-add deleted products (e.g. Faith Over Fear,
+  // Scripture Wristbands) when the Supabase fetch fails (mobile, network, etc.). Supabase is source of truth.
   useEffect(() => {
     if (isLoading) return;
+    if (isSupabaseConfigured()) return;
     if (productsLoadedFromSupabaseRef.current) return;
     setProducts((prevProducts) => syncProductsFromConstants(prevProducts, ALL_PRODUCTS));
-  }, [isLoading]); // Run after Supabase load completes
+  }, [isLoading]); // Run after load completes
 
   // Persistence Effects - Save to both localStorage and Supabase
   useEffect(() => {
@@ -592,9 +595,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
   
   const addProduct = async (p: Product) => {
-    // #region agent log
-    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:addProduct:entry',message:'addProduct called',data:{productId:p.id,title:p.title,imageComingSoon:p.imageComingSoon,supabaseConfigured:isSupabaseConfigured()},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     setProducts(prev => [...prev, p]);
     
     if (isSupabaseConfigured()) {
@@ -612,17 +612,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           inventory: p.inventory ?? null,
           featured: p.featured ?? false
         });
-      // #region agent log
-      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:addProduct:supabase',message:'addProduct Supabase result',data:{productId:p.id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (error) throw error;
     }
   };
 
   const updateProduct = async (p: Product) => {
-    // #region agent log
-    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:updateProduct:entry',message:'updateProduct called',data:{productId:p.id,title:p.title,imageComingSoon:p.imageComingSoon},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     setProducts(prev => prev.map(item => item.id === p.id ? p : item));
     
     if (isSupabaseConfigured()) {
@@ -641,25 +635,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           featured: p.featured ?? false,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
-      // #region agent log
-      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:updateProduct:supabase',message:'updateProduct Supabase result',data:{productId:p.id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (error) throw error;
     }
   };
 
   const deleteProduct = async (id: string) => {
-    // #region agent log
-    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:deleteProduct:entry',message:'deleteProduct called',data:{productId:id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
-      // #region agent log
-      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:deleteProduct:supabase',message:'deleteProduct Supabase result',data:{productId:id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       if (error) throw error;
     }
     setProducts((prev) => prev.filter((item) => item.id !== id));
@@ -684,45 +669,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const closeCart = () => setIsCartOpen(false);
   
   const addToCart = (product: Product, size: string) => {
-    setCart(prev => {
-      const cartId = `${product.id}-${size}`;
-      const existing = prev.find(item => item.cartId === cartId);
-      
-      if (existing) {
-        return prev.map(item => 
-          item.cartId === cartId 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      
-      return [...prev, { ...product, selectedSize: size, quantity: 1, cartId }];
-    });
+    setCart((prev) => addToCartOp(prev, product, size));
     setIsCartOpen(true);
   };
 
   const removeFromCart = (cartId: string) => {
-    setCart(prev => prev.filter(item => item.cartId !== cartId));
+    setCart((prev) => removeFromCartOp(prev, cartId));
   };
 
   const updateQuantity = (cartId: string, delta: number) => {
-    setCart(prev => {
-      return prev
-        .map(item => {
-          if (item.cartId === cartId) {
-            const newQuantity = item.quantity + delta;
-            return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
-          }
-          return item;
-        })
-        .filter((item): item is CartItem => item !== null);
-    });
+    setCart((prev) => updateQuantityOp(prev, cartId, delta));
   };
 
   const clearCart = () => setCart([]);
 
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const cartTotal = computeCartTotal(cart);
+  const cartCount = computeCartCount(cart);
 
   return (
     <StoreContext.Provider value={{

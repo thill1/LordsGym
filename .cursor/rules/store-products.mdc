@@ -21,4 +21,9 @@ When working with store products, CRUD, or product sync:
 ## Sync logic (`lib/store-products.ts`)
 
 - `syncProductsFromConstants(current, seed)` adds only products in `seed` that are not in `current`. It never removes products.
-- Call it only when products were NOT loaded from Supabase (e.g. localStorage or no DB).
+- **Never call sync when Supabase is configured.** When `isSupabaseConfigured()` is true, the sync effect must return early. Calling sync when DB is source would re-add deleted products (constants include seed items like Faith Over Fear Tee, Scripture Wristbands).
+- See `docs/STORE_PRODUCT_DELETE_LESSONS.md` for the incident and prevention.
+
+## Deterministic verification
+
+- `e2e/admin-product-delete-persistence.spec.ts` proves delete persists to DB: insert via Supabase → delete via Admin UI → assert product gone from DB.

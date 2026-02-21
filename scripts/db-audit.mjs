@@ -113,11 +113,22 @@ async function main() {
   // 3. Products columns (image_coming_soon from migration)
   console.log('\n3. Products schema');
   try {
-    const { data, error } = await supabase.from('products').select('id, title, price, image_coming_soon').limit(1);
+    const { data, error } = await supabase.from('products').select('id, title, price, image_coming_soon, coming_soon_image').limit(1);
     if (error) throw error;
-    ok('products has id, title, price, image_coming_soon');
+    ok('products has id, title, price, image_coming_soon, coming_soon_image');
   } catch (e) {
     fail(`products schema: ${e.message}`);
+  }
+
+  console.log('\n3b. Products currently in database');
+  try {
+    const { data, error } = await supabase.from('products').select('id, title').order('id');
+    if (error) throw error;
+    const list = Array.isArray(data) ? data : [];
+    list.forEach((p) => console.log(`     - ${p.id}: ${p.title}`));
+    ok(`products count: ${list.length}`);
+  } catch (e) {
+    fail(`products list: ${e.message}`);
   }
 
   // 4. Testimonials source/external_id
