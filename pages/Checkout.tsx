@@ -6,9 +6,10 @@ import { useStore } from '../context/StoreContext';
 
 interface CheckoutProps {
   onSuccess: () => void;
+  onNavigate: (path: string) => void;
 }
 
-const Checkout: React.FC<CheckoutProps> = ({ onSuccess }) => {
+const Checkout: React.FC<CheckoutProps> = ({ onSuccess, onNavigate }) => {
   const { cart, cartTotal, closeCart, clearCart } = useStore();
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +34,7 @@ const Checkout: React.FC<CheckoutProps> = ({ onSuccess }) => {
         <Section bg="alternate" className="pt-32 min-h-screen text-center flex flex-col items-center justify-center">
            <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
            <p className="mb-8">Add some items before checking out.</p>
-           <Button onClick={() => window.location.hash = '/shop'}>Return to Shop</Button>
+           <Button onClick={() => onNavigate('/shop')}>Return to Shop</Button>
         </Section>
      );
   }
@@ -152,8 +153,12 @@ const Checkout: React.FC<CheckoutProps> = ({ onSuccess }) => {
               <div className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                 {cart.map(item => (
                   <div key={item.cartId} className="flex gap-4 items-center">
-                    <div className="relative w-16 h-16 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="relative w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                      {item.imageComingSoon || !item.image ? (
+                        <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                      ) : (
+                        <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                      )}
                       <span className="absolute top-0 right-0 bg-neutral-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full -mt-1 -mr-1">
                          {item.quantity}
                       </span>

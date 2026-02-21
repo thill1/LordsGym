@@ -85,7 +85,7 @@ const App: React.FC = () => {
       case '/shop':
         return <Shop />;
       case '/checkout':
-        return <Checkout onSuccess={() => navigate('/order-confirmation')} />;
+        return <Checkout onSuccess={() => navigate('/order-confirmation')} onNavigate={navigate} />;
       case '/order-confirmation':
         return <OrderConfirmation />;
       case '/about':

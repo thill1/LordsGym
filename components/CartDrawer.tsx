@@ -44,8 +44,12 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ onCheckout }) => {
           ) : (
             cart.map((item) => (
               <div key={item.cartId} className="flex gap-4">
-                <div className="w-20 h-24 bg-neutral-100 rounded overflow-hidden flex-shrink-0">
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                <div className="w-20 h-24 bg-neutral-100 dark:bg-neutral-700 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  {item.imageComingSoon || !item.image ? (
+                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                  ) : (
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                  )}
                 </div>
                 <div className="flex-grow">
                   <div className="flex justify-between items-start">

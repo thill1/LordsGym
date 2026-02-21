@@ -13,7 +13,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
-  const { homeContent, testimonials } = useStore();
+  const { homeContent, testimonials, products } = useStore();
 
   const heroHeadline = (homeContent?.hero?.headline || "Train with Purpose. Live with Faith.").replace(/\\n|\n/g, ' ').trim();
   const heroSubheadline = homeContent?.hero?.subheadline || "Our mission is to bring strength and healing to our community through fitness, Christ and service.";
@@ -81,7 +81,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       {/* ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx */}
 
-      {/* New Arrivals Section */}
+      {/* New Arrivals Section - uses store products so admin and store stay in sync */}
       <Section>
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">New Arrivals</h2>
@@ -90,14 +90,33 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {FEATURED_PRODUCTS.map((product) => (
+          {(products.length > 0
+            ? (() => {
+                const featured = products.filter(p => p.featured);
+                const nonFeatured = products.filter(p => !p.featured);
+                // Show all featured products; if fewer than 4 total, fill with non-featured
+                const toShow = featured.length > 0
+                  ? featured.length >= 4
+                    ? featured.slice(0, 8)
+                    : [...featured, ...nonFeatured].slice(0, 4)
+                  : nonFeatured.slice(0, 4);
+                return toShow;
+              })()
+            : FEATURED_PRODUCTS
+          ).map((product) => (
             <Card key={product.id} className="overflow-hidden group">
-              <div className="w-full h-64 overflow-hidden">
-                <img 
-                  src={product.image} 
-                  alt={product.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+              <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                {product.imageComingSoon || !product.image ? (
+                  <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
+                    Coming soon: Lord&apos;s Gym merch
+                  </p>
+                ) : (
+                  <img 
+                    src={product.image} 
+                    alt={product.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                )}
               </div>
               <div className="p-4">
                 <h3 className="font-bold text-lg mb-1">{product.title}</h3>

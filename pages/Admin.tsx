@@ -49,6 +49,7 @@ const Admin: React.FC = () => {
   const [prodDescription, setProdDescription] = useState('');
   const [prodInventory, setProdInventory] = useState<Record<string, number>>({});
   const [prodFeatured, setProdFeatured] = useState(false);
+  const [prodImageComingSoon, setProdImageComingSoon] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -80,6 +81,9 @@ const Admin: React.FC = () => {
 
   const openProductModal = (product?: Product) => {
     if (product) {
+      // #region agent log
+      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:openProductModal:edit',message:'openProductModal edit',data:{productId:product.id,imageComingSoon:product.imageComingSoon,hasDescription:!!product.description},hypothesisId:'B',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       setEditingProduct(product);
       setProdTitle(product.title);
       setProdPrice(product.price.toString());
@@ -88,6 +92,7 @@ const Admin: React.FC = () => {
       setProdDescription(product.description || '');
       setProdInventory(product.inventory || {});
       setProdFeatured(product.featured || false);
+      setProdImageComingSoon(product.imageComingSoon ?? false);
     } else {
       setEditingProduct(null);
       setProdTitle('');
@@ -97,6 +102,7 @@ const Admin: React.FC = () => {
       setProdDescription('');
       setProdInventory({});
       setProdFeatured(false);
+      setProdImageComingSoon(false);
     }
     setIsProductModalOpen(true);
   };
@@ -110,6 +116,11 @@ const Admin: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = '';
+  };
+
+  const handleDeleteImage = () => {
+    setProdImage('');
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -125,24 +136,39 @@ const Admin: React.FC = () => {
       title: prodTitle,
       price: price,
       category: prodCategory,
-      image: prodImage,
+      image: prodImageComingSoon ? '' : prodImage,
       featured: prodFeatured,
+      imageComingSoon: prodImageComingSoon || undefined,
+      description: prodDescription.trim() || undefined,
       inventory: Object.keys(prodInventory).length > 0 ? prodInventory : undefined
     };
+
+    // #region agent log
+    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct',message:'handleSaveProduct payload',data:{isEdit:!!editingProduct,productId:newProduct.id,imageComingSoon:newProduct.imageComingSoon,hasDescription:!!prodDescription},hypothesisId:'C',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
 
     try {
       const { logProductAction } = await import('../lib/activity-logger');
       if (editingProduct) {
         await updateProduct(newProduct);
         await logProductAction('update', newProduct.id, newProduct.title);
+        // #region agent log
+        fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:done',message:'updateProduct completed',data:{productId:newProduct.id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         showSuccess('Product updated successfully');
       } else {
         await addProduct(newProduct);
         await logProductAction('create', newProduct.id, newProduct.title);
+        // #region agent log
+        fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:done',message:'addProduct completed',data:{productId:newProduct.id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         showSuccess('Product added successfully');
       }
       setIsProductModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      // #region agent log
+      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:error',message:'handleSaveProduct caught error',data:{productId:newProduct.id,errorMessage:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       showError('Failed to save product');
     }
   };
@@ -324,8 +350,12 @@ const Admin: React.FC = () => {
                             />
                           </td>
                           <td className="p-4">
-                            <div className="w-12 h-12 rounded overflow-hidden bg-neutral-100">
-                              <img src={product.image} alt="" className="w-full h-full object-cover" />
+                            <div className="w-12 h-12 rounded overflow-hidden bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
+                              {product.imageComingSoon || !product.image ? (
+                                <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                              ) : (
+                                <img src={product.image} alt="" className="w-full h-full object-cover" />
+                              )}
                             </div>
                           </td>
                           <td className="p-4 font-bold text-sm dark:text-white">{product.title}</td>
@@ -538,46 +568,101 @@ const Admin: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Product Image</label>
-                <div className="space-y-4">
+
+                {/* Image coming soon toggle */}
+                <div className="flex items-center mb-4">
                   <input
-                    type="text"
-                    placeholder="Enter Image URL..."
-                    className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white text-sm"
-                    value={prodImage}
-                    onChange={e => setProdImage(e.target.value)}
+                    type="checkbox"
+                    id="imageComingSoon"
+                    checked={prodImageComingSoon}
+                    onChange={e => {
+                      setProdImageComingSoon(e.target.checked);
+                      if (e.target.checked) setProdImage('');
+                    }}
+                    className="mr-2"
                   />
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full border-t border-neutral-200 dark:border-neutral-700"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 font-bold text-xs uppercase">Or Upload File</span>
-                    </div>
-                  </div>
-
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-neutral-300 dark:border-neutral-600 border-dashed rounded-lg cursor-pointer bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-8 h-8 mb-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <p className="mb-2 text-sm text-neutral-500 dark:text-neutral-400"><span className="font-bold">Click to upload</span></p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">PNG, JPG, GIF</p>
-                    </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                  <label htmlFor="imageComingSoon" className="text-sm font-bold dark:text-neutral-300">
+                    Image coming soon (show placeholder on store)
                   </label>
                 </div>
 
-                {prodImage && (
+                {!prodImageComingSoon && (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      placeholder="Enter Image URL..."
+                      className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white text-sm"
+                      value={prodImage}
+                      onChange={e => setProdImage(e.target.value)}
+                    />
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-neutral-200 dark:border-neutral-700"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 font-bold text-xs uppercase">Or Upload File</span>
+                      </div>
+                    </div>
+
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-neutral-300 dark:border-neutral-600 border-dashed rounded-lg cursor-pointer bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="mb-2 text-sm text-neutral-500 dark:text-neutral-400"><span className="font-bold">Click to upload</span></p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">PNG, JPG, GIF</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                    </label>
+
+                    {prodImage && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDeleteImage}
+                          className="text-red-600 hover:text-red-700 hover:border-red-500 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          Delete photo
+                        </Button>
+                        <span className="text-xs text-neutral-500 dark:text-neutral-400">Remove the current image</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Preview: either image or coming soon placeholder */}
+                {(prodImageComingSoon || prodImage) && (
                   <div className="mt-4">
                     <label className="block text-xs font-bold mb-1 text-neutral-500 uppercase">Preview</label>
-                    <div className="h-48 w-full rounded overflow-hidden bg-neutral-100 border dark:border-neutral-700 flex items-center justify-center">
-                      <img
-                        src={prodImage}
-                        alt="Preview"
-                        className="h-full w-full object-contain"
-                        onError={(e) => (e.currentTarget.style.display = 'none')}
-                      />
+                    <div className="relative h-48 w-full rounded overflow-hidden bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 flex items-center justify-center">
+                      {prodImageComingSoon ? (
+                        <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4">
+                          Coming soon: Lord&apos;s Gym merch
+                        </p>
+                      ) : (
+                        <>
+                          <img
+                            src={prodImage}
+                            alt="Preview"
+                            className="h-full w-full object-contain"
+                            onError={(e) => (e.currentTarget.style.display = 'none')}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleDeleteImage}
+                            className="absolute top-2 right-2 p-1.5 rounded bg-black/60 text-white hover:bg-red-600 transition-colors"
+                            title="Delete photo"
+                            aria-label="Delete photo"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

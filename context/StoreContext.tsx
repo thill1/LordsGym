@@ -319,21 +319,26 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
 
-        // Load products
+        // Load products — always use Supabase result (including empty) so admin and store stay in sync
         const { data: productsData } = await supabase
           .from('products')
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (productsData && productsData.length > 0) {
+        if (productsData !== null && productsData !== undefined) {
           productsLoadedFromSupabaseRef.current = true;
-          setProducts(productsData.map(p => ({
+          const mapped = productsData.map(p => ({
             id: p.id,
             title: p.title,
             price: p.price,
             category: p.category,
-            image: p.image
-          })));
+            image: p.image ?? '',
+            imageComingSoon: p.image_coming_soon ?? false,
+            description: (p as { description?: string | null }).description ?? undefined,
+            inventory: (p as { inventory?: Record<string, number> | null }).inventory ?? undefined,
+            featured: (p as { featured?: boolean | null }).featured ?? false
+          }));
+          setProducts(mapped);
         }
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
@@ -435,7 +440,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             title: product.title,
             price: product.price,
             category: product.category,
-            image: product.image,
+            image: product.image || '',
+            image_coming_soon: product.imageComingSoon ?? false,
+            description: product.description || null,
+            inventory: product.inventory ?? null,
+            featured: product.featured ?? false,
             updated_at: new Date().toISOString()
           }, { onConflict: 'id' })
           .then(({ error }) => {
@@ -576,44 +585,72 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
   
   const addProduct = async (p: Product) => {
+    // #region agent log
+    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:addProduct:entry',message:'addProduct called',data:{productId:p.id,title:p.title,imageComingSoon:p.imageComingSoon,supabaseConfigured:isSupabaseConfigured()},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     setProducts(prev => [...prev, p]);
     
     if (isSupabaseConfigured()) {
-      await supabase
+      const { error } = await supabase
         .from('products')
         .insert({
           id: p.id,
           title: p.title,
           price: p.price,
           category: p.category,
-          image: p.image
+          image: p.image || '',
+          image_coming_soon: p.imageComingSoon ?? false,
+          description: p.description || null,
+          inventory: p.inventory ?? null,
+          featured: p.featured ?? false
         });
+      // #region agent log
+      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:addProduct:supabase',message:'addProduct Supabase result',data:{productId:p.id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      if (error) throw error;
     }
   };
 
   const updateProduct = async (p: Product) => {
+    // #region agent log
+    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:updateProduct:entry',message:'updateProduct called',data:{productId:p.id,title:p.title,imageComingSoon:p.imageComingSoon},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     setProducts(prev => prev.map(item => item.id === p.id ? p : item));
     
     if (isSupabaseConfigured()) {
-      await supabase
+      const { error } = await supabase
         .from('products')
         .upsert({
           id: p.id,
           title: p.title,
           price: p.price,
           category: p.category,
-          image: p.image,
+          image: p.image || '',
+          image_coming_soon: p.imageComingSoon ?? false,
+          description: p.description || null,
+          inventory: p.inventory ?? null,
+          featured: p.featured ?? false,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
+      // #region agent log
+      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:updateProduct:supabase',message:'updateProduct Supabase result',data:{productId:p.id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      if (error) throw error;
     }
   };
 
   const deleteProduct = async (id: string) => {
+    // #region agent log
+    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:deleteProduct:entry',message:'deleteProduct called',data:{productId:id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
+      // #region agent log
+      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'StoreContext.tsx:deleteProduct:supabase',message:'deleteProduct Supabase result',data:{productId:id,error:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       if (error) throw error;
     }
     setProducts((prev) => prev.filter((item) => item.id !== id));
@@ -661,13 +698,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const updateQuantity = (cartId: string, delta: number) => {
     setCart(prev => {
-      return prev.map(item => {
-        if (item.cartId === cartId) {
-          const newQuantity = item.quantity + delta;
-          return newQuantity > 0 ? { ...item, quantity: newQuantity } : item;
-        }
-        return item;
-      });
+      return prev
+        .map(item => {
+          if (item.cartId === cartId) {
+            const newQuantity = item.quantity + delta;
+            return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+          }
+          return item;
+        })
+        .filter((item): item is CartItem => item !== null);
     });
   };
 

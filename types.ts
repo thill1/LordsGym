@@ -29,6 +29,7 @@ export interface Product {
   image: string;
   category: string;
   featured?: boolean;
+  imageComingSoon?: boolean;
   description?: string;
   inventory?: Record<string, number>;
   variants?: Record<string, any>;

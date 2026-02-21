@@ -89,6 +89,17 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - name: Run database audit
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$VITE_SUPABASE_URL" ] && [ -n "$VITE_SUPABASE_ANON_KEY" ]; then
+            node scripts/db-audit.mjs
+          else
+            echo "Skipping db audit (no Supabase credentials)"
+          fi
+
       - name: Run lint
         run: npm run lint
 
@@ -217,6 +228,29 @@ jobs:
           
           echo "⚠️ Health check did not pass after $MAX_RETRIES attempts, but deployment may still be propagating"
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+  e2e:
+    name: E2E Production Tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: Run E2E smoke tests
+        env:
+          PLAYWRIGHT_BASE_URL: https://lords-gym.pages.dev
+          ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          CI: true
+        run: npm run test:e2e
         continue-on-error: true
 
   notify:
