@@ -11,6 +11,8 @@ export interface Testimonial {
   quote: string;
   /** Optional source: 'manual' from DB, 'google' from Google Reviews */
   source?: 'manual' | 'google';
+  /** For imported Google reviews: external_id (e.g. google-0) for deduplication */
+  externalId?: string;
 }
 
 export interface Program {

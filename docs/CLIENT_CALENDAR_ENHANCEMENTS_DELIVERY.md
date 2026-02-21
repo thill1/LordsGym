@@ -1,70 +1,59 @@
-# Lord's Gym Calendar — Recurring Events & Enhancements
-## Client Delivery Summary
+# Lord's Gym Calendar — Enhancements Summary
 
 **Date:** February 2025  
-**Status:** ✅ Completed & Validated
+**Status:** ✅ Completed & Tested
+
+## Code Versions Tested & Deployed
+
+| Role | GitHub Commit | Short SHA | Link |
+|------|---------------|-----------|------|
+| **Source** (before) | `90f51191cdf9d60b407330204844daadac653d1a` | `90f5119` | [View](https://github.com/thill1/LordsGym/commit/90f5119) |
+| **Target** (deployed) | `7aca6e978fbbd57c29c7d5cf3e99650beb803696` | `7aca6e9` | [View](https://github.com/thill1/LordsGym/commit/7aca6e9) |
+
+Commits in range: `8a0b710` → `7aca6e9` (5 commits). [Compare source..target](https://github.com/thill1/LordsGym/compare/90f5119..7aca6e9)
 
 ---
 
-## Executive Summary
+## What Changed
 
-The calendar has been updated so recurring events (e.g., Bible Study, 12-Step Bible Study, Alcoholics Anonymous) display correctly on all devices, including iPhones. A number of usability improvements were also added to make the calendar easier to navigate and use.
+### Fix: Recurring Events on Mobile
+Recurring events (Bible Study, 12-Step Bible Study, AA, etc.) now display correctly on iPhones and all mobile devices. Previously they showed on desktop only.
 
----
+### New Features
 
-## What Was Fixed
-
-### Recurring Events on Mobile
-
-**Issue:** Recurring events appeared on desktop but not on mobile phones (especially iPhones), even after a hard refresh.
-
-**Solution:** Changes were made to how recurring event data is loaded and displayed so it works for all visitors, including those using mobile browsers. Recurring events now appear consistently across:
-
-- Month view
-- Week view  
-- Day view
-- List view
-
-**Result:** Recurring events display correctly on iPhones and other mobile devices.
+| Feature | What It Does |
+|---------|--------------|
+| **Event type legend** | Color-coded dots by type (Community, Outreach, Fundraisers, Self Help, Holiday) |
+| **Jump to date** | Date picker in the toolbar — go to any date without clicking Previous/Next |
+| **Show past events** | In List view, toggle between "Upcoming" and "All Events" |
+| **Export on mobile** | Export button works on phones for adding events to your personal calendar |
+| **Larger event dots** | Easier to see on mobile (2×2 size) |
+| **Day popover** | Clicking a day in another month shows events without changing the visible month |
+| **Recurring details** | Event details show "Repeats every …" and end date when set |
+| **iCal export** | Exported .ics files include recurrence rules for Google Calendar, Apple Calendar, Outlook |
 
 ---
 
-## Calendar Enhancements
+## What Was Tested
 
-### New & Improved Features
-
-| Feature | Benefit |
-|---------|---------|
-| **Event type legend** | Color-coded dots for Community, Outreach, Fundraisers, Self Help, and Holiday events make it easy to see event types at a glance. |
-| **Jump to date** | A date picker in the toolbar lets visitors quickly jump to any date without using Previous/Next. |
-| **Show past events** | In List view, visitors can toggle between “Upcoming Events” and “All Events” to view past events if desired. |
-| **Export on mobile** | The Export button is now visible and usable on mobile devices for adding the calendar to their own calendar app. |
-| **Improved mobile view** | Event dots on mobile are larger (2×2) for better visibility on phones. |
-| **Better day popover behavior** | Clicking a day in a previous or next month opens the event list without unexpectedly changing the visible month. |
-| **Recurring event details** | When viewing a recurring event, visitors see when it repeats (e.g., “Repeats every 2 weeks on Monday, Wednesday”) and when it ends, if applicable. |
-| **iCal export with recurrences** | Exported .ics files now include proper recurrence rules so recurring events sync correctly in Google Calendar, Apple Calendar, Outlook, etc. |
+- ✅ Recurring events show in Month, Week, Day, and List views
+- ✅ Verified on iPhone
+- ✅ Calendar export (.ics) includes recurring events
+- ✅ Past and future events display correctly across time zones
 
 ---
 
-## Technical Summary (Optional Reading)
+## Planned Future Upgrades
 
-For transparency, here is a brief technical overview of the changes:
+These are under consideration for future releases:
 
-- **Backend:** A dedicated database function now serves recurring event data to all visitors, including anonymous mobile users.
-- **Timezone handling:** Dates are now handled in the user’s local timezone so events display on the correct day across different regions.
-- **Data robustness:** Recurring event data is loaded and validated in a way that works reliably on different browsers and devices.
-
----
-
-## Validation
-
-- ✅ Recurring events display in all views (Month, Week, Day, List).
-- ✅ Verified on iPhone.
-- ✅ Calendar export (.ics) includes recurring events.
-- ✅ Past and future events behave correctly across timezones.
+- **Recurring event templates** — Save and reuse templates for common recurring events
+- **Waitlist management** — Let visitors join a waitlist when a class is full
+- **Automated reminders** — Email/SMS reminders for upcoming bookings
+- **Capacity display** — Show how full a class is (e.g., "12/15 spots") and close when full
 
 ---
 
-## Questions or Issues?
+## Questions?
 
-If you notice any problems with the calendar or recurring events, please let us know so we can address them quickly.
+If you notice any issues or have feature requests, please reach out.

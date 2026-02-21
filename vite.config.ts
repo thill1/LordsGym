@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
@@ -29,6 +30,10 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       include: ['react', 'react-dom', '@supabase/supabase-js'],
+    },
+    test: {
+      include: ['**/*.test.{ts,tsx}'],
+      environment: 'node',
     },
   };
 });

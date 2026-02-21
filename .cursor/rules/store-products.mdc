@@ -1,0 +1,24 @@
+---
+description: Store products and CRUD behavior
+alwaysApply: false
+globs: context/StoreContext.tsx, lib/store-products.ts, constants.ts, pages/Admin.tsx, components/admin/ProductBulkOperations.tsx
+---
+
+# Store Products
+
+When working with store products, CRUD, or product sync:
+
+## Source of truth
+
+- **Supabase configured**: Products come from the `products` table. Supabase is the source of truth. Do not add from `ALL_PRODUCTS` when products were loaded from Supabase (would re-add deleted products).
+- **No Supabase**: Use `ALL_PRODUCTS` from constants as seed. `syncProductsFromConstants` adds new products from constants only when not using Supabase.
+
+## Delete behavior
+
+- `deleteProduct` must throw on Supabase error so Admin can show `showError`.
+- Do not call `syncProductsFromConstants` when `productsLoadedFromSupabaseRef` is true.
+
+## Sync logic (`lib/store-products.ts`)
+
+- `syncProductsFromConstants(current, seed)` adds only products in `seed` that are not in `current`. It never removes products.
+- Call it only when products were NOT loaded from Supabase (e.g. localStorage or no DB).

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lord's Gym Calendar — Recurring Events & Enhancements</title>
+  <title>Lord's Gym Calendar — Enhancements Summary</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -87,13 +87,9 @@
       color: #16a34a;
       font-weight: 600;
     }
-    .tech-note {
-      background: #f8fafc;
-      border-left: 4px solid #94a3b8;
-      padding: 1rem 1.25rem;
-      margin: 1.5rem 0;
-      font-size: 0.9rem;
-      color: #475569;
+    .future-list {
+      color: #4b5563;
+      margin: 0.5rem 0;
     }
     .footer {
       margin-top: 2.5rem;
@@ -111,92 +107,101 @@
 <body>
 
   <h1>Lord's Gym Calendar</h1>
-  <p class="subtitle">Recurring Events & Enhancements — Client Delivery Summary</p>
-  <span class="badge">✓ Completed & Validated</span>
+  <p class="subtitle">Enhancements Summary</p>
+  <span class="badge">✓ Completed & Tested</span>
   <p class="subtitle" style="margin-top: 0;">February 2025</p>
 
-  <h2>Executive Summary</h2>
-  <p>
-    The calendar has been updated so recurring events (e.g., Bible Study, 12-Step Bible Study, Alcoholics Anonymous) 
-    display correctly on all devices, including iPhones. A number of usability improvements were also added to make 
-    the calendar easier to navigate and use.
-  </p>
+  <h2>Code Versions Tested & Deployed</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Commit</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Source</strong> (before)</td>
+        <td><code>90f5119</code></td>
+        <td><a href="https://github.com/thill1/LordsGym/commit/90f5119">View</a></td>
+      </tr>
+      <tr>
+        <td><strong>Target</strong> (deployed)</td>
+        <td><code>7aca6e9</code></td>
+        <td><a href="https://github.com/thill1/LordsGym/commit/7aca6e9">View</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size: 0.9rem; color: #6b7280;">Commits in range: 8a0b710 → 7aca6e9. <a href="https://github.com/thill1/LordsGym/compare/90f5119..7aca6e9">Compare source..target</a></p>
 
-  <h2>What Was Fixed</h2>
-  <h3>Recurring Events on Mobile</h3>
-  <p><strong>Issue:</strong> Recurring events appeared on desktop but not on mobile phones (especially iPhones), even after a hard refresh.</p>
-  <p><strong>Solution:</strong> Changes were made to how recurring event data is loaded and displayed so it works for all visitors, including those using mobile browsers. Recurring events now appear consistently across:</p>
-  <ul>
-    <li>Month view</li>
-    <li>Week view</li>
-    <li>Day view</li>
-    <li>List view</li>
-  </ul>
-  <p><strong>Result:</strong> Recurring events display correctly on iPhones and other mobile devices.</p>
+  <h2>What Changed</h2>
+  <h3>Fix: Recurring Events on Mobile</h3>
+  <p>Recurring events (Bible Study, 12-Step Bible Study, AA, etc.) now display correctly on iPhones and all mobile devices. Previously they showed on desktop only.</p>
 
-  <h2>Calendar Enhancements</h2>
-  <p>New and improved features added to the calendar:</p>
-
+  <h3>New Features</h3>
   <table>
     <thead>
       <tr>
         <th>Feature</th>
-        <th>Benefit</th>
+        <th>What It Does</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><strong>Event type legend</strong></td>
-        <td>Color-coded dots for Community, Outreach, Fundraisers, Self Help, and Holiday events make it easy to see event types at a glance.</td>
+        <td>Color-coded dots by type (Community, Outreach, Fundraisers, Self Help, Holiday)</td>
       </tr>
       <tr>
         <td><strong>Jump to date</strong></td>
-        <td>A date picker in the toolbar lets visitors quickly jump to any date without using Previous/Next.</td>
+        <td>Date picker in the toolbar — go to any date without clicking Previous/Next</td>
       </tr>
       <tr>
         <td><strong>Show past events</strong></td>
-        <td>In List view, visitors can toggle between "Upcoming Events" and "All Events" to view past events if desired.</td>
+        <td>In List view, toggle between "Upcoming" and "All Events"</td>
       </tr>
       <tr>
         <td><strong>Export on mobile</strong></td>
-        <td>The Export button is now visible and usable on mobile devices for adding the calendar to their own calendar app.</td>
+        <td>Export button works on phones for adding events to your personal calendar</td>
       </tr>
       <tr>
-        <td><strong>Improved mobile view</strong></td>
-        <td>Event dots on mobile are larger (2×2) for better visibility on phones.</td>
+        <td><strong>Larger event dots</strong></td>
+        <td>Easier to see on mobile (2×2 size)</td>
       </tr>
       <tr>
-        <td><strong>Better day popover</strong></td>
-        <td>Clicking a day in a previous or next month opens the event list without unexpectedly changing the visible month.</td>
+        <td><strong>Day popover</strong></td>
+        <td>Clicking a day in another month shows events without changing the visible month</td>
       </tr>
       <tr>
-        <td><strong>Recurring event details</strong></td>
-        <td>When viewing a recurring event, visitors see when it repeats (e.g., "Repeats every 2 weeks on Monday, Wednesday") and when it ends, if applicable.</td>
+        <td><strong>Recurring details</strong></td>
+        <td>Event details show "Repeats every …" and end date when set</td>
       </tr>
       <tr>
-        <td><strong>iCal export with recurrences</strong></td>
-        <td>Exported .ics files now include proper recurrence rules so recurring events sync correctly in Google Calendar, Apple Calendar, Outlook, etc.</td>
+        <td><strong>iCal export</strong></td>
+        <td>Exported .ics files include recurrence rules for Google Calendar, Apple Calendar, Outlook</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>Technical Summary</h2>
-  <p class="tech-note">
-    For transparency: Backend changes ensure recurring event data is served to all visitors including anonymous mobile users. 
-    Date handling now uses the user's local timezone so events display on the correct day. Data loading has been made robust 
-    for different browsers and devices.
-  </p>
-
-  <h2>Validation</h2>
+  <h2>What Was Tested</h2>
   <ul>
-    <li><span class="check">✓</span> Recurring events display in all views (Month, Week, Day, List)</li>
+    <li><span class="check">✓</span> Recurring events show in Month, Week, Day, and List views</li>
     <li><span class="check">✓</span> Verified on iPhone</li>
     <li><span class="check">✓</span> Calendar export (.ics) includes recurring events</li>
-    <li><span class="check">✓</span> Past and future events behave correctly across timezones</li>
+    <li><span class="check">✓</span> Past and future events display correctly across time zones</li>
+  </ul>
+
+  <h2>Planned Future Upgrades</h2>
+  <p>These are under consideration for future releases:</p>
+  <ul class="future-list">
+    <li><strong>Recurring event templates</strong> — Save and reuse templates for common recurring events</li>
+    <li><strong>Waitlist management</strong> — Let visitors join a waitlist when a class is full</li>
+    <li><strong>Automated reminders</strong> — Email/SMS reminders for upcoming bookings</li>
+    <li><strong>Capacity display</strong> — Show how full a class is (e.g., "12/15 spots") and close when full</li>
   </ul>
 
   <div class="footer">
-    <p><strong>Questions or issues?</strong> If you notice any problems with the calendar or recurring events, please let us know so we can address them quickly.</p>
+    <p><strong>Questions?</strong> If you notice any issues or have feature requests, please reach out.</p>
   </div>
 
 </body>

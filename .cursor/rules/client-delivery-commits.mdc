@@ -1,0 +1,20 @@
+---
+description: Client delivery docs must include explicit GitHub source/target commits
+globs: docs/*DELIVERY*.md, docs/*_DELIVERY.md
+alwaysApply: false
+---
+
+# Client Delivery Docs — GitHub Commits Required
+
+When creating or editing `docs/CLIENT_*_DELIVERY.md`:
+
+1. **Include explicit source and target commits:**
+   - **Source** = SHA before enhancements (use `git rev-parse FIRST_COMMIT^`)
+   - **Target** = deployed SHA (use `git rev-parse HEAD`)
+
+2. **Add a "Code Versions Tested & Deployed" section** with:
+   - Full SHA and short SHA (7 chars)
+   - Links: `https://github.com/thill1/LordsGym/commit/SHORT_SHA`
+   - Compare link: `https://github.com/thill1/LordsGym/compare/SOURCE..TARGET`
+
+3. **Use the skill** `.cursor/skills/client-enhancements-delivery/` for the full template and workflow.

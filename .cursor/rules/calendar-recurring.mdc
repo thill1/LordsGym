@@ -27,6 +27,14 @@ The DB returns both **template** events (recurring seed) and **materialized** ev
 3. **New logic**
    - If adding expansion or recurrence handling, always deduplicate by `(recurring_pattern_id, toLocalDateKey(start_time))` for events with `recurring_pattern_id`
 
+## Tests
+
+Run `npm run test` — `lib/calendar-utils.test.ts` guards against:
+- Duplicate events per (pattern, date)
+- Recurring dates drifting from template day
+- Materialized overriding template
+- getEventsForDate returning duplicates
+
 ## Test on mobile/iPhone
 
 Recurring bugs often appear only on mobile (Safari, timezone). Add `?debug=calendar` to verify base/expanded counts.

@@ -1,10 +1,11 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
 import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
 import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
+import { syncProductsFromConstants } from '../lib/store-products';
 import { safeGet, safeSet } from '../lib/localStorage';
 
 // Initial Default State
@@ -96,6 +97,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [migrationRun, setMigrationRun] = useState(false);
+  const productsLoadedFromSupabaseRef = useRef(false);
 
   // Load from LocalStorage or use Defaults (fallback) — safe for quota/private mode
   const [settings, setSettings] = useState<SiteSettings>(() => {
@@ -262,7 +264,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Load testimonials - Supabase is source of truth when configured (prevents data loss across devices)
         const { data: testimonialsData, error: testimonialsErr } = await supabase
           .from('testimonials')
-          .select('id, name, role, quote')
+          .select('id, name, role, quote, source, external_id')
           .order('created_at', { ascending: false });
 
         let manualTestimonials: Testimonial[] = [];
@@ -272,7 +274,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             name: t.name,
             role: t.role,
             quote: t.quote,
-            source: 'manual' as const
+            source: t.source === 'google' ? ('google' as const) : ('manual' as const),
+            externalId: t.external_id ?? undefined
           }));
           safeSet('site_testimonials', testimonialsData.map(t => ({
             id: t.id,
@@ -298,7 +301,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             )
           : [];
 
-        const googleAsTestimonials: Testimonial[] = googleReviews.map((t: GoogleReviewTestimonial) => ({
+        // Dedupe: exclude live Google reviews that are already imported (in DB)
+        const importedExternalIds = new Set(
+          (testimonialsData || [])
+            .filter((t: { external_id?: string | null }) => t.external_id)
+            .map((t: { external_id: string }) => t.external_id)
+        );
+        const liveGoogleReviews = googleReviews.filter((r) => !importedExternalIds.has(r.id));
+
+        const googleAsTestimonials: Testimonial[] = liveGoogleReviews.map((t: GoogleReviewTestimonial) => ({
           id: t.id,
           name: t.name,
           role: t.role,
@@ -315,6 +326,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .order('created_at', { ascending: false });
 
         if (productsData && productsData.length > 0) {
+          productsLoadedFromSupabaseRef.current = true;
           setProducts(productsData.map(p => ({
             id: p.id,
             title: p.title,
@@ -334,31 +346,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadFromSupabase();
   }, [migrationRun]);
 
-  // Sync products with latest from constants on mount to ensure new merchandise appears
+  // Sync products: add only new products from constants when not using Supabase.
+  // When Supabase is source, do not add from constants (would re-add deleted products).
   useEffect(() => {
     if (isLoading) return;
-    
-    setProducts(prevProducts => {
-      const currentProductIds = new Set(prevProducts.map(p => p.id));
-      const latestProductIds = new Set(ALL_PRODUCTS.map(p => p.id));
-      
-      // If product structure changed (new products added), update to latest
-      if (currentProductIds.size !== latestProductIds.size || 
-          !Array.from(latestProductIds).every(id => currentProductIds.has(id))) {
-        const productMap = new Map(prevProducts.map((p: Product) => [p.id, p]));
-        ALL_PRODUCTS.forEach(newProduct => {
-          const existing = productMap.get(newProduct.id);
-          // Update image and title from constants, preserve price if admin customized
-          if (existing) {
-            productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
-          } else {
-            productMap.set(newProduct.id, newProduct);
-          }
-        });
-        return Array.from(productMap.values());
-      }
-      return prevProducts;
-    });
+    if (productsLoadedFromSupabaseRef.current) return;
+    setProducts((prevProducts) => syncProductsFromConstants(prevProducts, ALL_PRODUCTS));
   }, [isLoading]); // Run after Supabase load completes
 
   // Persistence Effects - Save to both localStorage and Supabase
@@ -508,21 +501,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addTestimonial = async (t: Testimonial) => {
     const quote = truncateQuote(t.quote);
     if (isSupabaseConfigured()) {
+      const insertPayload: { name: string; role: string; quote: string; source?: string; external_id?: string } = {
+        name: t.name,
+        role: t.role,
+        quote
+      };
+      if (t.source === 'google' && t.externalId) {
+        insertPayload.source = 'google';
+        insertPayload.external_id = t.externalId;
+      }
       const { data: inserted, error } = await supabase
         .from('testimonials')
-        .insert({
-          name: t.name,
-          role: t.role,
-          quote
-        })
-        .select('id, name, role, quote')
+        .insert(insertPayload)
+        .select('id, name, role, quote, source, external_id')
         .single();
       if (error) {
         console.error('Error saving testimonial to Supabase:', error);
         throw error;
       }
       if (inserted) {
-        setTestimonials(prev => [...prev, inserted as Testimonial]);
+        const mapped: Testimonial = {
+          id: inserted.id,
+          name: inserted.name,
+          role: inserted.role,
+          quote: inserted.quote,
+          source: inserted.source === 'google' ? 'google' : 'manual',
+          externalId: inserted.external_id ?? undefined
+        };
+        setTestimonials(prev => [...prev, mapped]);
         return;
       }
     }
@@ -603,14 +609,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteProduct = async (id: string) => {
-    setProducts(prev => prev.filter(item => item.id !== id));
-    
     if (isSupabaseConfigured()) {
-      await supabase
+      const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', id);
+      if (error) throw error;
     }
+    setProducts((prev) => prev.filter((item) => item.id !== id));
   };
 
   const login = (password: string) => {

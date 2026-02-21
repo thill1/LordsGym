@@ -3,6 +3,8 @@ import { useStore } from '../../context/StoreContext';
 import { Testimonial } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { logTestimonialAction } from '../../lib/activity-logger';
+import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../../lib/google-reviews';
+import { SUPABASE_URL, getAnonKey } from '../../lib/supabase';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
 
@@ -17,6 +19,12 @@ const TestimonialsManager: React.FC = () => {
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [formData, setFormData] = useState({ name: '', role: '', quote: '' });
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; id: number | null }>({ isOpen: false, id: null });
+
+  // Import from Google
+  const [googleReviews, setGoogleReviews] = useState<GoogleReviewTestimonial[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [selectedReviewIds, setSelectedReviewIds] = useState<Set<string>>(new Set());
+  const [isImporting, setIsImporting] = useState(false);
 
   const openModal = (testimonial?: Testimonial) => {
     if (testimonial) {
@@ -94,6 +102,77 @@ const TestimonialsManager: React.FC = () => {
     }
   };
 
+  const importedExternalIds = new Set(
+    manualTestimonials.filter(t => t.externalId).map(t => t.externalId!)
+  );
+  const availableToImport = googleReviews.filter(r => !importedExternalIds.has(r.id));
+
+  const handleFetchReviews = async () => {
+    const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID as string | undefined;
+    if (!placeId?.trim()) {
+      showError('Google Place ID not configured. Add VITE_GOOGLE_PLACE_ID to .env.local');
+      return;
+    }
+    setIsLoadingReviews(true);
+    setGoogleReviews([]);
+    setSelectedReviewIds(new Set());
+    try {
+      const reviews = await fetchGoogleReviews(
+        SUPABASE_URL,
+        getAnonKey(),
+        placeId,
+        DEFAULT_MAX_QUOTE_LENGTH
+      );
+      setGoogleReviews(reviews);
+      if (reviews.length === 0) showError('No 5-star reviews found or API error');
+    } catch (error) {
+      showError('Failed to fetch Google reviews');
+      console.error('Error fetching Google reviews:', error);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
+
+  const toggleReviewSelection = (id: string) => {
+    setSelectedReviewIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleImportSelected = async () => {
+    if (selectedReviewIds.size === 0) {
+      showError('Select at least one review to import');
+      return;
+    }
+    setIsImporting(true);
+    const idsToImport = [...selectedReviewIds];
+    try {
+      const toImport = googleReviews.filter(r => idsToImport.includes(r.id));
+      for (const r of toImport) {
+        await addTestimonial({
+          id: r.id,
+          name: r.name,
+          role: r.role,
+          quote: r.quote,
+          source: 'google',
+          externalId: r.id
+        });
+        await logTestimonialAction('create', r.id, r.name);
+      }
+      showSuccess(`Imported ${toImport.length} review(s)`);
+      setSelectedReviewIds(new Set());
+      setGoogleReviews(prev => prev.filter(r => !idsToImport.includes(r.id)));
+    } catch (error) {
+      showError('Failed to import reviews');
+      console.error('Error importing reviews:', error);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 fade-in">
       <div className="flex justify-between items-center">
@@ -101,6 +180,59 @@ const TestimonialsManager: React.FC = () => {
         <Button onClick={() => openModal()} size="sm">
           Add Testimonial
         </Button>
+      </div>
+
+      {/* Import from Google Reviews */}
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm p-6 border border-neutral-200 dark:border-neutral-700">
+        <h2 className="text-lg font-bold dark:text-white mb-3">Import from Google Reviews</h2>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+          Fetch 5-star reviews (truncated to 100 characters) and save selected ones as permanent testimonials.
+        </p>
+        <Button
+          onClick={handleFetchReviews}
+          disabled={isLoadingReviews}
+          size="sm"
+          variant="outline"
+        >
+          {isLoadingReviews ? 'Fetching...' : 'Fetch Reviews'}
+        </Button>
+        {googleReviews.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <div className="max-h-64 overflow-y-auto space-y-2 divide-y divide-neutral-100 dark:divide-neutral-700">
+              {availableToImport.map((r) => (
+                <label
+                  key={r.id}
+                  className="flex items-start gap-3 py-2 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-700/50 rounded px-2 -mx-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedReviewIds.has(r.id)}
+                    onChange={() => toggleReviewSelection(r.id)}
+                    className="mt-1 rounded border-neutral-300 text-brand-red focus:ring-brand-red"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm dark:text-white">{r.name}</p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2">"{r.quote}"</p>
+                  </div>
+                </label>
+              ))}
+              {availableToImport.length === 0 && (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 py-2">
+                  All fetched reviews have been imported.
+                </p>
+              )}
+            </div>
+            {availableToImport.length > 0 && (
+              <Button
+                onClick={handleImportSelected}
+                disabled={selectedReviewIds.size === 0 || isImporting}
+                size="sm"
+              >
+                {isImporting ? 'Importing...' : `Import Selected (${selectedReviewIds.size})`}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {manualTestimonials.length === 0 ? (
@@ -123,7 +255,12 @@ const TestimonialsManager: React.FC = () => {
                 {manualTestimonials.map((testimonial) => (
                   <tr key={testimonial.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
                     <td className="p-4 font-bold text-sm dark:text-white">{testimonial.name}</td>
-                    <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">{testimonial.role}</td>
+                    <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
+                      {testimonial.source === 'google' && (
+                        <span className="inline-block px-1.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 mr-1">Google</span>
+                      )}
+                      {testimonial.role}
+                    </td>
                     <td className="p-4 text-sm text-neutral-600 dark:text-neutral-300 max-w-md">
                       <p className="line-clamp-2">{testimonial.quote}</p>
                     </td>

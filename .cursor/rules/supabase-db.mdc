@@ -27,3 +27,22 @@ The user must add `SUPABASE_ACCESS_TOKEN` to `.env.local`:
 - **Apply migrations**: `npm run db:push`
 - **Test RPC after migration**: `npm run test:calendar-rpc`
 - **New migration**: create file in `supabase/migrations/` with format `YYYYMMDD_description.sql`
+
+## Database hardening checklist
+
+When adding or modifying migrations:
+
+1. **RLS**: Never use `USING (true)` or `WITH CHECK (true)` for write operations—explicitly restrict by `auth.role()` or `auth.uid()`. Service role bypasses RLS; do not create permissive policies intended "for service role" (they grant access to anon/auth).
+2. **Indexes**: Always use `CREATE INDEX IF NOT EXISTS` so migrations are idempotent.
+3. **Foreign keys**: Prefer explicit `ON DELETE` (CASCADE, SET NULL) for all references.
+4. **Admin role**: Do not rely on user-editable `user_metadata` for privileges; use server-side role assignment.
+5. **Uniqueness**: Add unique constraints for external IDs (e.g. `testimonials.source, external_id`) to prevent duplicate imports.
+
+## Before applying migrations
+
+- Run `supabase db diff` or test locally with `supabase start` and `supabase db reset`.
+- For RLS changes, verify anon/authenticated/service_role behavior with test scripts.
+
+## Backup and recovery
+
+See `docs/BACKUP_RESTORE.md` for backup, restore, and PITR procedures.

@@ -20,6 +20,8 @@
     "push:github": "node --env-file=.env.local scripts/push-via-github-api.js",
     "type-check": "tsc --noEmit",
     "lint": "echo 'No linter configured'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:admin": "node --env-file=.env.local scripts/test-admin-password.js",
     "diagnose:admin": "node scripts/diagnose-admin-login.js",
     "test:calendar-rpc": "node --env-file=.env.local scripts/test-calendar-rpc.mjs",
@@ -37,12 +39,13 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
+    "libsodium-wrappers": "^0.7.13",
     "md-to-pdf": "^5.2.5",
     "pdf-lib": "^1.17.1",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.3",
     "vite": "^5.3.4",
-    "libsodium-wrappers": "^0.7.13"
+    "vitest": "^4.0.18"
   }
 }

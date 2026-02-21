@@ -497,6 +497,12 @@ Your **database** needs a separate provider (Neon, Supabase, etc.).
 
 ---
 
+## Backup and Restore
+
+See [docs/BACKUP_RESTORE.md](docs/BACKUP_RESTORE.md) for backup, restore, and PITR procedures.
+
+---
+
 ## Next Steps
 
 ### Recommended Path:

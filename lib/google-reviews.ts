@@ -3,7 +3,7 @@
  * Keeps API key server-side; returns testimonials shaped for the carousel.
  */
 
-export const DEFAULT_MAX_QUOTE_LENGTH = 200;
+export const DEFAULT_MAX_QUOTE_LENGTH = 100;
 
 export interface GoogleReviewTestimonial {
   id: string;
