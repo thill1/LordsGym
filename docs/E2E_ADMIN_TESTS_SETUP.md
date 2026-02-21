@@ -12,6 +12,7 @@ Five E2E tests are skipped on every run because they require admin credentials. 
 |------|--------------|
 | Admin Calendar - Calendar Management loads | Logs in, opens Calendar tab, verifies Add Event or table loads |
 | Store CRUD - add, edit, delete product | Creates test product, edits it, deletes it |
+| Store CRUD - **deleted product stays deleted after refresh** | Regression: delete product, refresh page, verify it stays gone |
 | Store CRUD - bulk delete | Creates 2 test products, bulk selects, bulk deletes |
 | Testimonials CRUD - add, edit, delete | Creates testimonial, edits quote, deletes |
 | Calendar CRUD - add and delete event | Creates one-time event, deletes it |
