@@ -127,6 +127,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProducts = safeGet<Product[] | null>('shop_products', null);
+    // When Supabase is source (incognito/fresh = no localStorage): never use ALL_PRODUCTS
+    // as initial state. Use [] and let Supabase load. Otherwise mobile/failed-fetch shows
+    // stale ALL_PRODUCTS including deleted items.
+    if (isSupabaseConfigured() && (!savedProducts || !Array.isArray(savedProducts) || savedProducts.length === 0)) {
+      return [];
+    }
     if (!savedProducts || !Array.isArray(savedProducts)) return ALL_PRODUCTS;
     if (savedProducts.length === 0) return [];
     // When Supabase is source, respect deletions: never re-add from ALL_PRODUCTS when
@@ -332,6 +338,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             category: p.category,
             image: p.image ?? '',
             imageComingSoon: p.image_coming_soon ?? false,
+            comingSoonImage: (p as { coming_soon_image?: string | null }).coming_soon_image ?? undefined,
             description: (p as { description?: string | null }).description ?? undefined,
             inventory: (p as { inventory?: Record<string, number> | null }).inventory ?? undefined,
             featured: (p as { featured?: boolean | null }).featured ?? false
@@ -441,6 +448,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             category: product.category,
             image: product.image || '',
             image_coming_soon: product.imageComingSoon ?? false,
+            coming_soon_image: product.comingSoonImage || null,
             description: product.description || null,
             inventory: product.inventory ?? null,
             featured: product.featured ?? false,
@@ -599,6 +607,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           category: p.category,
           image: p.image || '',
           image_coming_soon: p.imageComingSoon ?? false,
+          coming_soon_image: p.comingSoonImage || null,
           description: p.description || null,
           inventory: p.inventory ?? null,
           featured: p.featured ?? false
@@ -626,6 +635,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           category: p.category,
           image: p.image || '',
           image_coming_soon: p.imageComingSoon ?? false,
+          coming_soon_image: p.comingSoonImage || null,
           description: p.description || null,
           inventory: p.inventory ?? null,
           featured: p.featured ?? false,
