@@ -127,15 +127,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProducts = safeGet<Product[] | null>('shop_products', null);
-    
-    // If saved products exist and match the count/structure, merge to preserve admin edits
-    // Otherwise, use fresh ALL_PRODUCTS to ensure new merchandise appears
-    if (savedProducts && Array.isArray(savedProducts) && savedProducts.length === ALL_PRODUCTS.length) {
+    if (!savedProducts || !Array.isArray(savedProducts)) return ALL_PRODUCTS;
+    if (savedProducts.length === 0) return [];
+    // When Supabase is source, respect deletions: never re-add from ALL_PRODUCTS when
+    // we have fewer products (user deleted). Only merge when counts match (update images/titles).
+    if (savedProducts.length === ALL_PRODUCTS.length) {
       const productMap = new Map(savedProducts.map((p: Product) => [p.id, p]));
-      // Update all products from ALL_PRODUCTS to ensure images/titles are current
       ALL_PRODUCTS.forEach(newProduct => {
         const existing = productMap.get(newProduct.id);
-        // Keep admin customizations (price, etc) but update image and title
         if (existing) {
           productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
         } else {
@@ -144,9 +143,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
       return Array.from(productMap.values());
     }
-    
-    // Use fresh products if structure changed or no saved data
-    return ALL_PRODUCTS;
+    // Fewer products = user deleted. Use savedProducts; do NOT re-add from ALL_PRODUCTS.
+    return savedProducts;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -430,8 +428,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     safeSet('shop_products', products);
-    
-    if (isSupabaseConfigured() && !isLoading) {
+    // Only upsert to Supabase after we've loaded from Supabase. Otherwise we might push
+    // wrong initial state (e.g. ALL_PRODUCTS) and re-add deleted products.
+    if (isSupabaseConfigured() && !isLoading && productsLoadedFromSupabaseRef.current) {
       products.forEach(product => {
         supabase
           .from('products')

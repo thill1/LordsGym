@@ -94,7 +94,9 @@ export const migrateHomeContent = async (): Promise<void> => {
 };
 
 /**
- * Migrate products from localStorage to Supabase
+ * Migrate products from localStorage to Supabase.
+ * Only runs when Supabase products table is empty (first-time setup).
+ * When Supabase already has products, it is the source of truth—do not overwrite.
  */
 export const migrateProducts = async (): Promise<void> => {
   if (!isSupabaseConfigured()) {
@@ -103,6 +105,11 @@ export const migrateProducts = async (): Promise<void> => {
   }
 
   try {
+    const { data: existing } = await supabase.from('products').select('id').limit(1);
+    if (existing && existing.length > 0) {
+      return; // Supabase has products; it is source of truth. Do not overwrite.
+    }
+
     const saved = localStorage.getItem('shop_products');
     if (!saved) return;
 

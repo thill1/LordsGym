@@ -110,6 +110,39 @@ test.describe('Admin CRUD', () => {
       await expect(page.getByText(testTitle)).not.toBeVisible({ timeout: 10000 });
     });
 
+    test('deleted product stays deleted after page refresh (regression)', async ({ page }) => {
+      await login(page);
+      await page.getByRole('button', { name: /Store|Merch/i }).click();
+      await expect(page.getByText('Store Manager')).toBeVisible({ timeout: 5000 });
+
+      const testTitle = `${TEST_PREFIX}DeleteRefresh ${Date.now()}`;
+
+      // Create product
+      await page.getByRole('button', { name: 'Add New Product' }).click();
+      await expect(page.getByRole('heading', { name: /Add New Product/i })).toBeVisible({ timeout: 3000 });
+      await page.getByLabel(/Product Title/i).fill(testTitle);
+      await page.getByLabel(/Price/i).first().fill('7.99');
+      await page.getByRole('button', { name: 'Save Product' }).click();
+      await expect(page.getByText(testTitle)).toBeVisible({ timeout: 10000 });
+
+      // Delete
+      await page.getByRole('row', { name: new RegExp(testTitle) }).getByRole('button', { name: 'Delete' }).click();
+      await expect(page.getByText(/Are you sure|Delete Product/i)).toBeVisible({ timeout: 3000 });
+      await page.getByRole('button', { name: /Confirm|Delete/i }).click();
+      await expect(page.getByText(testTitle)).not.toBeVisible({ timeout: 10000 });
+
+      // Refresh page and verify product stays deleted (regression: deleted products were reappearing)
+      await page.reload();
+      await expect(page.getByText('Dashboard')).toBeVisible({ timeout: 10000 });
+      await page.getByRole('button', { name: /Store|Merch/i }).click();
+      await expect(page.getByText('Store Manager')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(testTitle)).not.toBeVisible({ timeout: 5000 });
+
+      // Verify product is also gone from public store
+      await page.goto(`${BASE_PATH}/shop`);
+      await expect(page.getByText(testTitle)).not.toBeVisible({ timeout: 5000 });
+    });
+
     test('image coming soon product shows placeholder on Store', async ({ page }) => {
       await login(page);
       await page.getByRole('button', { name: /Store|Merch/i }).click();
