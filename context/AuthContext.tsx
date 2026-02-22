@@ -23,20 +23,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
   }, []);
 
-  // Failsafe: if loading stuck > 10s (e.g. Supabase unreachable), show login form
+  // Failsafe: if loading stuck > 2.5s, show login form (Supabase may hang; user must not wait)
   useEffect(() => {
     const id = setTimeout(() => {
-      setIsLoading((prev) => (prev ? false : prev));
-    }, 10000);
+      setIsLoading(false);
+    }, 2500);
     return () => clearTimeout(id);
   }, []);
 
   const checkSession = async () => {
-    const TIMEOUT_MS = 5000; // Prevent infinite loading if Supabase hangs (bad key, network, etc.)
+    const TIMEOUT_MS = 2000; // Short timeout; failsafe at 2.5s guarantees form shows
     try {
       const currentUser = await Promise.race([
         getCurrentUser(),
-        new Promise<null>((_, reject) =>
+        new Promise<AuthUser | null>((_, reject) =>
           setTimeout(() => reject(new Error('Session check timed out')), TIMEOUT_MS)
         ),
       ]);
