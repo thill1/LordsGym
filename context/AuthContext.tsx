@@ -42,8 +42,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
+    const LOGIN_TIMEOUT_MS = 15000;
     try {
-      const { user: authUser, error } = await signIn(email, password);
+      const { user: authUser, error } = await Promise.race([
+        signIn(email, password),
+        new Promise<{ user: AuthUser | null; error: Error | null }>((_, reject) =>
+          setTimeout(() => reject(new Error('Login timed out. Check Supabase anon key and network.')), LOGIN_TIMEOUT_MS)
+        ),
+      ]);
       if (error || !authUser) {
         setUser(null);
         setIsLoading(false);

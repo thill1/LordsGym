@@ -49,6 +49,8 @@ const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
 const adminAllowlist = process.env.VITE_ADMIN_ALLOWLIST_EMAILS;
 const breakGlassEmail = process.env.VITE_BREAK_GLASS_ADMIN_EMAIL;
 const oauthRedirectUrl = process.env.VITE_ADMIN_OAUTH_REDIRECT_URL;
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 // Help debug: show what was loaded (not values)
 const found = fs.existsSync(envPath);
@@ -142,6 +144,8 @@ async function main() {
   if (adminAllowlist) await setSecret('VITE_ADMIN_ALLOWLIST_EMAILS', adminAllowlist);
   if (breakGlassEmail) await setSecret('VITE_BREAK_GLASS_ADMIN_EMAIL', breakGlassEmail);
   if (oauthRedirectUrl) await setSecret('VITE_ADMIN_OAUTH_REDIRECT_URL', oauthRedirectUrl);
+  if (supabaseUrl) await setSecret('VITE_SUPABASE_URL', supabaseUrl);
+  if (supabaseAnonKey) await setSecret('VITE_SUPABASE_ANON_KEY', supabaseAnonKey);
 
   console.log('Done. Re-run the failed workflow or push to trigger deploy.');
 }
