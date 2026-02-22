@@ -23,16 +23,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
   }, []);
 
-  // Failsafe: if loading stuck > 2.5s, show login form (Supabase may hang; user must not wait)
+  // Failsafe: show login form within 1.5s max (Supabase may hang from CI/CD, slow networks)
   useEffect(() => {
-    const id = setTimeout(() => {
-      setIsLoading(false);
-    }, 2500);
+    const id = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(id);
   }, []);
 
   const checkSession = async () => {
-    const TIMEOUT_MS = 2000; // Short timeout; failsafe at 2.5s guarantees form shows
+    const TIMEOUT_MS = 1200; // Short timeout; 1.5s failsafe guarantees form shows
     try {
       const currentUser = await Promise.race([
         getCurrentUser(),
