@@ -30,6 +30,8 @@ export interface Product {
   category: string;
   featured?: boolean;
   imageComingSoon?: boolean;
+  /** Custom placeholder image when imageComingSoon is true and no product image */
+  comingSoonImage?: string;
   description?: string;
   inventory?: Record<string, number>;
   variants?: Record<string, any>;
