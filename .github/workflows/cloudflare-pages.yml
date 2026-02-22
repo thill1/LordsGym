@@ -89,17 +89,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      # DB audit skipped in CI: Supabase returns 522 from GitHub runners (network unreachable).
+      # Run locally: npm run test:db-audit
       - name: Run database audit
         continue-on-error: true
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "$VITE_SUPABASE_URL" ] && [ -n "$VITE_SUPABASE_ANON_KEY" ]; then
-            node scripts/db-audit.mjs || echo "⚠️ DB audit failed (Supabase may be unreachable from CI); deploy continues"
-          else
-            echo "Skipping db audit (no Supabase credentials)"
-          fi
+          echo "Skipping db audit in CI (Supabase unreachable from GitHub runners). Run 'npm run test:db-audit' locally."
 
       - name: Run lint
         run: npm run lint
