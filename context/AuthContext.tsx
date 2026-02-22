@@ -23,8 +23,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
   }, []);
 
+  // Failsafe: if loading stuck > 10s (e.g. Supabase unreachable), show login form
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setIsLoading((prev) => (prev ? false : prev));
+    }, 10000);
+    return () => clearTimeout(id);
+  }, []);
+
   const checkSession = async () => {
-    const TIMEOUT_MS = 8000; // Prevent infinite loading if Supabase hangs (bad key, network, etc.)
+    const TIMEOUT_MS = 5000; // Prevent infinite loading if Supabase hangs (bad key, network, etc.)
     try {
       const currentUser = await Promise.race([
         getCurrentUser(),
@@ -44,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoggingIn(true);
-    const LOGIN_TIMEOUT_MS = 8000;
+      const LOGIN_TIMEOUT_MS = 6000;
     try {
       const { user: authUser, error } = await Promise.race([
         signIn(email, password),
@@ -60,6 +68,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         if (msg.includes('Invalid API key')) {
           return { success: false, error: 'Invalid Supabase anon key. Paste the correct key below (from Supabase → Settings → API).' };
+        }
+        if (msg.includes('invalid_grant') || msg.includes('Invalid login credentials')) {
+          return { success: false, error: 'Wrong email or password. Use lordsgymoutreach@gmail.com (not lordsjimaoutreach) and Admin2026!' };
         }
         if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('load failed')) {
           return { success: false, error: 'Network error: could not reach Supabase. Check your connection, try paste anon key below, or verify VITE_SUPABASE_URL.' };

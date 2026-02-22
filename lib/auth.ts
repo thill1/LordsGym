@@ -44,7 +44,19 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
 
       return { user, error: null };
     } catch (error) {
-      return { user: null, error: error as Error };
+      const err = error as Error;
+      const msg = (err?.message || '').toLowerCase();
+      // In dev: if Supabase fetch fails (wrong key, network), allow bypass so local dev works
+      if (isDev && DEV_PASSWORDS.includes(p) && (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed'))) {
+        const fallbackUser: AuthUser = {
+          id: 'local-admin',
+          email: (email && email.trim()) || 'admin@lordsgym.com'
+        };
+        localStorage.setItem('admin_auth', 'true');
+        localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
+        return { user: fallbackUser, error: null };
+      }
+      return { user: null, error: err };
     }
   }
 

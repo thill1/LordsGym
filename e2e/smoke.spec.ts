@@ -37,8 +37,8 @@ test.describe('Public site smoke tests', () => {
 
   test('Admin login page loads', async ({ page }) => {
     await page.goto(`${BASE_PATH}/admin`);
-    await expect(page.getByPlaceholder(/Enter username|username/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('button', { name: /Sign In|Access Dashboard|Login/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByPlaceholder(/lordsgymoutreach|password/i)).toBeVisible({ timeout: 5000 });
   });
 
   test('Cart drawer opens from header', async ({ page }) => {

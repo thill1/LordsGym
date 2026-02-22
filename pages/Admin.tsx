@@ -66,9 +66,15 @@ const Admin: React.FC = () => {
       return;
     }
 
-    const result = await login(username.trim(), password);
+    const email = username.trim().toLowerCase();
+    if (email.includes('lordsjimaoutreach') || email.includes('jimaoutreach')) {
+      setError('Use lordsgymoutreach@gmail.com (not lordsjimaoutreach – typo in "gym")');
+      return;
+    }
+
+    const result = await login(email, password);
     if (!result.success) {
-      setError(result.error || 'Invalid email or password');
+      setError(result.error || 'Invalid credentials');
     } else {
       const { logActivity } = await import('../lib/activity-logger');
       await logActivity({
