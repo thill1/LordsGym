@@ -19,7 +19,7 @@ import HomeContentEditor from '../components/admin/HomeContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
-import { isSupabaseConfigured, setSupabaseAnonKey } from '../lib/supabase';
+import { isSupabaseConfigured, setSupabaseAnonKey, setSupabaseUrl, resetSupabaseClient } from '../lib/supabase';
 
 const Admin: React.FC = () => {
   const {
@@ -35,6 +35,7 @@ const Admin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [anonKeyInput, setAnonKeyInput] = useState('');
+  const [urlInput, setUrlInput] = useState('');
   const [anonKeySaved, setAnonKeySaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
@@ -226,14 +227,21 @@ const Admin: React.FC = () => {
               {isLoggingIn ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            {(!isSupabaseConfigured() || (error && (error.includes('timed out') || error.includes('anon key') || error.includes('not configured') || error.includes('Network error') || error.includes('Failed to fetch') || error.includes('could not reach')))) && (
+            {(true) && (
               <div className="mt-4 p-4 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-900/50">
                 <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
-                  Admin login not configured
+                  Troubleshooting: Override Supabase config
                 </p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
-                  Paste your Supabase anon key (from <a href="https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api" target="_blank" rel="noopener noreferrer" className="underline">Supabase API settings</a>) to enable login. Stored in this browser only.
+                  If login fails or hangs, paste URL and anon key from <a href="https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api" target="_blank" rel="noopener noreferrer" className="underline">Supabase API settings</a> (anon public, JWT). Stored in this browser only; overrides build config.
                 </p>
+                <input
+                  type="text"
+                  placeholder="https://mrptukahxloqpdqiaxkb.supabase.co"
+                  className="w-full p-2 text-sm border rounded dark:bg-neutral-800 dark:border-neutral-700 dark:text-white mb-2"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                />
                 <input
                   type="password"
                   placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -247,13 +255,15 @@ const Admin: React.FC = () => {
                   size="sm"
                   fullWidth
                   onClick={() => {
-                    setSupabaseAnonKey(anonKeyInput);
+                    if (urlInput.trim()) setSupabaseUrl(urlInput);
+                    if (anonKeyInput.trim()) setSupabaseAnonKey(anonKeyInput);
+                    resetSupabaseClient();
                     setAnonKeySaved(true);
                     setError('');
                     setTimeout(() => setAnonKeySaved(false), 3000);
                   }}
                 >
-                  {anonKeySaved ? 'Saved — try signing in above' : 'Save anon key & retry'}
+                  {anonKeySaved ? 'Saved — try signing in above' : 'Save & retry'}
                 </Button>
               </div>
             )}

@@ -103,6 +103,22 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+      - name: Validate Supabase config (production build)
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then
+            if ! echo "$VITE_SUPABASE_ANON_KEY" | grep -q '^eyJ'; then
+              echo "::error::VITE_SUPABASE_ANON_KEY must be the JWT anon key (starts with eyJ), not the publishable key. Get it from Supabase Dashboard → Settings → API → anon public."
+              echo "If you used sb_publishable_... or similar, replace with the long eyJ... token."
+              exit 1
+            fi
+            echo "✓ Supabase anon key format OK"
+          else
+            echo "⚠️ VITE_SUPABASE_ANON_KEY not set - production admin login will show paste-anon-key until configured"
+          fi
+
       - name: Build application
         id: build
         env:

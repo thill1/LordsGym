@@ -30,12 +30,14 @@ Needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`. This sets the password to `Ad
 
 GitHub Actions use:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_SUPABASE_URL` (e.g. `https://mrptukahxloqpdqiaxkb.supabase.co`)
+- `VITE_SUPABASE_ANON_KEY` – **must be the JWT** (starts with `eyJ`), not `sb_publishable_` or similar
 
-Add these under GitHub → Settings → Secrets and variables → Actions. Redeploy after adding.
+Add these under **GitHub → Settings → Secrets and variables → Actions**. Redeploy after adding.
 
-### 3. If keys are missing: paste anon key in browser
+**Common production mistake:** Using the wrong key format. The anon key is a long JWT like `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`. If you use a publishable key instead, you get "Failed to fetch" on login. Get the correct key from [Supabase → Settings → API](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api) → "anon public".
+
+### 3. If production login fails: paste URL and anon key in browser
 
 On the login page, when Supabase is not configured, you’ll see **“Admin login not configured”**. Use the form to:
 
@@ -59,3 +61,4 @@ If this works but the site doesn’t, the production build likely lacks the anon
 | Running `create-admin` instead of `set-admin-password` | Random password instead of `Admin2026!` |
 | Typo in email (`lordsjimaoutreach`) | No matching user in Supabase |
 | Wrong password format | Supabase rejects |
+| Wrong anon key (e.g. sb_publishable_ instead of JWT) | "Failed to fetch" on production login |

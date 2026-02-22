@@ -1,12 +1,38 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const DEFAULT_SUPABASE_URL = 'https://mrptukahxloqpdqiaxkb.supabase.co';
 const STORAGE_KEY = 'lordsgym_supabase_anon_key';
+const STORAGE_URL_KEY = 'lordsgym_supabase_url';
+
+export function getSupabaseUrl(): string {
+  try {
+    const fromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_URL_KEY) : null;
+    if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+  } catch (_) {}
+  return import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+}
+
+/** @deprecated Use getSupabaseUrl() for dynamic URL (respects localStorage override) */
+export const SUPABASE_URL = DEFAULT_SUPABASE_URL;
+
+export function setSupabaseUrl(url: string): void {
+  if (typeof localStorage !== 'undefined') {
+    url = url.trim();
+    if (url) localStorage.setItem(STORAGE_URL_KEY, url);
+    else localStorage.removeItem(STORAGE_URL_KEY);
+    _client = null as any;
+  }
+}
 
 export function getAnonKey(): string {
+  // localStorage override wins: when user pastes key on broken prod build, it must be used
+  try {
+    const fromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+    if (fromStorage && typeof fromStorage === 'string' && fromStorage.trim()) return fromStorage.trim();
+  } catch (_) {}
   const fromEnv = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (fromEnv && typeof fromEnv === 'string') return fromEnv;
-  return (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null) || '';
+  return '';
 }
 
 export function setSupabaseAnonKey(key: string): void {
@@ -27,7 +53,7 @@ export const isSupabaseConfigured = (): boolean => !!(SUPABASE_URL && getAnonKey
 let _client: SupabaseClient | null = null;
 
 function createSupabaseClient(anonKey: string): SupabaseClient {
-  return createClient(SUPABASE_URL, anonKey, {
+  return createClient(getSupabaseUrl(), anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
