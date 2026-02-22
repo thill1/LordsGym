@@ -4,6 +4,7 @@ import { getCurrentUser, signIn, signOut, AuthUser } from '../lib/auth';
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
+  isLoggingIn: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -41,18 +43,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
-    const LOGIN_TIMEOUT_MS = 15000;
+    setIsLoggingIn(true);
+    const LOGIN_TIMEOUT_MS = 8000;
     try {
       const { user: authUser, error } = await Promise.race([
         signIn(email, password),
         new Promise<{ user: AuthUser | null; error: Error | null }>((_, reject) =>
-          setTimeout(() => reject(new Error('Login timed out. Check Supabase anon key and network.')), LOGIN_TIMEOUT_MS)
+          setTimeout(() => reject(new Error('Login timed out. Paste your Supabase anon key below and retry.')), LOGIN_TIMEOUT_MS)
         ),
       ]);
       if (error || !authUser) {
         setUser(null);
-        setIsLoading(false);
         const msg = error?.message || '';
         if (msg.includes('not configured') || msg.includes('Supabase not configured')) {
           return { success: false, error: 'Supabase not configured. Paste your anon key below, or add VITE_SUPABASE_ANON_KEY to GitHub Secrets and redeploy.' };
@@ -63,14 +64,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: msg || 'Invalid email or password' };
       }
       setUser(authUser);
-      setIsLoading(false);
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       setUser(null);
-      setIsLoading(false);
       const errMsg = (error as Error)?.message || '';
       return { success: false, error: errMsg || 'Invalid email or password' };
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -96,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isLoading,
+        isLoggingIn,
         isAuthenticated: !!user,
         login,
         logout,

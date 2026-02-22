@@ -29,7 +29,7 @@ const Admin: React.FC = () => {
     deleteProduct
   } = useStore();
 
-  const { isAuthenticated, isLoading, login, logout, user } = useAuth();
+  const { isAuthenticated, isLoading, isLoggingIn, login, logout, user } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -222,11 +222,11 @@ const Admin: React.FC = () => {
               />
             </div>
             {error && <p className="text-red-600 text-sm font-bold">{error}</p>}
-            <Button fullWidth type="submit" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+            <Button fullWidth type="submit" disabled={isLoggingIn}>
+              {isLoggingIn ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            {!isSupabaseConfigured() && (
+            {(!isSupabaseConfigured() || (error && (error.includes('timed out') || error.includes('anon key') || error.includes('not configured')))) && (
               <div className="mt-4 p-4 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-900/50">
                 <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
                   Admin login not configured
