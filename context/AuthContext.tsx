@@ -15,22 +15,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Check for existing session on mount
+  // Session check runs in background; form shows immediately (no loading spinner)
   useEffect(() => {
     checkSession();
   }, []);
 
-  // Failsafe: show login form within 1.5s max (Supabase may hang from CI/CD, slow networks)
-  useEffect(() => {
-    const id = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(id);
-  }, []);
-
   const checkSession = async () => {
-    const TIMEOUT_MS = 1200; // Short timeout; 1.5s failsafe guarantees form shows
+    const TIMEOUT_MS = 3000;
     try {
       const currentUser = await Promise.race([
         getCurrentUser(),
@@ -43,8 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Silently fail - expected when Supabase not configured, invalid key, or timeout
       console.warn('Error checking session (non-critical):', error);
       setUser(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
