@@ -61,6 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (msg.includes('Invalid API key')) {
           return { success: false, error: 'Invalid Supabase anon key. Paste the correct key below (from Supabase → Settings → API).' };
         }
+        if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('load failed')) {
+          return { success: false, error: 'Network error: could not reach Supabase. Check your connection, try paste anon key below, or verify VITE_SUPABASE_URL.' };
+        }
         return { success: false, error: msg || 'Invalid email or password' };
       }
       setUser(authUser);
@@ -69,6 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Login error:', error);
       setUser(null);
       const errMsg = (error as Error)?.message || '';
+      if (errMsg.toLowerCase().includes('failed to fetch') || errMsg.toLowerCase().includes('network') || errMsg.toLowerCase().includes('load failed')) {
+        return { success: false, error: 'Network error: could not reach Supabase. Check your connection, try paste anon key below, or verify VITE_SUPABASE_URL.' };
+      }
       return { success: false, error: errMsg || 'Invalid email or password' };
     } finally {
       setIsLoggingIn(false);

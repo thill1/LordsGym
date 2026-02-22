@@ -226,7 +226,7 @@ const Admin: React.FC = () => {
               {isLoggingIn ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            {(!isSupabaseConfigured() || (error && (error.includes('timed out') || error.includes('anon key') || error.includes('not configured')))) && (
+            {(!isSupabaseConfigured() || (error && (error.includes('timed out') || error.includes('anon key') || error.includes('not configured') || error.includes('Network error') || error.includes('Failed to fetch') || error.includes('could not reach')))) && (
               <div className="mt-4 p-4 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-900/50">
                 <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
                   Admin login not configured
