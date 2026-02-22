@@ -22,11 +22,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const checkSession = async () => {
+    const TIMEOUT_MS = 8000; // Prevent infinite loading if Supabase hangs (bad key, network, etc.)
     try {
-      const currentUser = await getCurrentUser();
+      const currentUser = await Promise.race([
+        getCurrentUser(),
+        new Promise<null>((_, reject) =>
+          setTimeout(() => reject(new Error('Session check timed out')), TIMEOUT_MS)
+        ),
+      ]);
       setUser(currentUser);
     } catch (error) {
-      // Silently fail - this is expected when Supabase is not configured
+      // Silently fail - expected when Supabase not configured, invalid key, or timeout
       console.warn('Error checking session (non-critical):', error);
       setUser(null);
     } finally {
@@ -43,10 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
         const msg = error?.message || '';
         if (msg.includes('not configured') || msg.includes('Supabase not configured')) {
-          return { success: false, error: 'Admin login not configured. Add VITE_SUPABASE_ANON_KEY to GitHub Secrets.' };
+          return { success: false, error: 'Supabase not configured. Paste your anon key below, or add VITE_SUPABASE_ANON_KEY to GitHub Secrets and redeploy.' };
         }
         if (msg.includes('Invalid API key')) {
-          return { success: false, error: 'Invalid Supabase config. Add VITE_SUPABASE_ANON_KEY to GitHub Secrets and redeploy.' };
+          return { success: false, error: 'Invalid Supabase anon key. Paste the correct key below (from Supabase → Settings → API).' };
         }
         return { success: false, error: msg || 'Invalid email or password' };
       }
@@ -57,7 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Login error:', error);
       setUser(null);
       setIsLoading(false);
-      return { success: false, error: 'Invalid email or password' };
+      const errMsg = (error as Error)?.message || '';
+      return { success: false, error: errMsg || 'Invalid email or password' };
     }
   };
 

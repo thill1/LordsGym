@@ -2,39 +2,28 @@
 
 ## Supabase auth (required for full admin features)
 
-The admin uses **Supabase Auth** when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured (e.g. in `.env.local`). This is required for features that use Supabase RLS (e.g. **recurring calendar patterns**, media library, activity logs).
+The admin uses **Supabase Auth** when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured. This is required for product CRUD, calendar, media library, and activity logs.
 
-Create or reset the admin user:
-
-## Create admin user
+## Set admin password (recommended)
 
 **Email:** lordsgymoutreach@gmail.com  
-**Password:** Auto-generated (unique, printed once)
+**Password:** Admin2026!
 
-On first login, the user must change their password before accessing the dashboard.
-
-### Run the script
-
-1. Get your **service_role** key from [Supabase Dashboard → Settings → API](https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api).
-
-2. Add to `.env.local`:
+1. Add to `.env.local`:
    ```
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
    ```
 
-3. Run:
+2. Run:
    ```bash
-   npm run create-admin
+   npm run set-admin-password
    ```
 
-   Or inline:
-   ```bash
-   SUPABASE_SERVICE_ROLE_KEY=your_key node scripts/create-admin-user.js
-   ```
+3. Log in at [https://lordsgymoutreach.com/#/admin](https://lordsgymoutreach.com/admin)
 
-4. **Save the printed password** – it is shown only once.
+## Create admin user (alternative)
 
-5. Log in at [https://lordsgymoutreach.com/admin](https://lordsgymoutreach.com/admin)
+Use `npm run create-admin` for a random one-time password. See below.
 
 ## If user already exists
 

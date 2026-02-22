@@ -19,6 +19,7 @@ import HomeContentEditor from '../components/admin/HomeContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
+import { isSupabaseConfigured, setSupabaseAnonKey } from '../lib/supabase';
 
 const Admin: React.FC = () => {
   const {
@@ -33,6 +34,8 @@ const Admin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [anonKeyInput, setAnonKeyInput] = useState('');
+  const [anonKeySaved, setAnonKeySaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
@@ -50,6 +53,7 @@ const Admin: React.FC = () => {
   const [prodInventory, setProdInventory] = useState<Record<string, number>>({});
   const [prodFeatured, setProdFeatured] = useState(false);
   const [prodImageComingSoon, setProdImageComingSoon] = useState(false);
+  const [prodComingSoonImage, setProdComingSoonImage] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,13 +61,13 @@ const Admin: React.FC = () => {
     setError('');
 
     if (!username || !password) {
-      setError('Please enter username and password');
+      setError('Please enter email and password');
       return;
     }
 
     const result = await login(username.trim(), password);
     if (!result.success) {
-      setError(result.error || 'Invalid username or password');
+      setError(result.error || 'Invalid email or password');
     } else {
       const { logActivity } = await import('../lib/activity-logger');
       await logActivity({
@@ -81,9 +85,6 @@ const Admin: React.FC = () => {
 
   const openProductModal = (product?: Product) => {
     if (product) {
-      // #region agent log
-      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:openProductModal:edit',message:'openProductModal edit',data:{productId:product.id,imageComingSoon:product.imageComingSoon,hasDescription:!!product.description},hypothesisId:'B',timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setEditingProduct(product);
       setProdTitle(product.title);
       setProdPrice(product.price.toString());
@@ -93,6 +94,7 @@ const Admin: React.FC = () => {
       setProdInventory(product.inventory || {});
       setProdFeatured(product.featured || false);
       setProdImageComingSoon(product.imageComingSoon ?? false);
+      setProdComingSoonImage(product.comingSoonImage ?? '');
     } else {
       setEditingProduct(null);
       setProdTitle('');
@@ -103,6 +105,7 @@ const Admin: React.FC = () => {
       setProdInventory({});
       setProdFeatured(false);
       setProdImageComingSoon(false);
+      setProdComingSoonImage('');
     }
     setIsProductModalOpen(true);
   };
@@ -123,6 +126,20 @@ const Admin: React.FC = () => {
     setProdImage('');
   };
 
+  const handleComingSoonImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setProdComingSoonImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleDeleteComingSoonImage = () => {
+    setProdComingSoonImage('');
+  };
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const price = parseFloat(prodPrice);
@@ -139,36 +156,24 @@ const Admin: React.FC = () => {
       image: prodImageComingSoon ? '' : prodImage,
       featured: prodFeatured,
       imageComingSoon: prodImageComingSoon || undefined,
+      comingSoonImage: prodImageComingSoon && prodComingSoonImage ? prodComingSoonImage : undefined,
       description: prodDescription.trim() || undefined,
       inventory: Object.keys(prodInventory).length > 0 ? prodInventory : undefined
     };
-
-    // #region agent log
-    fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct',message:'handleSaveProduct payload',data:{isEdit:!!editingProduct,productId:newProduct.id,imageComingSoon:newProduct.imageComingSoon,hasDescription:!!prodDescription},hypothesisId:'C',timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     try {
       const { logProductAction } = await import('../lib/activity-logger');
       if (editingProduct) {
         await updateProduct(newProduct);
         await logProductAction('update', newProduct.id, newProduct.title);
-        // #region agent log
-        fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:done',message:'updateProduct completed',data:{productId:newProduct.id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         showSuccess('Product updated successfully');
       } else {
         await addProduct(newProduct);
         await logProductAction('create', newProduct.id, newProduct.title);
-        // #region agent log
-        fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:done',message:'addProduct completed',data:{productId:newProduct.id},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
         showSuccess('Product added successfully');
       }
       setIsProductModalOpen(false);
     } catch (error: any) {
-      // #region agent log
-      fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'97c42e'},body:JSON.stringify({sessionId:'97c42e',location:'Admin.tsx:handleSaveProduct:error',message:'handleSaveProduct caught error',data:{productId:newProduct.id,errorMessage:error?.message},hypothesisId:'A',timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       showError('Failed to save product');
     }
   };
@@ -191,16 +196,17 @@ const Admin: React.FC = () => {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-display font-bold text-brand-charcoal dark:text-white mb-2">Admin Portal</h2>
             <p className="text-neutral-500 dark:text-neutral-400">Authorized personnel only.</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-2">Email: lordsgymoutreach@gmail.com (not lordsjimaoutreach)</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Username</label>
+              <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Email</label>
               <input
-                type="text"
+                type="email"
                 className="w-full p-3 border border-neutral-300 dark:border-neutral-600 rounded focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none dark:bg-neutral-900 dark:text-white"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder="lordsgymoutreach@gmail.com"
                 required
               />
             </div>
@@ -219,6 +225,38 @@ const Admin: React.FC = () => {
             <Button fullWidth type="submit" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            {!isSupabaseConfigured() && (
+              <div className="mt-4 p-4 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-900/50">
+                <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
+                  Admin login not configured
+                </p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+                  Paste your Supabase anon key (from <a href="https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api" target="_blank" rel="noopener noreferrer" className="underline">Supabase API settings</a>) to enable login. Stored in this browser only.
+                </p>
+                <input
+                  type="password"
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  className="w-full p-2 text-sm border rounded dark:bg-neutral-800 dark:border-neutral-700 dark:text-white mb-2"
+                  value={anonKeyInput}
+                  onChange={(e) => setAnonKeyInput(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  onClick={() => {
+                    setSupabaseAnonKey(anonKeyInput);
+                    setAnonKeySaved(true);
+                    setError('');
+                    setTimeout(() => setAnonKeySaved(false), 3000);
+                  }}
+                >
+                  {anonKeySaved ? 'Saved — try signing in above' : 'Save anon key & retry'}
+                </Button>
+              </div>
+            )}
 
             <div className="text-center pt-4 border-t border-neutral-100 dark:border-neutral-700 mt-4">
               <a
@@ -352,7 +390,11 @@ const Admin: React.FC = () => {
                           <td className="p-4">
                             <div className="w-12 h-12 rounded overflow-hidden bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
                               {product.imageComingSoon || !product.image ? (
-                                <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                                product.comingSoonImage ? (
+                                  <img src={product.comingSoonImage} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                                )
                               ) : (
                                 <img src={product.image} alt="" className="w-full h-full object-cover" />
                               )}
@@ -586,6 +628,40 @@ const Admin: React.FC = () => {
                   </label>
                 </div>
 
+                {prodImageComingSoon && (
+                  <div className="mb-4 pl-6 border-l-2 border-neutral-200 dark:border-neutral-600 space-y-4">
+                    <label className="block text-sm font-bold dark:text-neutral-300">Coming soon placeholder image</label>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">Upload or paste a URL for the image shown when this product has no photo yet.</p>
+                    <input
+                      type="text"
+                      placeholder="Enter image URL or upload below..."
+                      className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white text-sm"
+                      value={prodComingSoonImage}
+                      onChange={e => setProdComingSoonImage(e.target.value)}
+                    />
+                    <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-neutral-300 dark:border-neutral-600 border-dashed rounded-lg cursor-pointer bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <svg className="w-6 h-6 mb-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400"><span className="font-bold">Click to upload</span> PNG, JPG</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleComingSoonImageUpload} />
+                    </label>
+                    {prodComingSoonImage && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeleteComingSoonImage}
+                        className="text-red-600 hover:text-red-700 hover:border-red-500 dark:text-red-400"
+                      >
+                        Remove coming soon image
+                      </Button>
+                    )}
+                  </div>
+                )}
+
                 {!prodImageComingSoon && (
                   <div className="space-y-4">
                     <input
@@ -639,9 +715,18 @@ const Admin: React.FC = () => {
                     <label className="block text-xs font-bold mb-1 text-neutral-500 uppercase">Preview</label>
                     <div className="relative h-48 w-full rounded overflow-hidden bg-neutral-100 dark:bg-neutral-700 border dark:border-neutral-600 flex items-center justify-center">
                       {prodImageComingSoon ? (
-                        <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4">
-                          Coming soon: Lord&apos;s Gym merch
-                        </p>
+                        prodComingSoonImage ? (
+                          <img
+                            src={prodComingSoonImage}
+                            alt="Coming soon"
+                            className="h-full w-full object-contain"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4">
+                            Coming soon: Lord&apos;s Gym merch
+                          </p>
+                        )
                       ) : (
                         <>
                           <img

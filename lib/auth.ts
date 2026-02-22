@@ -7,8 +7,8 @@ export interface AuthUser {
   needsPasswordChange?: boolean;
 }
 
-/** Dev-only password: works in local dev (Vite DEV) or when Supabase is not configured */
-const DEV_PASSWORDS = ['dev', 'admin123'];
+/** Dev-only passwords: work in local dev when Supabase is not configured */
+const DEV_PASSWORDS = ['dev', 'admin123', 'Admin2026!'];
 const isDevMode = () => typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
 
 /**
@@ -17,9 +17,11 @@ const isDevMode = () => typeof import.meta !== 'undefined' && !!import.meta.env?
 export const signIn = async (email: string, password: string): Promise<{ user: AuthUser | null; error: Error | null }> => {
   const e = (email || '').trim().toLowerCase();
   const p = (password || '').trim();
+  const supabaseOk = isSupabaseConfigured();
+  const isDev = isDevMode();
 
   // When Supabase is configured: always use real Supabase auth (required for RLS on calendar, etc.)
-  if (isSupabaseConfigured()) {
+  if (supabaseOk) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: e || email,
@@ -47,7 +49,7 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
   }
 
   // When Supabase NOT configured: dev bypass – any email + "dev" or "admin123" for local dev
-  if (isDevMode() && DEV_PASSWORDS.includes(p)) {
+  if (isDev && DEV_PASSWORDS.includes(p)) {
     const fallbackUser: AuthUser = {
       id: 'local-admin',
       email: (email && email.trim()) || 'admin@lordsgym.com'
@@ -57,7 +59,7 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
     return { user: fallbackUser, error: null };
   }
 
-  return { user: null, error: new Error('Invalid credentials. Supabase not configured – use "dev" or "admin123" in dev.') };
+  return { user: null, error: new Error('Invalid credentials. Supabase not configured – use "dev", "admin123", or "Admin2026!" in dev.') };
 }
 
 /**
