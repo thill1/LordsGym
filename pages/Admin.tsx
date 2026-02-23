@@ -19,8 +19,6 @@ import HomeContentEditor from '../components/admin/HomeContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
-import { isSupabaseConfigured, setSupabaseAnonKey, setSupabaseUrl, resetSupabaseClient } from '../lib/supabase';
-
 const Admin: React.FC = () => {
   const {
     products,
@@ -34,9 +32,6 @@ const Admin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [anonKeyInput, setAnonKeyInput] = useState('');
-  const [urlInput, setUrlInput] = useState('');
-  const [anonKeySaved, setAnonKeySaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
@@ -233,47 +228,6 @@ const Admin: React.FC = () => {
               {isLoggingIn ? 'Signing in...' : 'Sign In'}
             </Button>
 
-            {(true) && (
-              <div className="mt-4 p-4 border border-neutral-200 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-900/50">
-                <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">
-                  Troubleshooting: Override Supabase config
-                </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
-                  If login fails or hangs, paste URL and anon key from <a href="https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api" target="_blank" rel="noopener noreferrer" className="underline">Supabase API settings</a> (anon public, JWT). Stored in this browser only; overrides build config.
-                </p>
-                <input
-                  type="text"
-                  placeholder="https://mrptukahxloqpdqiaxkb.supabase.co"
-                  className="w-full p-2 text-sm border rounded dark:bg-neutral-800 dark:border-neutral-700 dark:text-white mb-2"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                />
-                <input
-                  type="password"
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  className="w-full p-2 text-sm border rounded dark:bg-neutral-800 dark:border-neutral-700 dark:text-white mb-2"
-                  value={anonKeyInput}
-                  onChange={(e) => setAnonKeyInput(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  fullWidth
-                  onClick={() => {
-                    if (urlInput.trim()) setSupabaseUrl(urlInput);
-                    if (anonKeyInput.trim()) setSupabaseAnonKey(anonKeyInput);
-                    resetSupabaseClient();
-                    setAnonKeySaved(true);
-                    setError('');
-                    setTimeout(() => setAnonKeySaved(false), 3000);
-                  }}
-                >
-                  {anonKeySaved ? 'Saved — try signing in above' : 'Save & retry'}
-                </Button>
-              </div>
-            )}
-
             <div className="text-center pt-4 border-t border-neutral-100 dark:border-neutral-700 mt-4">
               <a
                 href="#/"
@@ -309,6 +263,12 @@ const Admin: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-grow md:ml-64 p-8">
+        {user?.id === 'admin-fallback' && (
+          <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/30 border border-amber-400 dark:border-amber-600 rounded-lg">
+            <p className="text-amber-800 dark:text-amber-200 font-bold">Supabase unreachable — using fallback access. CRUD (products, calendar, etc.) may not work until Supabase is reachable.</p>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">Try a different network (e.g. mobile hotspot) or try again later.</p>
+          </div>
+        )}
         {activeTab === 'dashboard' && <AdminDashboard onTabChange={setActiveTab} />}
         {activeTab === 'home' && <HomeContentEditor />}
         {activeTab === 'pages' && <PageEditor />}
@@ -444,7 +404,13 @@ const Admin: React.FC = () => {
                                       showSuccess('Product deleted successfully');
                                       setConfirmDialog(null);
                                     } catch (error) {
-                                      showError('Failed to delete product');
+                                      const msg = (error as Error)?.message || '';
+                                      const isNetwork = /timeout|fetch|522|connection|network/i.test(msg);
+                                      showError(
+                                        isNetwork || user?.id === 'admin-fallback'
+                                          ? 'Delete failed: Supabase is unreachable. You\'re using fallback access — product CRUD requires a working Supabase connection.'
+                                          : 'Failed to delete product'
+                                      );
                                       setConfirmDialog(null);
                                     }
                                   }
