@@ -36,6 +36,7 @@ const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 
 const SQL_STATEMENTS = [
   `ALTER TABLE products ADD COLUMN IF NOT EXISTS image_coming_soon BOOLEAN DEFAULT false`,
+  `ALTER TABLE products ADD COLUMN IF NOT EXISTS coming_soon_image TEXT`,
   `ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual'`,
   `ALTER TABLE testimonials ADD COLUMN IF NOT EXISTS external_id TEXT`,
 ];
@@ -93,7 +94,7 @@ async function main() {
   try {
     const ok = await applyViaManagementApi() || await applyViaPg();
     if (ok) {
-      console.log('Pending schema changes applied: products.image_coming_soon, testimonials.source, testimonials.external_id');
+      console.log('Pending schema changes applied: products.image_coming_soon, products.coming_soon_image, testimonials.source, testimonials.external_id');
     } else {
       console.error('Add to .env.local: SUPABASE_ACCESS_TOKEN (from dashboard) or SUPABASE_DB_PASSWORD');
       process.exit(1);

@@ -279,15 +279,17 @@ async function testProducts() {
   const testProductId = `test-product-${Date.now()}`;
   
   try {
-    // CREATE: Insert new product
+    // CREATE: Insert new product (includes image_coming_soon, coming_soon_image)
     const newProduct = {
       id: testProductId,
       title: `Test Product ${Date.now()}`,
       price: 29.99,
       category: 'test',
-      image: '/test-image.jpg',
+      image: '',
       description: 'Test product for CRUD testing',
-      featured: false
+      featured: false,
+      image_coming_soon: true,
+      coming_soon_image: 'https://example.com/coming-soon-placeholder.jpg'
     };
     
     const { data: createData, error: createError } = await supabase
@@ -307,8 +309,9 @@ async function testProducts() {
         .single();
       
       logTest('Products READ', !readError && readData, readError?.message);
+      logTest('Products coming_soon_image round-trip', readData?.coming_soon_image === newProduct.coming_soon_image);
       
-      // UPDATE: Update the product
+      // UPDATE: Update the product (including coming_soon_image)
       const updatedProduct = {
         ...readData,
         title: `Updated Product ${Date.now()}`,
@@ -321,6 +324,7 @@ async function testProducts() {
         .update({
           title: updatedProduct.title,
           price: updatedProduct.price,
+          coming_soon_image: 'https://example.com/updated-coming-soon.jpg',
           updated_at: updatedProduct.updated_at
         })
         .eq('id', testProductId);
@@ -330,13 +334,14 @@ async function testProducts() {
       // Verify update
       const { data: verifyData } = await supabase
         .from('products')
-        .select('title, price')
+        .select('title, price, coming_soon_image')
         .eq('id', testProductId)
         .single();
       
       logTest('Products UPDATE Verification', 
         verifyData?.title === updatedProduct.title && 
-        parseFloat(verifyData?.price) === updatedProduct.price);
+        parseFloat(verifyData?.price) === updatedProduct.price &&
+        verifyData?.coming_soon_image === 'https://example.com/updated-coming-soon.jpg');
       
       // DELETE: Delete the test product
       const { error: deleteError } = await supabase

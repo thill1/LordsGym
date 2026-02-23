@@ -35,9 +35,14 @@
     "set:cloudflare-secrets": "node --env-file=.env.local scripts/set-github-cloudflare-secrets-via-api.js",
     "set:supabase-secrets": "node --env-file=.env.local scripts/set-github-supabase-secrets.js",
     "show:supabase-secrets": "node --env-file=.env.local scripts/show-supabase-secrets-for-github.js",
+    "fix:supabase-auth-urls": "node --env-file=.env.local scripts/fix-supabase-auth-urls.mjs",
+    "fix:cloudflare-deploy": "node --env-file=.env.local scripts/fix-cloudflare-deploy-command.mjs",
     "trigger-cloudflare-deploy": "node --env-file=.env.local scripts/trigger-cloudflare-deploy.js",
     "test:db-audit": "node --env-file=.env.local scripts/db-audit.mjs",
-    "db:apply-pending": "node --env-file=.env.local scripts/apply-pending-schema.mjs"
+    "diagnose:supabase": "node --env-file=.env.local scripts/supabase-diagnose.mjs",
+    "db:apply-pending": "node --env-file=.env.local scripts/apply-pending-schema.mjs",
+    "backup:schema": "node scripts/export-schema-backup.mjs",
+    "backup:create-project": "node --env-file=.env.local scripts/create-backup-project.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

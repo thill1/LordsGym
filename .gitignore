@@ -92,3 +92,6 @@ dist
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Database backups (schema exports, pg_dump)
+backup/

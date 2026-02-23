@@ -107,9 +107,17 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <Card key={product.id} className="overflow-hidden group">
               <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
                 {product.imageComingSoon || !product.image ? (
-                  <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
-                    Coming soon: Lord&apos;s Gym merch
-                  </p>
+                  product.comingSoonImage ? (
+                    <img
+                      src={product.comingSoonImage}
+                      alt="Coming soon"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
+                      Coming soon: Lord&apos;s Gym merch
+                    </p>
+                  )
                 ) : (
                   <img 
                     src={product.image} 

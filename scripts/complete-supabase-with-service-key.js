@@ -47,7 +47,7 @@ if (!supabaseUrl) {
 
 if (!serviceRoleKey) {
   console.error('❌ Error: SUPABASE_SERVICE_ROLE_KEY must be set');
-  console.error('   Get it from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
+  console.error('   Get it from: Dashboard → your project → Settings → API');
   console.error('   Add to .env.local: SUPABASE_SERVICE_ROLE_KEY=your_key_here');
   process.exit(1);
 }
@@ -60,8 +60,41 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
+const JWT_ERROR_MARKERS = ['signature verification failed', 'Invalid API key', 'invalid api key'];
+
+function isJwtOrKeyError(message) {
+  if (!message || typeof message !== 'string') return false;
+  const lower = message.toLowerCase();
+  return JWT_ERROR_MARKERS.some(m => lower.includes(m.toLowerCase()));
+}
+
+function printJwtWorkaround() {
+  console.log('\n' + '='.repeat(70));
+  console.log('⚠️  JWT / API key rejected by this project');
+  console.log('='.repeat(70));
+  console.log('\nThe project is not accepting the anon/service_role keys in .env.local.');
+  console.log('See: docs/SUPABASE_JWT_PROVISIONING_WORKAROUND.md\n');
+  console.log('Quick fix — do these in the Supabase Dashboard for this project:');
+  console.log('  1. Storage → New bucket → name: media, Public → Create');
+  console.log('  2. Authentication → Users → Add user → create admin (email + password)');
+  console.log('  3. Authentication → URL Configuration → set Site URL and Redirect URLs');
+  console.log('\n' + '='.repeat(70) + '\n');
+}
+
 console.log('🚀 Completing Supabase Setup with Service Role Key\n');
 console.log(`📡 Connected to: ${supabaseUrl}\n`);
+
+async function checkApiAccess() {
+  try {
+    const { error } = await supabase.storage.listBuckets();
+    if (error && isJwtOrKeyError(error.message)) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    const msg = e?.message || String(e);
+    if (isJwtOrKeyError(msg)) return { ok: false, error: msg };
+    return { ok: true };
+  }
+}
 
 async function createStorageBucket() {
   console.log('📦 Creating Storage Bucket...');
@@ -78,6 +111,7 @@ async function createStorageBucket() {
         return { success: true, created: false };
       }
       console.log(`   ❌ Failed: ${error.message}\n`);
+      if (isJwtOrKeyError(error.message)) printJwtWorkaround();
       return { success: false, error: error.message };
     }
 
@@ -92,8 +126,8 @@ async function createStorageBucket() {
 async function createAdminUser() {
   console.log('👤 Creating Admin User...');
   
-  const email = `admin@lordsgym.local`;
-  const password = `Admin${Math.random().toString(36).slice(2, 10)}!123`;
+  const email = `lordsgymoutreach@gmail.com`;
+  const password = `Admin2026!`;
   
   try {
     const { data, error } = await supabase.auth.admin.createUser({
@@ -109,6 +143,7 @@ async function createAdminUser() {
         return { success: false, error: error.message };
       }
       console.log(`   ❌ Failed: ${error.message}\n`);
+      if (isJwtOrKeyError(error.message)) printJwtWorkaround();
       return { success: false, error: error.message };
     }
 
@@ -163,6 +198,14 @@ async function verifySetup() {
 }
 
 async function main() {
+  const access = await checkApiAccess();
+  if (!access.ok) {
+    console.log(`   ❌ API check failed: ${access.error}\n`);
+    printJwtWorkaround();
+    process.exitCode = 1;
+    return;
+  }
+
   // Create storage bucket
   const bucketResult = await createStorageBucket();
   

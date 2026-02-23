@@ -25,9 +25,17 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
     >
       <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-neutral-200 dark:bg-neutral-700 lg:aspect-none lg:h-80 relative flex items-center justify-center">
         {product.imageComingSoon || !product.image ? (
-          <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm sm:text-base">
-            Coming soon: Lord&apos;s Gym merch
-          </p>
+          product.comingSoonImage ? (
+            <img
+              src={product.comingSoonImage}
+              alt="Coming soon"
+              className="h-full w-full object-contain object-center"
+            />
+          ) : (
+            <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm sm:text-base">
+              Coming soon: Lord&apos;s Gym merch
+            </p>
+          )
         ) : (
           <img 
             src={product.image} 

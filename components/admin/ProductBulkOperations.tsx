@@ -40,7 +40,13 @@ const ProductBulkOperations: React.FC<ProductBulkOperationsProps> = ({
       setShowDeleteConfirm(false);
       showSuccess(`${selectedProducts.size} product(s) deleted successfully`);
     } catch (error) {
-      showError('Failed to delete products');
+      const msg = (error as Error)?.message || '';
+      const isNetwork = /timeout|fetch|522|connection|network/i.test(msg);
+      showError(
+        isNetwork
+          ? 'Delete failed: Supabase is unreachable. Product CRUD requires a working connection.'
+          : 'Failed to delete products'
+      );
     }
   };
 

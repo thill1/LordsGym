@@ -60,8 +60,8 @@ const Checkout: React.FC<CheckoutProps> = ({ onSuccess, onNavigate }) => {
                 <h3 className="text-lg font-bold mb-4 uppercase tracking-wider">Contact Information</h3>
                 <div className="space-y-4">
                    <div>
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">Email Address</label>
-                      <input type="email" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" placeholder="you@example.com" />
+                      <label htmlFor="checkout-email" className="block text-xs font-bold uppercase text-neutral-500 mb-1">Email Address</label>
+                      <input id="checkout-email" type="email" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" placeholder="you@example.com" />
                    </div>
                 </div>
              </div>
@@ -71,24 +71,24 @@ const Checkout: React.FC<CheckoutProps> = ({ onSuccess, onNavigate }) => {
                 <h3 className="text-lg font-bold mb-4 uppercase tracking-wider">Billing Address</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <div>
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">First Name</label>
-                      <input type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
+                      <label htmlFor="checkout-first-name" className="block text-xs font-bold uppercase text-neutral-500 mb-1">First Name</label>
+                      <input id="checkout-first-name" type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
                    </div>
                    <div>
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">Last Name</label>
-                      <input type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
+                      <label htmlFor="checkout-last-name" className="block text-xs font-bold uppercase text-neutral-500 mb-1">Last Name</label>
+                      <input id="checkout-last-name" type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
                    </div>
                    <div className="md:col-span-2">
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">Address</label>
-                      <input type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
+                      <label htmlFor="checkout-address" className="block text-xs font-bold uppercase text-neutral-500 mb-1">Address</label>
+                      <input id="checkout-address" type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
                    </div>
                    <div>
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">City</label>
-                      <input type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
+                      <label htmlFor="checkout-city" className="block text-xs font-bold uppercase text-neutral-500 mb-1">City</label>
+                      <input id="checkout-city" type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
                    </div>
                    <div>
-                      <label className="block text-xs font-bold uppercase text-neutral-500 mb-1">Postal Code</label>
-                      <input type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
+                      <label htmlFor="checkout-postal-code" className="block text-xs font-bold uppercase text-neutral-500 mb-1">Postal Code</label>
+                      <input id="checkout-postal-code" type="text" required className="w-full p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded focus:border-brand-red outline-none transition-colors" />
                    </div>
                 </div>
              </div>
@@ -155,7 +155,11 @@ const Checkout: React.FC<CheckoutProps> = ({ onSuccess, onNavigate }) => {
                   <div key={item.cartId} className="flex gap-4 items-center">
                     <div className="relative w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
                       {item.imageComingSoon || !item.image ? (
-                        <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                        item.comingSoonImage ? (
+                          <img src={item.comingSoonImage} alt="Coming soon" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[8px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                        )
                       ) : (
                         <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                       )}

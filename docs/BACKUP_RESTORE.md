@@ -4,6 +4,14 @@
 
 The LordsGym database is managed via Supabase. Migrations in `supabase/migrations/` are the source of truth for schema. This doc covers backup, restore, and recovery procedures.
 
+## Backup Database (New Project)
+
+**If the primary database is stuck (e.g. PAUSING) or unrecoverable**, create a backup Supabase project as fallback:
+
+- **[SUPABASE_BACKUP_DATABASE.md](SUPABASE_BACKUP_DATABASE.md)** — Step-by-step guide to create and provision a backup project
+- Run `node scripts/export-schema-backup.mjs` for a portable schema SQL file
+- Run `node scripts/create-backup-project.mjs` to attempt API-based project creation
+
 ## Point-in-Time Recovery (PITR)
 
 **Supabase Pro+** offers automatic PITR. Enable it in:

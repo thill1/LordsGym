@@ -1,0 +1,12 @@
+-- Inventory: Auth configuration reference
+-- Auth config (providers, URLs, JWT) is managed via Supabase Dashboard or Management API,
+-- not via SQL. This file documents what to verify manually.
+--
+-- Manual checklist (Dashboard → Auth):
+-- 1. Auth → URL Configuration: site_url, redirect_urls
+-- 2. Auth → Providers: Email enabled; others as needed
+-- 3. Auth → Users: Admin users
+--
+-- For API-based inventory, use Supabase Management API:
+-- GET https://api.supabase.com/v1/projects/{ref}/config/auth
+-- Requires: Authorization: Bearer $SUPABASE_ACCESS_TOKEN

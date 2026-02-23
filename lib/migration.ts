@@ -125,6 +125,7 @@ export const migrateProducts = async (): Promise<void> => {
       category: product.category,
       image: product.image || '',
       image_coming_soon: product.imageComingSoon ?? false,
+      coming_soon_image: product.comingSoonImage || null,
       description: null,
       inventory: null,
       variants: null,

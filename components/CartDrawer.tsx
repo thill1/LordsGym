@@ -19,7 +19,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ onCheckout }) => {
       />
 
       {/* Drawer */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-neutral-900 z-[101] shadow-2xl transform transition-transform duration-300 flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div data-testid="cart-drawer" className={`fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-neutral-900 z-[101] shadow-2xl transform transition-transform duration-300 flex flex-col ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         
         {/* Header */}
         <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-brand-charcoal text-white">
@@ -46,7 +46,11 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ onCheckout }) => {
               <div key={item.cartId} className="flex gap-4">
                 <div className="w-20 h-24 bg-neutral-100 dark:bg-neutral-700 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {item.imageComingSoon || !item.image ? (
-                    <span className="text-[10px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                    item.comingSoonImage ? (
+                      <img src={item.comingSoonImage} alt="Coming soon" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400 text-center leading-tight px-1">Coming soon</span>
+                    )
                   ) : (
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                   )}
