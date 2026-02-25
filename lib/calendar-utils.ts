@@ -516,13 +516,13 @@ export const getEventTypeIcon = (classType: string): React.ReactElement => {
 };
 
 /**
- * Group events by date
+ * Group events by date (uses local date key to avoid timezone shift).
  */
 export const groupEventsByDate = (events: CalendarEvent[]): Record<string, CalendarEvent[]> => {
   const grouped: Record<string, CalendarEvent[]> = {};
-  
-  events.forEach(event => {
-    const dateKey = new Date(event.start_time).toISOString().split('T')[0];
+
+  events.forEach((event) => {
+    const dateKey = toLocalDateKey(new Date(event.start_time));
     if (!grouped[dateKey]) {
       grouped[dateKey] = [];
     }

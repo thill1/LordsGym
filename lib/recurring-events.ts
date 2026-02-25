@@ -81,9 +81,39 @@ const normalizeTime = (value: string): string => {
   return value.length === 5 ? `${value}:00` : value;
 };
 
-const combineDateAndTime = (dateKey: string, timeValue: string): Date => {
+/**
+ * Get offset in minutes to add to local time (in tz) to get UTC, at noon UTC on the given date.
+ * Used so that "09:00" in America/Los_Angeles becomes 17:00 UTC (PST), not 09:00 UTC.
+ */
+const getOffsetMinutesLocalToUtc = (timeZone: string, year: number, month: number, day: number): number => {
+  const noonUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(noonUtc);
+  const hour = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10);
+  const minute = parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0', 10);
+  return 12 * 60 + 0 - (hour * 60 + minute);
+};
+
+/**
+ * Combine date key (YYYY-MM-DD) and local time (HH:mm or HH:mm:ss) into a UTC Date.
+ * If timezone is provided, the time is interpreted in that zone (e.g. America/Los_Angeles).
+ * Otherwise the time is treated as UTC (legacy; can cause 8-hour shift for Pacific users).
+ */
+const combineDateAndTime = (dateKey: string, timeValue: string, timeZone?: string): Date => {
   const [year, month, day] = dateKey.split('-').map(Number);
   const [hours, minutes, seconds] = normalizeTime(timeValue).split(':').map(Number);
+
+  if (timeZone) {
+    const offsetMinutes = getOffsetMinutesLocalToUtc(timeZone, year, month, day);
+    const utcMs = Date.UTC(year, month - 1, day, hours, minutes, seconds) + offsetMinutes * 60 * 1000;
+    return new Date(utcMs);
+  }
+
   return new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
 };
 
@@ -93,6 +123,23 @@ const getTimePartFromIso = (isoString: string): string => {
   const minutes = String(date.getUTCMinutes()).padStart(2, '0');
   const seconds = String(date.getUTCSeconds()).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
+};
+
+/** Get time part (HH:mm:ss) of an ISO timestamp in a given timezone, for use as start_time_local. */
+const getTimePartFromIsoInZone = (isoString: string, timeZone: string): string => {
+  const date = new Date(isoString);
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const hour = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const minute = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  const second = parts.find((p) => p.type === 'second')?.value ?? '00';
+  return `${hour}:${minute}:${second}`;
 };
 
 const occurrenceDateFromEvent = (event: { occurrence_date: string | null; start_time: string }): string => {
@@ -171,8 +218,9 @@ const collectOccurrenceDates = (
 };
 
 const buildOccurrencePayload = (pattern: RecurringPatternDefinition, occurrenceDate: string) => {
-  const start = combineDateAndTime(occurrenceDate, pattern.start_time_local);
-  const end = combineDateAndTime(occurrenceDate, pattern.end_time_local);
+  const tz = pattern.timezone || 'America/Los_Angeles';
+  const start = combineDateAndTime(occurrenceDate, pattern.start_time_local, tz);
+  const end = combineDateAndTime(occurrenceDate, pattern.end_time_local, tz);
 
   if (end <= start) {
     end.setDate(end.getDate() + 1);
@@ -267,6 +315,7 @@ const buildEffectivePatternDefinition = (
 ): RecurringPatternDefinition => {
   if (!templateEvent) return pattern;
 
+  const tz = pattern.timezone || 'America/Los_Angeles';
   return {
     ...pattern,
     title: templateEvent.title || pattern.title || 'Recurring Event',
@@ -275,8 +324,8 @@ const buildEffectivePatternDefinition = (
     instructor_id: templateEvent.instructor_id ?? pattern.instructor_id ?? null,
     capacity: templateEvent.capacity ?? pattern.capacity ?? null,
     starts_on: toDateKey(new Date(templateEvent.start_time)),
-    start_time_local: getTimePartFromIso(templateEvent.start_time),
-    end_time_local: getTimePartFromIso(templateEvent.end_time)
+    start_time_local: getTimePartFromIsoInZone(templateEvent.start_time, tz),
+    end_time_local: getTimePartFromIsoInZone(templateEvent.end_time, tz),
   };
 };
 

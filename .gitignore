@@ -95,3 +95,4 @@ Thumbs.db
 
 # Database backups (schema exports, pg_dump)
 backup/
+scripts/calendar-backup/
