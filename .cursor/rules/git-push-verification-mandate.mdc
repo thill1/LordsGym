@@ -1,0 +1,25 @@
+---
+description: Mandatory post-push verification; no drift; changes require user approval
+alwaysApply: true
+---
+
+# Git Push Verification Mandate
+
+**This process is mandatory. Changes require user approval.**
+
+## After Every Git Push
+
+1. Run `npm run verify-push` (or `npm run verify-push:full`) to confirm the commit matches what was pushed.
+2. Verify the commit is the tip of `origin/main` and that a workflow run was triggered for that commit.
+3. Do **not** report that a push succeeded until verification passes.
+
+## Deviation Handling
+
+- **Any deviation** (push rejected, commit not on remote, workflow not triggered, mismatch) must be **communicated to the user immediately**.
+- Drift must be **mediated** — do not proceed as if the push succeeded. Resolve or escalate.
+- Do not assume or silently work around verification failures.
+
+## Changes to This Process
+
+- Any modification to this verification process, the verify-push script, or these rules **requires user approval** before implementation.
+- Do not alter, relax, or bypass this mandate without explicit user consent.
