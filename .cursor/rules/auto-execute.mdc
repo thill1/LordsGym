@@ -10,3 +10,25 @@ When the user asks you to do something, proceed directly and execute the changes
 - Run commands, apply edits, and deploy as needed to complete the task
 - Do not pause to ask "Should I proceed?" or "Do you want me to run this?"
 - If something requires user credentials, provide clear instructions instead of blocking
+
+## Post-Push Verification
+
+After running `git push origin main`, **always** run verification to confirm the commit reached GitHub and triggered the workflow:
+
+```bash
+npm run verify-push
+```
+
+Or with workflow check (requires GITHUB_TOKEN in .env.local):
+```bash
+npm run verify-push:full
+```
+
+Do **not** report that a push succeeded until this verification passes. If the push was rejected or the commit is not on origin/main, the verification will fail.
+
+## Before Destructive Git Commands
+
+Before running `git reset --hard` or `git stash drop`:
+1. List what will be lost: `git status` and `git stash list`
+2. If there are uncommitted or stashed changes the user may want, **warn** and offer to commit or save them first
+3. Never assume uncommitted changes are disposable without explicit user confirmation
