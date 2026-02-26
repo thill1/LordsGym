@@ -69,7 +69,14 @@ npm run db:push
 | Restore from PITR | Dashboard → Database → Backups → Restore to point in time |
 | Full restore from dump | `pg_restore -d "$DATABASE_URL" backup.dump` |
 
+## Automated daily backup (cron)
+
+**End-of-day backup** to Cloudflare R2 is implemented as a scheduled GitHub Actions workflow:
+
+- **[BACKUP_DAILY_CRON.md](BACKUP_DAILY_CRON.md)** — Setup: GitHub (cron) + Supabase (source) + Cloudflare R2 (destination). Runs daily at 07:00 UTC; exports schema + calendar JSON and uploads to R2.
+
 ## Related
 
+- [BACKUP_DAILY_CRON.md](BACKUP_DAILY_CRON.md) — Automated daily backup (GitHub + Supabase + R2)
 - [DATABASE_BRANCHING_STRATEGY.md](../DATABASE_BRANCHING_STRATEGY.md) — Dev/staging/prod database strategy
 - [.cursor/rules/supabase-db.mdc](../.cursor/rules/supabase-db.mdc) — Migration and hardening rules
