@@ -62,6 +62,59 @@ export function toJsDay(dbDay: number): number {
   return dbDay === 7 ? 0 : dbDay;
 }
 
+/** Gym timezone for interpreting admin-entered times. All calendar times are Pacific. */
+export const GYM_TIMEZONE = 'America/Los_Angeles';
+
+/**
+ * Format an ISO timestamp as YYYY-MM-DDTHH:mm for datetime-local input, in a given timezone.
+ * Use when loading an event for edit so the form shows the correct time regardless of admin browser TZ.
+ */
+export function formatDatetimeLocalInTimezone(isoString: string, timeZone: string = GYM_TIMEZONE): string {
+  const d = new Date(isoString);
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+}
+
+/**
+ * Interpret date (YYYY-MM-DD) + time (HH:mm or HH:mm:ss) as local time in a given timezone,
+ * return UTC Date. Use this when the admin enters a time (e.g. 9 AM) so it's stored correctly
+ * regardless of the admin's browser timezone. Prevents 8-hour shift for Pacific gym times.
+ */
+export function combineDateAndTimeInTimezone(
+  dateKey: string,
+  timePart: string,
+  timeZone: string = GYM_TIMEZONE
+): Date {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const normalized = timePart.length === 5 ? `${timePart}:00` : timePart;
+  const [hours, minutes, seconds] = normalized.split(':').map(Number);
+
+  const noonUtc = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(noonUtc);
+  const tzHour = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10);
+  const tzMinute = parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0', 10);
+  const offsetMinutes = 12 * 60 + 0 - (tzHour * 60 + tzMinute);
+  const sec = Number.isFinite(seconds) ? seconds : 0;
+  const utcMs = Date.UTC(year, month - 1, day, hours, minutes, sec) + offsetMinutes * 60 * 1000;
+  return new Date(utcMs);
+}
+
 /** Get local date as YYYY-MM-DD. Use this instead of toISOString().split('T')[0] to avoid UTC shift (e.g. PST midnight → previous day in UTC). */
 function toLocalDateKey(d: Date): string {
   const y = d.getFullYear();

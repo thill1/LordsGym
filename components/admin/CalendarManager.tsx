@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useCalendar } from '../../context/CalendarContext';
-import { CalendarEvent, formatClassType, toDbDay, toJsDay } from '../../lib/calendar-utils';
+import { CalendarEvent, formatClassType, formatDatetimeLocalInTimezone, combineDateAndTimeInTimezone, GYM_TIMEZONE, toDbDay, toJsDay } from '../../lib/calendar-utils';
 import { logEventAction } from '../../lib/activity-logger';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { syncRecurringPattern } from '../../lib/recurring-events';
@@ -100,17 +100,11 @@ const CalendarManager: React.FC = () => {
 
     setEditingEvent(event);
 
-    const toLocalDatetime = (iso: string): string => {
-      const d = new Date(iso);
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
-
     setFormData({
       title: event.title,
       description: event.description || '',
-      start_time: toLocalDatetime(event.start_time),
-      end_time: toLocalDatetime(event.end_time),
+      start_time: formatDatetimeLocalInTimezone(event.start_time),
+      end_time: formatDatetimeLocalInTimezone(event.end_time),
       class_type: event.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help',
       capacity: event.capacity?.toString() || '',
       instructor_id: event.instructor_id || '',
@@ -191,8 +185,12 @@ const CalendarManager: React.FC = () => {
       return;
     }
 
-    const startDate = new Date(formData.start_time);
-    const endDate = new Date(formData.end_time);
+    const datePart = formData.start_time.split('T')[0] || '';
+    const startTimePart = formData.start_time.split('T')[1] || '00:00';
+    const endDatePart = formData.end_time.split('T')[0] || datePart;
+    const endTimePart = formData.end_time.split('T')[1] || '00:00';
+    const startDate = combineDateAndTimeInTimezone(datePart, startTimePart, GYM_TIMEZONE);
+    const endDate = combineDateAndTimeInTimezone(endDatePart, endTimePart, GYM_TIMEZONE);
     if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
       showError('End time must be after start time.');
       return;
@@ -329,8 +327,8 @@ const CalendarManager: React.FC = () => {
         const buildEventForDate = (dateKey: string, patternId: string): Omit<CalendarEvent, 'id'> => {
           const timePart = formData.start_time.split('T')[1] || '00:00';
           const endTimePart = formData.end_time.split('T')[1] || '00:00';
-          const evStart = new Date(`${dateKey}T${timePart}`);
-          const evEnd = new Date(`${dateKey}T${endTimePart}`);
+          const evStart = combineDateAndTimeInTimezone(dateKey, timePart, GYM_TIMEZONE);
+          const evEnd = combineDateAndTimeInTimezone(dateKey, endTimePart, GYM_TIMEZONE);
           if (evEnd <= evStart) evEnd.setDate(evEnd.getDate() + 1);
 
           return {
