@@ -207,7 +207,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
     }
     try {
       const tz = editingPattern.timezone || 'America/Los_Angeles';
-      const { error } = await supabase
+      const { data: updated, error } = await supabase
         .from('calendar_recurring_patterns')
         .update({
           title: editForm.title.trim(),
@@ -224,8 +224,18 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
           days_of_week: editForm.pattern_type === 'weekly' ? editForm.days_of_week : null,
           end_date: editForm.end_date ? `${editForm.end_date}T23:59:59.000Z` : null
         })
-        .eq('id', editingPattern.id);
-      if (error) throw error;
+        .eq('id', editingPattern.id)
+        .select()
+        .single();
+      if (error) {
+        const hint = error.code === 'PGRST116' || (error.message || '').includes('no') && (error.message || '').includes('row')
+          ? ' The update did not persist—often because you are logged in via fallback (Supabase unreachable) and have no real session. Try again when Supabase is reachable.'
+          : '';
+        throw new Error((error.message || 'Update failed') + hint);
+      }
+      if (!updated) {
+        throw new Error('Update did not persist. Ensure you are signed in to the admin portal.');
+      }
       const syncResult = await syncRecurringPattern(editingPattern.id);
       showSuccess(`Recurring event updated. ${syncResult.generatedCount} generated, ${syncResult.deletedUnbookedCount} replaced, ${syncResult.preservedBookedCount} preserved.`);
       closeEditModal();
@@ -233,7 +243,8 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
       if (onPatternsChanged) await onPatternsChanged();
     } catch (err) {
       console.error('Error updating recurring pattern:', err);
-      showError('Failed to update recurring event.');
+      const msg = err instanceof Error ? err.message : 'Failed to update recurring event.';
+      showError(msg.includes('did not persist') ? msg : `Failed to update: ${msg}`);
     }
   };
 
