@@ -12,13 +12,33 @@ interface RecurringPatternWithTitle {
   days_of_week: number[] | null;
   end_date: string | null;
   title: string;
+  description: string | null;
   class_type: string;
+  instructor_id: string | null;
+  capacity: number | null;
+  timezone: string;
   is_active: boolean;
   starts_on: string;
   start_time_local: string;
   end_time_local: string;
   event_title?: string;
 }
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const emptyEditForm = {
+  title: '',
+  description: '',
+  start_time: '',
+  end_time: '',
+  class_type: 'community' as 'community' | 'outreach' | 'fundraisers' | 'self_help',
+  capacity: '',
+  instructor_id: '',
+  pattern_type: 'weekly' as 'daily' | 'weekly' | 'monthly',
+  interval: 1,
+  days_of_week: [] as number[],
+  end_date: ''
+};
 
 interface RecurringEventsManagerProps {
   onPatternsChanged?: () => Promise<void> | void;
@@ -28,6 +48,9 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
   const { showSuccess, showError } = useToast();
   const [patterns, setPatterns] = useState<RecurringPatternWithTitle[]>([]);
   const [expandedPatternId, setExpandedPatternId] = useState<string | null>(null);
+  const [editingPattern, setEditingPattern] = useState<RecurringPatternWithTitle | null>(null);
+  const [editForm, setEditForm] = useState(emptyEditForm);
+  const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     loadPatterns();
@@ -42,7 +65,7 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
     try {
       const { data: patternsData, error: patternsErr } = await supabase
         .from('calendar_recurring_patterns')
-        .select('id, pattern_type, interval, days_of_week, end_date, title, class_type, is_active, starts_on, start_time_local, end_time_local')
+        .select('id, pattern_type, interval, days_of_week, end_date, title, description, class_type, instructor_id, capacity, timezone, is_active, starts_on, start_time_local, end_time_local')
         .order('created_at', { ascending: false });
 
       if (patternsErr) throw patternsErr;
@@ -121,7 +144,98 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
     }
   };
 
-  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const loadInstructors = async () => {
+    if (!isSupabaseConfigured()) return;
+    const { data } = await supabase.from('instructors').select('id, name').order('name', { ascending: true });
+    setInstructors(data || []);
+  };
+
+  useEffect(() => {
+    loadInstructors();
+  }, []);
+
+  const openEditModal = (pattern: RecurringPatternWithTitle) => {
+    const st = pattern.start_time_local?.slice(0, 5) || '09:00';
+    const et = pattern.end_time_local?.slice(0, 5) || '10:00';
+    setEditingPattern(pattern);
+    setEditForm({
+      title: pattern.title || '',
+      description: pattern.description || '',
+      start_time: `${pattern.starts_on}T${st}`,
+      end_time: `${pattern.starts_on}T${et}`,
+      class_type: (pattern.class_type as 'community' | 'outreach' | 'fundraisers' | 'self_help') || 'community',
+      capacity: pattern.capacity?.toString() || '',
+      instructor_id: pattern.instructor_id || '',
+      pattern_type: pattern.pattern_type || 'weekly',
+      interval: pattern.interval || 1,
+      days_of_week: pattern.days_of_week || [],
+      end_date: pattern.end_date ? pattern.end_date.slice(0, 10) : ''
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingPattern(null);
+    setEditForm(emptyEditForm);
+  };
+
+  const toggleEditDay = (day: number) => {
+    setEditForm((prev) => ({
+      ...prev,
+      days_of_week: prev.days_of_week.includes(day)
+        ? prev.days_of_week.filter((d) => d !== day)
+        : [...prev.days_of_week, day]
+    }));
+  };
+
+  const normalizeTimePart = (dateTime: string): string => {
+    const part = dateTime.split('T')[1] || '00:00';
+    return part.length === 5 ? `${part}:00` : part;
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPattern || !editForm.start_time || !editForm.end_time) return;
+    if (editForm.pattern_type === 'weekly' && editForm.days_of_week.length === 0) {
+      showError('Please select at least one day of the week for weekly recurrence.');
+      return;
+    }
+    const startDate = new Date(editForm.start_time);
+    const endDate = new Date(editForm.end_time);
+    if (endDate <= startDate) {
+      showError('End time must be after start time.');
+      return;
+    }
+    try {
+      const tz = editingPattern.timezone || 'America/Los_Angeles';
+      const { error } = await supabase
+        .from('calendar_recurring_patterns')
+        .update({
+          title: editForm.title.trim(),
+          description: editForm.description.trim() || null,
+          class_type: editForm.class_type,
+          instructor_id: editForm.instructor_id || null,
+          capacity: editForm.capacity ? parseInt(editForm.capacity, 10) : null,
+          starts_on: editForm.start_time.split('T')[0],
+          start_time_local: normalizeTimePart(editForm.start_time),
+          end_time_local: normalizeTimePart(editForm.end_time),
+          timezone: tz,
+          pattern_type: editForm.pattern_type,
+          interval: Math.max(1, editForm.interval),
+          days_of_week: editForm.pattern_type === 'weekly' ? editForm.days_of_week : null,
+          end_date: editForm.end_date ? `${editForm.end_date}T23:59:59.000Z` : null
+        })
+        .eq('id', editingPattern.id);
+      if (error) throw error;
+      const syncResult = await syncRecurringPattern(editingPattern.id);
+      showSuccess(`Recurring event updated. ${syncResult.generatedCount} generated, ${syncResult.deletedUnbookedCount} replaced, ${syncResult.preservedBookedCount} preserved.`);
+      closeEditModal();
+      await loadPatterns();
+      if (onPatternsChanged) await onPatternsChanged();
+    } catch (err) {
+      console.error('Error updating recurring pattern:', err);
+      showError('Failed to update recurring event.');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -166,6 +280,12 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
                     {pattern.is_active ? 'Pause' : 'Activate'}
                   </button>
                   <button
+                    onClick={() => openEditModal(pattern)}
+                    className="text-xs font-bold text-brand-charcoal dark:text-white hover:text-brand-red"
+                  >
+                    Edit
+                  </button>
+                  <button
                     onClick={() => handleResync(pattern.id)}
                     className="text-xs font-bold text-brand-charcoal dark:text-white hover:text-brand-red"
                   >
@@ -199,6 +319,87 @@ const RecurringEventsManager: React.FC<RecurringEventsManagerProps> = ({ onPatte
               )}
             </div>
           ))}
+        </div>
+      )}
+
+
+      {editingPattern && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-6 dark:text-white">Edit Recurring Event</h2>
+            <form onSubmit={handleEditSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Title</label>
+                <input type="text" required value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Description</label>
+                <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Start Time</label>
+                  <input type="datetime-local" required value={editForm.start_time} onChange={(e) => setEditForm({ ...editForm, start_time: e.target.value })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End Time</label>
+                  <input type="datetime-local" required value={editForm.end_time} onChange={(e) => setEditForm({ ...editForm, end_time: e.target.value })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Event Type</label>
+                  <select value={editForm.class_type} onChange={(e) => setEditForm({ ...editForm, class_type: e.target.value as 'community' | 'outreach' | 'fundraisers' | 'self_help' })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white">
+                    <option value="community">Community</option>
+                    <option value="outreach">Outreach</option>
+                    <option value="fundraisers">Fundraisers</option>
+                    <option value="self_help">Self Help</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Capacity</label>
+                  <input type="number" value={editForm.capacity} onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })} placeholder="Unlimited" className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Instructor</label>
+                <select value={editForm.instructor_id} onChange={(e) => setEditForm({ ...editForm, instructor_id: e.target.value })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white">
+                  <option value="">Unassigned</option>
+                  {instructors.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Repeats</label>
+                <select value={editForm.pattern_type} onChange={(e) => setEditForm({ ...editForm, pattern_type: e.target.value as 'daily' | 'weekly' | 'monthly' })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Every</label>
+                <input type="number" min={1} value={editForm.interval} onChange={(e) => setEditForm({ ...editForm, interval: parseInt(e.target.value, 10) || 1 })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+              </div>
+              {editForm.pattern_type === 'weekly' && (
+                <div>
+                  <label className="block text-sm font-bold mb-2 dark:text-neutral-300">Days</label>
+                  <div className="flex flex-wrap gap-2">
+                    {DAYS.map((day, index) => (
+                      <button key={day} type="button" onClick={() => toggleEditDay(index)} className={`px-2 py-1 rounded text-sm font-bold ${editForm.days_of_week.includes(index) ? 'bg-brand-red text-white' : 'bg-neutral-200 dark:bg-neutral-700 dark:text-white'}`}>{day.slice(0, 3)}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">End date (optional)</label>
+                <input type="date" value={editForm.end_date} onChange={(e) => setEditForm({ ...editForm, end_date: e.target.value })} className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white" />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">
+                <button type="button" onClick={closeEditModal} className="px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-brand-charcoal dark:text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-red-700 transition-colors">Save Changes</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

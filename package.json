@@ -10,8 +10,6 @@
     "preview:cloudflare": "VITE_BASE_PATH=/ npm run build && npx vite preview --base /",
     "deploy:cloudflare": "VITE_BASE_PATH=/ npm run build && npx wrangler pages deploy dist --project-name=lords-gym",
     "setup:supabase": "node scripts/setup-supabase.js",
-    "setup:google-auth": "node --env-file=.env.local scripts/configure-google-oauth.js",
-    "check:google-auth": "node --env-file=.env.local scripts/configure-google-oauth.js --check",
     "setup:supabase:ps1": "powershell -ExecutionPolicy Bypass -File scripts/setup-supabase.ps1",
     "setup:cloudflare": "node scripts/setup-github-cloudflare.js",
     "dns:add": "node scripts/cloudflare-dns.js",
@@ -46,6 +44,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
