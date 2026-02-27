@@ -1,31 +1,40 @@
-
 import React from 'react';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import { SQUARE_DONATION_LINKS, getDonationUrl } from '../constants';
+import { useStore } from '../context/StoreContext';
 
-// Helper function to get outreach image path
+// Helper function to get outreach image path (fallback)
 const getOutreachImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
   return `${base}media/outreach/${filename}`;
 };
 
-// Helper function to get hero image path
+// Helper function to get hero image path (fallback)
 const getHeroImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
   return `${base}media/hero/${filename}`;
 };
 
-const IMAGES = {
-  hero: getHeroImage('hero-background.jpg.jpg'), // Hero background
-  trailer: getOutreachImage('outreach-trailer.jpg.jpeg'), // Trailer/Distribution vibe
-  outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
-  prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
-  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'), // Brotherhood/Support
-  community: getOutreachImage('outreach-community.jpg.jpeg') // Community photo (bottom section)
+const DEFAULT_IMAGES = {
+  hero: getHeroImage('hero-background.jpg.jpg'),
+  trailer: getOutreachImage('outreach-trailer.jpg.jpeg'),
+  outreach: getOutreachImage('outreach-walking.jpg.JPG'),
+  prayer: getOutreachImage('outreach-prayer.jpg.jpeg'),
+  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'),
+  community: getOutreachImage('outreach-community.jpg.jpeg'),
 };
 
 const Outreach: React.FC = () => {
+  const { outreachContent } = useStore();
+  const IMAGES = {
+    hero: outreachContent?.hero || DEFAULT_IMAGES.hero,
+    trailer: outreachContent?.trailer || DEFAULT_IMAGES.trailer,
+    outreach: outreachContent?.outreach || DEFAULT_IMAGES.outreach,
+    prayer: outreachContent?.prayer || DEFAULT_IMAGES.prayer,
+    hug: outreachContent?.hug || DEFAULT_IMAGES.hug,
+    community: outreachContent?.community || DEFAULT_IMAGES.community,
+  };
   return (
     <>
       {/* Hero */}

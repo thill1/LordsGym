@@ -2,10 +2,7 @@
 import React from 'react';
 import Section from '../components/Section';
 import Card from '../components/Card';
-import Button from '../components/Button';
-
-// Mindbody CRM URL for membership management
-const MINDBODY_URL = 'https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1';
+import { MINDBODY_MEMBERSHIP_URL } from '../constants';
 
 // Hero placeholder (public folder)
 const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
@@ -27,11 +24,6 @@ const IMAGES = {
 };
 
 const Membership: React.FC = () => {
-  const handleJoin = () => {
-    // Redirect to Mindbody CRM for membership management
-    window.open(MINDBODY_URL, '_blank');
-  };
-
   return (
     <>
       <Section bg="image" bgImage={HERO_IMAGE} bgImagePosition="center top" className="min-h-[55vh] flex items-center justify-center text-center pt-32 pb-24">
@@ -71,7 +63,9 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_MEMBERSHIP_URL} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center font-bold tracking-wider uppercase w-full min-h-[44px] px-6 py-3 bg-neutral-900 text-white border border-neutral-700 hover:bg-brand-red hover:border-brand-red hover:text-white shadow-lg rounded focus:outline-none focus:ring-2 focus:ring-offset-2">
+                Join Now
+              </a>
             </div>
           </Card>
 
@@ -96,7 +90,9 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">Monthly</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">+ $39 One-Time Setup Fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_MEMBERSHIP_URL} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center font-bold tracking-wider uppercase w-full min-h-[44px] px-6 py-3 bg-neutral-900 text-white border border-neutral-700 hover:bg-brand-red hover:border-brand-red hover:text-white shadow-lg rounded focus:outline-none focus:ring-2 focus:ring-offset-2">
+                Join Now
+              </a>
             </div>
           </Card>
 
@@ -121,7 +117,9 @@ const Membership: React.FC = () => {
                 <div className="text-xs font-bold uppercase tracking-widest text-neutral-500">1 Year</div>
                 <div className="text-[10px] text-neutral-400 mt-1 pt-1">No setup fee</div>
               </div>
-              <Button variant="brand" className="mt-6" fullWidth onClick={handleJoin}>Join Now</Button>
+              <a href={MINDBODY_MEMBERSHIP_URL} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center font-bold tracking-wider uppercase w-full min-h-[44px] px-6 py-3 bg-neutral-900 text-white border border-neutral-700 hover:bg-brand-red hover:border-brand-red hover:text-white shadow-lg rounded focus:outline-none focus:ring-2 focus:ring-offset-2">
+                Join Now
+              </a>
             </div>
           </Card>
         </div>

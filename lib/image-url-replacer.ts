@@ -14,7 +14,7 @@ export interface ImageReplacement {
 export const replaceImageUrl = async (
   oldUrl: string,
   newUrl: string,
-  tables: string[] = ['products', 'pages', 'home_content', 'media']
+  tables: string[] = ['products', 'pages', 'home_content', 'outreach_content', 'media']
 ): Promise<{ success: boolean; affectedRows: number; errors: string[] }> => {
   if (!isSupabaseConfigured()) {
     return { success: false, affectedRows: 0, errors: ['Supabase not configured'] };
@@ -134,6 +134,38 @@ export const replaceImageUrl = async (
           
           if (error) {
             errors.push(`Home content: ${error.message}`);
+          } else {
+            totalAffected++;
+          }
+        }
+      }
+    }
+
+    // Replace in outreach_content (JSONB images)
+    if (tables.includes('outreach_content')) {
+      const { data: outreachRows, error: outreachError } = await supabase
+        .from('outreach_content')
+        .select('id, images');
+
+      if (!outreachError && outreachRows && outreachRows.length > 0) {
+        const images = outreachRows[0].images || ({} as Record<string, string>);
+        const keys = ['hero', 'trailer', 'outreach', 'prayer', 'hug', 'community'] as const;
+        let updated = false;
+        const newImages = { ...images };
+        for (const key of keys) {
+          const val = newImages[key];
+          if (typeof val === 'string' && val.includes(oldUrl)) {
+            newImages[key] = val.replace(oldUrl, newUrl);
+            updated = true;
+          }
+        }
+        if (updated) {
+          const { error } = await supabase
+            .from('outreach_content')
+            .update({ images: newImages })
+            .eq('id', outreachRows[0].id);
+          if (error) {
+            errors.push(`Outreach content: ${error.message}`);
           } else {
             totalAffected++;
           }

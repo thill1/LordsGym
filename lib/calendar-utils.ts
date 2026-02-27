@@ -190,6 +190,8 @@ export function expandRecurringEvents(
     const exceptionDates = getEx(event);
     const templateStart = new Date(event.start_time);
     const templateEnd = new Date(event.end_time);
+    const timePartStart = formatDatetimeLocalInTimezone(event.start_time, GYM_TIMEZONE).split('T')[1] ?? '00:00';
+    const timePartEnd = formatDatetimeLocalInTimezone(event.end_time, GYM_TIMEZONE).split('T')[1] ?? '00:00';
     const baseDate = new Date(templateStart);
     baseDate.setHours(0, 0, 0, 0);
     const patternEnd = pattern.end_date
@@ -221,10 +223,9 @@ export function expandRecurringEvents(
         }
         const dateStr = toLocalDateKey(d);
         if (!exceptionDates.has(dateStr)) {
-          const occStart = new Date(d);
-          occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
-          const occEnd = new Date(d);
-          occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+          let occStart = combineDateAndTimeInTimezone(dateStr, timePartStart, GYM_TIMEZONE);
+          let occEnd = combineDateAndTimeInTimezone(dateStr, timePartEnd, GYM_TIMEZONE);
+          if (occEnd <= occStart) occEnd.setDate(occEnd.getDate() + 1);
           result.push({
             ...event,
             id: `${event.id}-${dateStr}`,
@@ -244,10 +245,9 @@ export function expandRecurringEvents(
         if (weeksSince % interval !== 0) continue;
         const dateStr = toLocalDateKey(d);
         if (exceptionDates.has(dateStr)) continue;
-        const occStart = new Date(d);
-        occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
-        const occEnd = new Date(d);
-        occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+        let occStart = combineDateAndTimeInTimezone(dateStr, timePartStart, GYM_TIMEZONE);
+        let occEnd = combineDateAndTimeInTimezone(dateStr, timePartEnd, GYM_TIMEZONE);
+        if (occEnd <= occStart) occEnd.setDate(occEnd.getDate() + 1);
         result.push({
           ...event,
           id: `${event.id}-${dateStr}`,
@@ -269,10 +269,9 @@ export function expandRecurringEvents(
           if (monthsSince % interval === 0) {
             const dateStr = toLocalDateKey(d);
             if (!exceptionDates.has(dateStr)) {
-              const occStart = new Date(d);
-              occStart.setHours(templateStart.getHours(), templateStart.getMinutes(), 0, 0);
-              const occEnd = new Date(d);
-              occEnd.setHours(templateEnd.getHours(), templateEnd.getMinutes(), 0, 0);
+              let occStart = combineDateAndTimeInTimezone(dateStr, timePartStart, GYM_TIMEZONE);
+              let occEnd = combineDateAndTimeInTimezone(dateStr, timePartEnd, GYM_TIMEZONE);
+              if (occEnd <= occStart) occEnd.setDate(occEnd.getDate() + 1);
               result.push({
                 ...event,
                 id: `${event.id}-${dateStr}`,
@@ -404,13 +403,14 @@ export const isAllDayEvent = (event: CalendarEvent): boolean => {
 };
 
 /**
- * Format time for display. Returns "All Day" for all-day events.
+ * Format time for display. Returns "All Day" for all-day events. Uses gym timezone.
  */
-export const formatTimeOrAllDay = (event: CalendarEvent): string => {
+export const formatTimeOrAllDay = (event: CalendarEvent, timeZone: string = GYM_TIMEZONE): string => {
   if (isAllDayEvent(event)) return 'All Day';
   const s = new Date(event.start_time);
   const e = new Date(event.end_time);
-  const fmt = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone });
   return `${fmt(s)} - ${fmt(e)}`;
 };
 
@@ -429,14 +429,15 @@ export const getClassTypeDotColor = (classType: string): string => {
 };
 
 /**
- * Format time for display
+ * Format time for display. Uses gym timezone so calendar times are always shown in Pacific.
  */
-export const formatTime = (dateString: string): string => {
+export const formatTime = (dateString: string, timeZone: string = GYM_TIMEZONE): string => {
   const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
     minute: '2-digit',
-    hour12: true 
+    hour12: true,
+    timeZone,
   });
 };
 

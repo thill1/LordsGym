@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
-import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
+import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig, OutreachPageImages } from '../types';
 import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
 import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
@@ -57,10 +57,13 @@ const DEFAULT_HOME_CONTENT: HomePageContent = {
   }
 };
 
+const OUTREACH_STORAGE_KEY = 'outreach_content_v1';
+
 interface StoreContextType {
   // Data
   settings: SiteSettings;
   homeContent: HomePageContent;
+  outreachContent: OutreachPageImages;
   testimonials: Testimonial[];
   programs: Program[];
   products: Product[];
@@ -80,6 +83,7 @@ interface StoreContextType {
   // Actions
   updateSettings: (settings: SiteSettings) => void;
   updateHomeContent: (content: HomePageContent) => void;
+  updateOutreachContent: (content: OutreachPageImages) => void;
   addTestimonial: (t: Testimonial) => void;
   updateTestimonial: (id: number, t: Partial<Testimonial>) => void;
   deleteTestimonial: (id: number) => void;
@@ -108,6 +112,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...parsed,
       popupModals: Array.isArray(parsed?.popupModals) ? parsed.popupModals : []
     };
+  });
+
+  const [outreachContent, setOutreachContent] = useState<OutreachPageImages>(() => {
+    return safeGet<OutreachPageImages>(OUTREACH_STORAGE_KEY, {});
   });
 
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
@@ -266,6 +274,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
         }
 
+        // Load outreach content
+        const { data: outreachData } = await supabase
+          .from('outreach_content')
+          .select('images')
+          .eq('id', 'default')
+          .single();
+
+        if (outreachData?.images && typeof outreachData.images === 'object') {
+          setOutreachContent(outreachData.images as OutreachPageImages);
+        }
+
         // Load testimonials - Supabase is source of truth when configured (prevents data loss across devices)
         const { data: testimonialsData, error: testimonialsErr } = await supabase
           .from('testimonials')
@@ -410,6 +429,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [homeContent, isLoading]);
 
   useEffect(() => {
+    safeSet(OUTREACH_STORAGE_KEY, outreachContent);
+
+    if (isSupabaseConfigured() && !isLoading) {
+      supabase
+        .from('outreach_content')
+        .upsert({
+          id: 'default',
+          images: outreachContent,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving outreach content to Supabase:', error);
+        });
+    }
+  }, [outreachContent, isLoading]);
+
+  useEffect(() => {
     const manualOnly = testimonials.filter((t): t is Testimonial & { id: number } => typeof t.id === 'number');
     safeSet('site_testimonials', manualOnly);
 
@@ -512,6 +548,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           id: 'default',
           hero: cleaned.hero,
           values: cleaned.values,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    }
+  };
+
+  const updateOutreachContent = async (newContent: OutreachPageImages) => {
+    setOutreachContent(newContent);
+
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('outreach_content')
+        .upsert({
+          id: 'default',
+          images: newContent,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
     }
@@ -690,6 +740,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <StoreContext.Provider value={{
       settings,
       homeContent,
+      outreachContent,
       testimonials,
       programs,
       products,
@@ -705,6 +756,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       cartCount,
       updateSettings,
       updateHomeContent,
+      updateOutreachContent,
       addTestimonial,
       updateTestimonial,
       deleteTestimonial,

@@ -6,7 +6,11 @@ export const APP_NAME = "Lord's Gym";
 // INTEGRATION KEYS
 // In production, these should be set via environment variables (e.g., .env file or Vercel config)
 export const SHOPIFY_STORE_URL = import.meta.env.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
-export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456"; 
+export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456";
+
+/** Mindbody shop URL for membership sign-up; all "Join Now" buttons should point here. */
+export const MINDBODY_MEMBERSHIP_URL =
+  "https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1"; 
 export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEKT1SC3YW/checkout/LM65OFKUNRAUMDU4YIMON77A?src=sheet";
 
 // Square donation links for preset amounts

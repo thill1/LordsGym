@@ -106,6 +106,16 @@ export interface HomePageContent {
   };
 }
 
+/** Outreach page images: hero, photo grid slots, community. Admin-editable. */
+export interface OutreachPageImages {
+  hero?: string;
+  trailer?: string;
+  outreach?: string;
+  prayer?: string;
+  hug?: string;
+  community?: string;
+}
+
 export interface AdminState {
   isAuthenticated: boolean;
   user?: {

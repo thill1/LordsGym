@@ -16,6 +16,7 @@ import SettingsManager from '../components/admin/SettingsManager';
 import PopupModalsManager from '../components/admin/PopupModalsManager';
 import SEOManager from '../components/admin/SEOManager';
 import HomeContentEditor from '../components/admin/HomeContentEditor';
+import OutreachContentEditor from '../components/admin/OutreachContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
@@ -32,7 +33,7 @@ const Admin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'outreach' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
 
@@ -271,6 +272,7 @@ const Admin: React.FC = () => {
         )}
         {activeTab === 'dashboard' && <AdminDashboard onTabChange={setActiveTab} />}
         {activeTab === 'home' && <HomeContentEditor />}
+        {activeTab === 'outreach' && <OutreachContentEditor />}
         {activeTab === 'pages' && <PageEditor />}
         {activeTab === 'testimonials' && <TestimonialsManager />}
         {activeTab === 'calendar' && <CalendarManager />}

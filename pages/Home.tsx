@@ -5,7 +5,7 @@ import Card from '../components/Card';
 import MetaTags from '../components/MetaTags';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { useStore } from '../context/StoreContext';
-import { FEATURED_PRODUCTS } from '../constants';
+import { FEATURED_PRODUCTS, MINDBODY_MEMBERSHIP_URL } from '../constants';
 // ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx
 
 interface HomeProps {
@@ -53,7 +53,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <Button 
             size="lg" 
             variant="brand" 
-            onClick={() => onNavigate('/membership')}
+            onClick={() => window.open(MINDBODY_MEMBERSHIP_URL, '_blank')}
             className="min-w-[200px] !bg-brand-red !text-white !border-brand-red hover:!bg-brand-charcoal hover:!border-brand-charcoal dark:!bg-brand-red dark:!text-white dark:!border-brand-red"
           >
             {heroCtaText}
@@ -176,7 +176,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <Button 
               variant="primary" 
               size="lg"
-              onClick={() => onNavigate('/membership')}
+              onClick={() => window.open(MINDBODY_MEMBERSHIP_URL, '_blank')}
               className="!bg-brand-red !text-white !border-brand-red hover:!bg-brand-red hover:!text-white hover:!border-brand-red dark:!bg-brand-red dark:!text-white dark:!border-brand-red"
             >
               View Memberships

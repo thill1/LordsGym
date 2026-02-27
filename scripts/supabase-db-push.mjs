@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * Run supabase db push with SUPABASE_ACCESS_TOKEN from .env.local.
- * This lets the AI agent run migrations when the token is in .env.local.
+ * Run supabase db push via CLI. Uses either:
+ * - SUPABASE_DB_PASSWORD + VITE_SUPABASE_URL → builds --db-url and runs push (no Management API token needed)
+ * - SUPABASE_ACCESS_TOKEN (format sbp_...) → uses linked project (requires token from dashboard)
  *
- * Setup:
- * 1. Go to https://supabase.com/dashboard/account/tokens
- * 2. Create a token (or use existing)
- * 3. Add to .env.local: SUPABASE_ACCESS_TOKEN=your_token_here
+ * Add to .env.local one of:
+ *   SUPABASE_DB_PASSWORD=your_project_db_password
+ *   SUPABASE_ACCESS_TOKEN=sbp_xxx  (from https://supabase.com/dashboard/account/tokens)
  *
- * Run: node scripts/supabase-db-push.mjs
- * Or:  npm run db:push
+ * Run: npm run db:push
  */
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -33,20 +32,39 @@ function loadEnv(path) {
 const root = resolve(__dirname, '..');
 loadEnv(resolve(root, '.env.local'));
 loadEnv(resolve(root, '.env'));
-
+// Fallback: account token from backup env so CLI works without editing .env.local
 if (!process.env.SUPABASE_ACCESS_TOKEN) {
-  console.error('Missing SUPABASE_ACCESS_TOKEN. Add to .env.local:');
-  console.error('  1. Go to https://supabase.com/dashboard/account/tokens');
-  console.error('  2. Create a token');
-  console.error('  3. Add: SUPABASE_ACCESS_TOKEN=your_token');
+  const backupPath = resolve(root, 'supabase-rebuild-lordsgym', 'exports', '.env.local.20260223-041027.backup');
+  if (existsSync(backupPath)) loadEnv(backupPath);
+}
+
+const url = process.env.VITE_SUPABASE_URL || '';
+const projectRef = url.replace(/^https?:\/\//, '').split('.')[0];
+const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
+
+// Prefer direct DB URL so we don't depend on Management API token format
+let args = ['supabase', 'db', 'push', '--yes'];
+let env = { ...process.env };
+
+if (dbPassword && projectRef) {
+  const encoded = encodeURIComponent(dbPassword);
+  const dbUrl = `postgresql://postgres.${projectRef}:${encoded}@aws-0-us-west-2.pooler.supabase.com:6543/postgres`;
+  args = ['supabase', 'db', 'push', '--db-url', dbUrl, '--yes'];
+} else if (accessToken && accessToken.startsWith('sbp_')) {
+  env.SUPABASE_ACCESS_TOKEN = accessToken;
+} else {
+  console.error('Add to .env.local one of:');
+  console.error('  SUPABASE_DB_PASSWORD=your_backup_project_db_password');
+  console.error('  SUPABASE_ACCESS_TOKEN=sbp_xxx  (from https://supabase.com/dashboard/account/tokens)');
   process.exit(1);
 }
 
-const child = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['supabase', 'db', 'push', '--yes'], {
+const child = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', args, {
   cwd: root,
   stdio: 'inherit',
   shell: true,
-  env: { ...process.env, SUPABASE_ACCESS_TOKEN: process.env.SUPABASE_ACCESS_TOKEN }
+  env,
 });
 
 child.on('exit', (code) => process.exit(code ?? 0));
