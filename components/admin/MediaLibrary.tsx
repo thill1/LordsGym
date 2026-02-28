@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { uploadMediaFile } from '../../lib/media-upload';
 import { useToast } from '../../context/ToastContext';
 import { logMediaAction } from '../../lib/activity-logger';
 import { safeGet, safeSet } from '../../lib/localStorage';
@@ -100,41 +101,8 @@ const MediaLibrary: React.FC = () => {
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `media/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from('media').upload(filePath, file);
-      if (uploadError) {
-        const msg = uploadError.message || String(uploadError);
-        if (msg.includes('Bucket not found') || msg.includes('does not exist')) {
-          throw new Error('Storage bucket "media" not found. Create it in Supabase Dashboard → Storage → New bucket.');
-        }
-        if (msg.includes('new row violates row-level security') || msg.includes('policy')) {
-          throw new Error('Storage policy denied upload. Ensure authenticated users have INSERT on storage.objects.');
-        }
-        if (msg.includes('Paused') || msg.includes('522') || msg.includes('project')) {
-          throw new Error('Supabase project may be paused. Check Dashboard and resume the project.');
-        }
-        throw uploadError;
-      }
-      const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(filePath);
-      const { data: inserted, error: dbError } = await supabase.from('media').insert({
-        filename: file.name,
-        url: publicUrl,
-        file_type: file.type,
-        file_size: file.size,
-        folder: null,
-        tags: null,
-        alt_text: null
-      }).select('id').single();
-      if (dbError) {
-        const msg = dbError.message || String(dbError);
-        if (msg.includes('new row violates row-level security')) {
-          throw new Error('Not authenticated or insufficient permissions for media table.');
-        }
-        throw dbError;
-      }
-      if (inserted) await logMediaAction('create', inserted.id, file.name);
+      const { id } = await uploadMediaFile(file);
+      if (id) await logMediaAction('create', id, file.name);
       await loadMedia();
       showSuccess('File uploaded successfully!');
     } catch (error) {
