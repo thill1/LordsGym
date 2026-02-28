@@ -8,13 +8,13 @@ import { isSupabaseConfigured } from '../../lib/supabase';
 import Button from '../Button';
 import MediaPickerModal from './MediaPickerModal';
 
-const IMAGE_SLOTS: { key: keyof OutreachPageImages; label: string; placeholder: string }[] = [
-  { key: 'hero', label: 'Hero background', placeholder: '/media/hero/hero-background.jpg.jpg' },
-  { key: 'trailer', label: 'Community Outreach (photo grid)', placeholder: '/media/outreach/outreach-trailer.jpg.jpeg' },
-  { key: 'outreach', label: 'Cal Trans – Litter Pickup (photo grid)', placeholder: '/media/outreach/outreach-walking.jpg.JPG' },
-  { key: 'prayer', label: '12 Step – Self Help (photo grid)', placeholder: '/media/outreach/outreach-prayer.jpg.jpeg' },
-  { key: 'hug', label: 'Bible Study (photo grid)', placeholder: '/media/outreach/outreach-brotherhood.jpg.jpeg' },
-  { key: 'community', label: 'Community photo (bottom section)', placeholder: '/media/outreach/outreach-community.jpg.jpeg' },
+const IMAGE_SLOTS: { key: keyof OutreachPageImages; position: string; placeholder: string }[] = [
+  { key: 'hero', position: 'Hero banner (top of page)', placeholder: '/media/hero/hero-background.jpg.jpg' },
+  { key: 'trailer', position: 'Grid, position 1', placeholder: '/media/outreach/outreach-trailer.jpg.jpeg' },
+  { key: 'outreach', position: 'Grid, position 2', placeholder: '/media/outreach/outreach-walking.jpg.JPG' },
+  { key: 'prayer', position: 'Grid, position 3', placeholder: '/media/outreach/outreach-prayer.jpg.jpeg' },
+  { key: 'hug', position: 'Grid, position 4', placeholder: '/media/outreach/outreach-brotherhood.jpg.jpeg' },
+  { key: 'community', position: 'Bottom section', placeholder: '/media/outreach/outreach-community.jpg.jpeg' },
 ];
 
 const OutreachContentEditor: React.FC = () => {
@@ -132,19 +132,25 @@ const OutreachContentEditor: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        {IMAGE_SLOTS.map(({ key, label, placeholder }) => {
+        {IMAGE_SLOTS.map(({ key, position, placeholder }, index) => {
           const url = formData[key];
           const isUploading = uploadingSlot === key;
+          const photoNumber = index + 1;
           return (
             <div
               key={key}
               className="bg-white dark:bg-neutral-800 p-4 sm:p-6 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700"
             >
-              <label className="block text-sm font-bold mb-2 dark:text-neutral-300">{label}</label>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-red text-white text-sm font-bold flex-shrink-0">
+                  {photoNumber}
+                </span>
+                <span className="text-sm text-neutral-500 dark:text-neutral-400">{position}</span>
+              </div>
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="w-full sm:w-40 h-28 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 flex-shrink-0">
+                <div className="w-full sm:w-44 h-32 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-900 border-2 border-neutral-200 dark:border-neutral-700 flex-shrink-0">
                   {url ? (
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <img src={url} alt={`Photo ${photoNumber}`} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm">No image</div>
                   )}
