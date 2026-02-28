@@ -36,10 +36,12 @@
     "fix:supabase-auth-urls": "node --env-file=.env.local scripts/fix-supabase-auth-urls.mjs",
     "fix:cloudflare-deploy": "node --env-file=.env.local scripts/fix-cloudflare-deploy-command.mjs",
     "trigger-cloudflare-deploy": "node --env-file=.env.local scripts/trigger-cloudflare-deploy.js",
-    "verify-push": "node scripts/verify-push.mjs",
+    "regression": "node scripts/run-regression.mjs --continue-on-error",
+"verify-push": "node scripts/verify-push.mjs",
     "verify-push:full": "node --env-file=.env.local scripts/verify-push.mjs",
     "test:db-audit": "node --env-file=.env.local scripts/db-audit.mjs",
     "diagnose:supabase": "node --env-file=.env.local scripts/supabase-diagnose.mjs",
+    "inspect:supabase": "node --env-file=.env.local scripts/supabase-inspect-report.mjs",
     "db:apply-pending": "node --env-file=.env.local scripts/apply-pending-schema.mjs",
     "backup:schema": "node scripts/export-schema-backup.mjs",
     "backup:create-project": "node --env-file=.env.local scripts/create-backup-project.mjs"

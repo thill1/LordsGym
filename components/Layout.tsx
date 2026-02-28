@@ -69,7 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                     ? 'text-brand-red'
                     : isScrolled || isMobileMenuOpen
                       ? 'text-brand-charcoal dark:text-white'
-                      : 'text-brand-charcoal dark:text-white'
+                      : 'text-white'
                 }`}
                 >
                 {item.label}
@@ -81,11 +81,11 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
           {/* Desktop Right Side Controls - only visible at xl+ via CSS */}
           <div className="desktop-header-controls hidden xl:flex items-center gap-4 flex-shrink-0">
-            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}>
               <ThemeToggle />
             </div>
             <button 
-                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           {/* Mobile Menu Controls - Visible below xl (1280px) */}
           <div className="xl:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
              <button 
-                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -116,7 +116,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 </span>
               )}
             </button>
-            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'} flex-shrink-0`}>
+            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'} flex-shrink-0`}>
               <ThemeToggle />
             </div>
              <button 
