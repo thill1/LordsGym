@@ -8,7 +8,7 @@ import { SUPABASE_URL, getAnonKey } from '../../lib/supabase';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
 
-const MAX_QUOTE_LENGTH = 200;
+const MAX_QUOTE_LENGTH = 300;
 
 const TestimonialsManager: React.FC = () => {
   const { testimonials, addTestimonial, updateTestimonial, deleteTestimonial } = useStore();
@@ -253,7 +253,7 @@ const TestimonialsManager: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
                 {manualTestimonials.map((testimonial) => (
-                  <tr key={testimonial.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
+                  <tr key={testimonial.id} className="hower:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
                     <td className="p-4 font-bold text-sm dark:text-white">{testimonial.name}</td>
                     <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
                       {testimonial.source === 'google' && (
