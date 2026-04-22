@@ -33,7 +33,7 @@ const getMediaImage = (filename: string) => {
 // Sanitize hero headline: remove \n (bug) so it displays on one line
 const sanitizeHeadline = (s: string): string => (s || '').replace(/\\n|\n/g, ' ').trim();
 
-const MAX_TESTIMONIAL_QUOTE_LENGTH = 200;
+const MAX_TESTIMONIAL_QUOTE_LENGTH = 300;
 const truncateQuote = (s: string): string =>
   (s || '').slice(0, MAX_TESTIMONIAL_QUOTE_LENGTH).trim();
 
@@ -446,31 +446,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [outreachContent, isLoading]);
 
   useEffect(() => {
+    // Only persist manual testimonials (numeric IDs) to localStorage as backup.
+    // Supabase writes are handled individually in addTestimonial / updateTestimonial / deleteTestimonial.
+    // Do NOT batch-upsert here: it would silently overwrite Supabase with truncated quotes on every load.
     const manualOnly = testimonials.filter((t): t is Testimonial & { id: number } => typeof t.id === 'number');
     safeSet('site_testimonials', manualOnly);
-
-    if (isSupabaseConfigured() && !isLoading && manualOnly.length > 0) {
-      (async () => {
-        for (const t of manualOnly) {
-          const { error } = await supabase
-            .from('testimonials')
-            .upsert(
-              {
-                id: t.id,
-                name: t.name,
-                role: t.role,
-                quote: truncateQuote(t.quote),
-                updated_at: new Date().toISOString()
-              },
-              { onConflict: 'id', ignoreDuplicates: false }
-            );
-          if (error) {
-            console.error('Error syncing testimonial to Supabase:', error);
-          }
-        }
-      })();
-    }
-  }, [testimonials, isLoading]);
+  }, [testimonials]);
 
   useEffect(() => {
     safeSet('shop_products', products);
@@ -621,7 +602,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (isSupabaseConfigured() && updatedTestimonial) {
       const quoteToSave = truncateQuote(updatedTestimonial.quote);
-      await supabase
+      const { error } = await supabase
         .from('testimonials')
         .update({
           name: updatedTestimonial.name,
@@ -630,17 +611,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
+      if (error) {
+        console.error('Error updating testimonial in Supabase:', error);
+        throw error;
+      }
     }
   };
 
   const deleteTestimonial = async (id: number) => {
     setTestimonials(prev => prev.filter(t => t.id !== id));
-    
+
     if (isSupabaseConfigured()) {
-      await supabase
+      const { error } = await supabase
         .from('testimonials')
         .delete()
         .eq('id', id);
+      if (error) {
+        console.error('Error deleting testimonial from Supabase:', error);
+        throw error;
+      }
     }
   };
   

@@ -145,7 +145,9 @@ export const migrateProducts = async (): Promise<void> => {
 };
 
 /**
- * Migrate testimonials from localStorage to Supabase
+ * Migrate testimonials from localStorage to Supabase.
+ * Only runs when Supabase testimonials table is empty (first-time setup).
+ * When Supabase already has testimonials, it is the source of truth—do not overwrite.
  */
 export const migrateTestimonials = async (): Promise<void> => {
   if (!isSupabaseConfigured()) {
@@ -154,11 +156,16 @@ export const migrateTestimonials = async (): Promise<void> => {
   }
 
   try {
+    const { data: existing } = await supabase.from('testimonials').select('id').limit(1);
+    if (existing && existing.length > 0) {
+      return; // Supabase has testimonials; it is source of truth. Do not overwrite.
+    }
+
     const saved = localStorage.getItem('site_testimonials');
     if (!saved) return;
 
     const testimonials: Testimonial[] = JSON.parse(saved);
-    
+
     const testimonialsData = testimonials.map(testimonial => ({
       id: testimonial.id,
       name: testimonial.name,
@@ -167,7 +174,6 @@ export const migrateTestimonials = async (): Promise<void> => {
       updated_at: new Date().toISOString()
     }));
 
-    // Upsert testimonials
     for (const testimonial of testimonialsData) {
       await supabase
         .from('testimonials')
