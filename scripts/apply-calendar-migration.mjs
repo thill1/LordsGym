@@ -28,7 +28,7 @@ loadEnv(resolve(root, '.env.local'));
 loadEnv(resolve(root, '.env'));
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
-const projectRef = 'mrptukahxloqpdqiaxkb';
+const projectRef = 'ktzvzossoyyfvexkgagm';
 const migrationPath = resolve(root, 'supabase/migrations/20260219_calendar_recurring_public.sql');
 
 if (!token) {

@@ -3,12 +3,11 @@ import { useStore } from '../../context/StoreContext';
 import { Testimonial } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { logTestimonialAction } from '../../lib/activity-logger';
-import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../../lib/google-reviews';
-import { SUPABASE_URL, getAnonKey } from '../../lib/supabase';
+import { fetchGoogleReviews, GoogleReviewTestimonial } from '../../lib/google-reviews';
+import { getSupabaseUrl } from '../../lib/supabase';
+import { MAX_TESTIMONIAL_QUOTE_LENGTH, normalizeTestimonialQuote } from '../../lib/testimonials';
 import Button from '../Button';
 import ConfirmDialog from '../ConfirmDialog';
-
-const MAX_QUOTE_LENGTH = 300;
 
 const TestimonialsManager: React.FC = () => {
   const { testimonials, addTestimonial, updateTestimonial, deleteTestimonial } = useStore();
@@ -25,13 +24,12 @@ const TestimonialsManager: React.FC = () => {
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [selectedReviewIds, setSelectedReviewIds] = useState<Set<string>>(new Set());
   const [isImporting, setIsImporting] = useState(false);
+  const [showImportedReviews, setShowImportedReviews] = useState(false);
 
   const openModal = (testimonial?: Testimonial) => {
     if (testimonial) {
       setEditingTestimonial(testimonial);
-      const quote = testimonial.quote.length > MAX_QUOTE_LENGTH
-        ? testimonial.quote.slice(0, MAX_QUOTE_LENGTH - 3).trim() + '...'
-        : testimonial.quote;
+      const quote = normalizeTestimonialQuote(testimonial.quote);
       setFormData({
         name: testimonial.name,
         role: testimonial.role,
@@ -55,14 +53,14 @@ const TestimonialsManager: React.FC = () => {
       showError('Please fill in all fields');
       return;
     }
-    if (formData.quote.length > MAX_QUOTE_LENGTH) {
-      showError(`Quote must be ${MAX_QUOTE_LENGTH} characters or less (currently ${formData.quote.length})`);
+    if (formData.quote.length > MAX_TESTIMONIAL_QUOTE_LENGTH) {
+      showError(`Quote must be ${MAX_TESTIMONIAL_QUOTE_LENGTH} characters or less (currently ${formData.quote.length})`);
       return;
     }
 
     try {
       if (editingTestimonial && typeof editingTestimonial.id === 'number') {
-        const quote = formData.quote.slice(0, MAX_QUOTE_LENGTH).trim();
+        const quote = normalizeTestimonialQuote(formData.quote);
         await updateTestimonial(editingTestimonial.id, {
           name: formData.name.trim(),
           role: formData.role.trim(),
@@ -71,7 +69,7 @@ const TestimonialsManager: React.FC = () => {
         await logTestimonialAction('update', editingTestimonial.id, formData.name);
         showSuccess('Testimonial updated successfully');
       } else {
-        const quote = formData.quote.slice(0, MAX_QUOTE_LENGTH).trim();
+        const quote = normalizeTestimonialQuote(formData.quote);
         const newTestimonial: Testimonial = {
           id: Date.now(),
           name: formData.name.trim(),
@@ -106,25 +104,24 @@ const TestimonialsManager: React.FC = () => {
     manualTestimonials.filter(t => t.externalId).map(t => t.externalId!)
   );
   const availableToImport = googleReviews.filter(r => !importedExternalIds.has(r.id));
+  const alreadyImportedReviews = googleReviews.filter(r => importedExternalIds.has(r.id));
 
   const handleFetchReviews = async () => {
-    const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID as string | undefined;
-    if (!placeId?.trim()) {
-      showError('Google Place ID not configured. Add VITE_GOOGLE_PLACE_ID to .env.local');
-      return;
-    }
     setIsLoadingReviews(true);
     setGoogleReviews([]);
     setSelectedReviewIds(new Set());
+    setShowImportedReviews(false);
     try {
       const reviews = await fetchGoogleReviews(
-        SUPABASE_URL,
-        getAnonKey(),
-        placeId,
-        DEFAULT_MAX_QUOTE_LENGTH
+        getSupabaseUrl(),
+        '',
+        undefined,
+        MAX_TESTIMONIAL_QUOTE_LENGTH
       );
       setGoogleReviews(reviews);
-      if (reviews.length === 0) showError('No 5-star reviews found or API error');
+      if (reviews.length === 0) {
+        showError('No 5-star reviews found. Verify GOOGLE_PLACES_API_KEY and GOOGLE_PLACE_ID on the Supabase Edge Function.');
+      }
     } catch (error) {
       showError('Failed to fetch Google reviews');
       console.error('Error fetching Google reviews:', error);
@@ -186,7 +183,7 @@ const TestimonialsManager: React.FC = () => {
       <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm p-6 border border-neutral-200 dark:border-neutral-700">
         <h2 className="text-lg font-bold dark:text-white mb-3">Import from Google Reviews</h2>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-          Fetch 5-star reviews (truncated to 100 characters) and save selected ones as permanent testimonials.
+          Fetch 5-star reviews (truncated to 300 characters) and save selected ones as permanent testimonials.
         </p>
         <Button
           onClick={handleFetchReviews}
@@ -198,6 +195,18 @@ const TestimonialsManager: React.FC = () => {
         </Button>
         {googleReviews.length > 0 && (
           <div className="mt-4 space-y-3">
+            <div className="text-xs text-neutral-500 dark:text-neutral-400">
+              Fetched {googleReviews.length} five-star review(s): {availableToImport.length} available to import, {alreadyImportedReviews.length} already imported.
+            </div>
+            {alreadyImportedReviews.length > 0 && (
+              <Button
+                onClick={() => setShowImportedReviews((v) => !v)}
+                size="sm"
+                variant="outline"
+              >
+                {showImportedReviews ? 'Hide Already Imported' : 'Show Already Imported'}
+              </Button>
+            )}
             <div className="max-h-64 overflow-y-auto space-y-2 divide-y divide-neutral-100 dark:divide-neutral-700">
               {availableToImport.map((r) => (
                 <label
@@ -221,6 +230,28 @@ const TestimonialsManager: React.FC = () => {
                   All fetched reviews have been imported.
                 </p>
               )}
+              {showImportedReviews && alreadyImportedReviews.map((r) => (
+                <div
+                  key={`imported-${r.id}`}
+                  className="flex items-start gap-3 py-2 rounded px-2 -mx-2 bg-neutral-50 dark:bg-neutral-700/30 opacity-80"
+                >
+                  <input
+                    type="checkbox"
+                    disabled
+                    checked
+                    className="mt-1 rounded border-neutral-300 text-brand-red focus:ring-brand-red"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm dark:text-white">
+                      {r.name}
+                      <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                        Imported
+                      </span>
+                    </p>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-300 line-clamp-2">"{r.quote}"</p>
+                  </div>
+                </div>
+              ))}
             </div>
             {availableToImport.length > 0 && (
               <Button
@@ -253,7 +284,7 @@ const TestimonialsManager: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
                 {manualTestimonials.map((testimonial) => (
-                  <tr key={testimonial.id} className="hower:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
+                  <tr key={testimonial.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
                     <td className="p-4 font-bold text-sm dark:text-white">{testimonial.name}</td>
                     <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
                       {testimonial.source === 'google' && (
@@ -317,17 +348,17 @@ const TestimonialsManager: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Quote (max {MAX_QUOTE_LENGTH} characters)</label>
+                <label className="block text-sm font-bold mb-1 dark:text-neutral-300">Quote (max {MAX_TESTIMONIAL_QUOTE_LENGTH} characters)</label>
                 <textarea
                   rows={4}
                   required
-                  maxLength={MAX_QUOTE_LENGTH}
+                  maxLength={MAX_TESTIMONIAL_QUOTE_LENGTH}
                   className="w-full p-2 border rounded dark:bg-neutral-900 dark:border-neutral-700 dark:text-white"
                   value={formData.quote}
-                  onChange={(e) => setFormData({ ...formData, quote: e.target.value.slice(0, MAX_QUOTE_LENGTH) })}
+                  onChange={(e) => setFormData({ ...formData, quote: e.target.value.slice(0, MAX_TESTIMONIAL_QUOTE_LENGTH) })}
                   placeholder="This gym has changed my life..."
                 />
-                <p className="text-xs text-neutral-500 mt-1">{formData.quote.length}/{MAX_QUOTE_LENGTH}</p>
+                <p className="text-xs text-neutral-500 mt-1">{formData.quote.length}/{MAX_TESTIMONIAL_QUOTE_LENGTH}</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">

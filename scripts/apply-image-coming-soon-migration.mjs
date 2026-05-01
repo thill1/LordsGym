@@ -39,7 +39,7 @@ const sql = readFileSync(
 
 let connStr = process.env.SUPABASE_DB_URL;
 if (!connStr && process.env.SUPABASE_DB_PASSWORD) {
-  const url = process.env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+  const url = process.env.VITE_SUPABASE_URL || 'https://ktzvzossoyyfvexkgagm.supabase.co';
   const ref = url.replace(/^https?:\/\//, '').split('.')[0];
   const pw = encodeURIComponent(process.env.SUPABASE_DB_PASSWORD);
   connStr = `postgresql://postgres:${pw}@db.${ref}.supabase.co:5432/postgres`;

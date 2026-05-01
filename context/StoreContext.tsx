@@ -2,12 +2,13 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
 import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig, OutreachPageImages } from '../types';
-import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, getSupabaseUrl } from '../lib/supabase';
 import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
 import { syncProductsFromConstants } from '../lib/store-products';
 import { addToCart as addToCartOp, removeFromCart as removeFromCartOp, updateQuantity as updateQuantityOp, cartTotal as computeCartTotal, cartCount as computeCartCount } from '../lib/cart-operations';
 import { safeGet, safeSet } from '../lib/localStorage';
+import { MAX_TESTIMONIAL_QUOTE_LENGTH, normalizeTestimonialQuote } from '../lib/testimonials';
 
 // Initial Default State
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -33,9 +34,8 @@ const getMediaImage = (filename: string) => {
 // Sanitize hero headline: remove \n (bug) so it displays on one line
 const sanitizeHeadline = (s: string): string => (s || '').replace(/\\n|\n/g, ' ').trim();
 
-const MAX_TESTIMONIAL_QUOTE_LENGTH = 300;
 const truncateQuote = (s: string): string =>
-  (s || '').slice(0, MAX_TESTIMONIAL_QUOTE_LENGTH).trim();
+  normalizeTestimonialQuote(s, MAX_TESTIMONIAL_QUOTE_LENGTH);
 
 // Helper to get hero image path
 const getHeroImage = (filename: string) => {
@@ -366,15 +366,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Fetch 5-star Google reviews (truncated) and merge with manual testimonials
-        const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID as string | undefined;
-        const googleReviews = placeId
-          ? await fetchGoogleReviews(
-              SUPABASE_URL,
-              getAnonKey(),
-              placeId,
-              DEFAULT_MAX_QUOTE_LENGTH
-            )
-          : [];
+        const googleReviews = await fetchGoogleReviews(
+          getSupabaseUrl(),
+          '',
+          undefined,
+          DEFAULT_MAX_QUOTE_LENGTH
+        );
 
         // Dedupe: exclude live Google reviews that are already imported (in DB)
         const importedExternalIds = new Set(
@@ -492,10 +489,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     safeSet('shop_cart', cart);
   }, [cart]);
 
-  // Check Auth on Mount
+  // Legacy auth state retained for backward compatibility with older components.
   useEffect(() => {
-    const auth = localStorage.getItem('admin_auth');
-    if (auth === 'true') setIsAuthenticated(true);
+    setIsAuthenticated(false);
   }, []);
 
   // Actions
@@ -593,41 +589,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateTestimonial = async (id: number, updates: Partial<Testimonial>) => {
-    let updatedTestimonial: Testimonial | undefined;
     const quote = updates.quote !== undefined ? truncateQuote(updates.quote) : undefined;
     const cleanUpdates = quote !== undefined ? { ...updates, quote } : updates;
-    setTestimonials(prev => {
-      const updated = prev.map(t => {
-        if (t.id === id) {
-          updatedTestimonial = { ...t, ...cleanUpdates };
-          return updatedTestimonial;
-        }
-        return t;
-      });
-      return updated;
-    });
-    
-    if (isSupabaseConfigured() && updatedTestimonial) {
-      const quoteToSave = truncateQuote(updatedTestimonial.quote);
-      const { error } = await supabase
+
+    if (isSupabaseConfigured()) {
+      const existing = testimonials.find((t) => t.id === id);
+      if (!existing) return;
+      const merged = { ...existing, ...cleanUpdates };
+      const quoteToSave = truncateQuote(merged.quote);
+      const { data: updatedRow, error } = await supabase
         .from('testimonials')
         .update({
-          name: updatedTestimonial.name,
-          role: updatedTestimonial.role,
+          name: merged.name,
+          role: merged.role,
           quote: quoteToSave,
           updated_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id, name, role, quote, source, external_id')
+        .single();
       if (error) {
         console.error('Error updating testimonial in Supabase:', error);
         throw error;
       }
+
+      if (updatedRow) {
+        const mapped: Testimonial = {
+          id: updatedRow.id,
+          name: updatedRow.name,
+          role: updatedRow.role,
+          quote: updatedRow.quote,
+          source: updatedRow.source === 'google' ? 'google' : 'manual',
+          externalId: updatedRow.external_id ?? undefined
+        };
+        setTestimonials((prev) => prev.map((t) => (t.id === id ? mapped : t)));
+      }
+      return;
     }
+
+    setTestimonials(prev => prev.map((t) => (t.id === id ? { ...t, ...cleanUpdates } : t)));
   };
 
   const deleteTestimonial = async (id: number) => {
-    setTestimonials(prev => prev.filter(t => t.id !== id));
-
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('testimonials')
@@ -638,6 +641,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         throw error;
       }
     }
+    setTestimonials(prev => prev.filter(t => t.id !== id));
   };
   
   const addProduct = async (p: Product) => {
@@ -697,17 +701,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const login = (password: string) => {
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
-      localStorage.setItem('admin_auth', 'true');
-      return true;
-    }
+    void password;
     return false;
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('admin_auth');
   };
 
   // Cart Functions
