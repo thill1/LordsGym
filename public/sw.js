@@ -1,6 +1,6 @@
 // Service Worker for Lord's Gym - Offline Support
 // Increment version number when deploying to force cache invalidation
-const CACHE_VERSION = 'lords-gym-v4';
+const CACHE_VERSION = 'lords-gym-v5';
 const CACHE_NAME = CACHE_VERSION;
 // Get base path from scope (e.g., '/LordsGym/' or '/')
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '') || '/';

@@ -142,7 +142,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = safeGet<Product[] | null>('shop_products', null);
+    const savedProducts = safeGet<Product[] | null>('shop_products_v2', null);
     // When Supabase is source (incognito/fresh = no localStorage): never use ALL_PRODUCTS
     // as initial state. Use [] and let Supabase load. Otherwise mobile/failed-fetch shows
     // stale ALL_PRODUCTS including deleted items.
@@ -158,7 +158,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ALL_PRODUCTS.forEach(newProduct => {
         const existing = productMap.get(newProduct.id);
         if (existing) {
-          productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
+          // Special handling for w1 and a1: always use correct images from constants
+          // These had placeholder images that caused confusion; force reset on every load
+          const isSpecialProduct = newProduct.id === 'w1' || newProduct.id === 'a1';
+          productMap.set(newProduct.id, {
+            ...existing,
+            image: newProduct.image,
+            title: newProduct.title,
+            // Clear any placeholder or stale image data for these products
+            ...(isSpecialProduct && { imageComingSoon: false, comingSoonImage: undefined })
+          });
         } else {
           productMap.set(newProduct.id, newProduct);
         }
@@ -496,37 +505,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [testimonials]);
 
   useEffect(() => {
-    safeSet('shop_products', products);
-    // Only upsert to Supabase after we've loaded from Supabase. Otherwise we might push
-    // wrong initial state (e.g. ALL_PRODUCTS) and re-add deleted products.
-    //
-    // ALSO gate on isAuthenticated: anonymous visitors don't have RLS write permission,
-    // so this effect was firing N upserts per page view that all returned 401. Writes
-    // are also performed inside addProduct/updateProduct/deleteProduct directly, so this
-    // bulk re-upsert is only needed (and only succeeds) for an admin session.
-    if (isSupabaseConfigured() && isAuthenticated && !isLoading && productsLoadedFromSupabaseRef.current) {
-      products.forEach(product => {
-        supabase
-          .from('products')
-          .upsert({
-            id: product.id,
-            title: product.title,
-            price: product.price,
-            category: product.category,
-            image: product.image || '',
-            image_coming_soon: product.imageComingSoon ?? false,
-            coming_soon_image: product.comingSoonImage || null,
-            description: product.description || null,
-            inventory: product.inventory ?? null,
-            featured: product.featured ?? false,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'id' })
-          .then(({ error }) => {
-            if (error) console.error('Error saving product to Supabase:', error);
-          });
-      });
-    }
-  }, [products, isLoading, isAuthenticated]);
+    safeSet('shop_products_v2', products);
+    // Supabase writes are handled exclusively by addProduct/updateProduct/deleteProduct
+    // with activity logging. A bulk upsert here was silently overwriting the database
+    // from stale localStorage on every admin session — the source of inventory corruption.
+  }, [products]);
 
   useEffect(() => {
     safeSet('shop_cart', cart);
