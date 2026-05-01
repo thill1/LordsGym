@@ -18,6 +18,8 @@ import Calendar from './pages/Calendar';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
 import Outreach from './pages/Outreach';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 const App: React.FC = () => {
   // Simple Hash Router Implementation
@@ -92,6 +94,10 @@ const App: React.FC = () => {
         return <About />;
       case '/contact':
         return <Contact />;
+      case '/privacy':
+        return <Privacy />;
+      case '/terms':
+        return <Terms />;
       case '/admin':
         return <Admin />;
       default:
