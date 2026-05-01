@@ -356,13 +356,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // free-tier project, mobile network, DNS hiccup) leaves `products` empty forever, which
         // is what made the Home page render `FEATURED_PRODUCTS` constants as fake "live" data.
         //
-        // KNOWN ISSUE (TODO): `products.image` currently contains base64-encoded image data
-        // for admin-uploaded products instead of Storage URLs. With ~16 rows the full SELECT
-        // returns ~18 MB, which takes 3–30s to download depending on the network. The 30s
-        // timeout below is generous enough to cover slow mobile connections, but the right
-        // fix is to migrate base64 image data out of the products table into Supabase Storage
-        // and store only URLs in the `image` column. Once that's done this can drop to 8s.
-        const PRODUCTS_FETCH_TIMEOUT_MS = 30000;
+        // Image data is now stored in Supabase Storage with only URLs in the products table,
+        // so the fetch is fast and reliable. The 8s timeout is standard for reliable networks.
+        const PRODUCTS_FETCH_TIMEOUT_MS = 8000;
         const fetchProductsOnce = () =>
           Promise.race<{ data: any; error: any }>([
             supabase

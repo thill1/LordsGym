@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
 import { Product } from '../types';
+import { uploadProductImage, deleteProductImage } from '../lib/image-upload';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import PageEditor from '../components/admin/PageEditor';
@@ -52,6 +53,8 @@ const Admin: React.FC = () => {
   const [prodImageComingSoon, setProdImageComingSoon] = useState(false);
   const [prodComingSoonImage, setProdComingSoonImage] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingComingSoonImage, setIsUploadingComingSoonImage] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,33 +116,63 @@ const Admin: React.FC = () => {
     setIsProductModalOpen(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProdImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) {
+      e.target.value = '';
+      return;
     }
-    e.target.value = '';
+
+    setIsUploadingImage(true);
+    try {
+      const url = await uploadProductImage(file);
+      if (url) {
+        setProdImage(url);
+      } else {
+        showError('Failed to upload image');
+      }
+    } catch (error) {
+      showError('Error uploading image');
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
-  const handleDeleteImage = () => {
+  const handleDeleteImage = async () => {
+    if (prodImage && prodImage.includes('/storage/')) {
+      await deleteProductImage(prodImage);
+    }
     setProdImage('');
   };
 
-  const handleComingSoonImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleComingSoonImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProdComingSoonImage(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) {
+      e.target.value = '';
+      return;
     }
-    e.target.value = '';
+
+    setIsUploadingComingSoonImage(true);
+    try {
+      const url = await uploadProductImage(file);
+      if (url) {
+        setProdComingSoonImage(url);
+      } else {
+        showError('Failed to upload image');
+      }
+    } catch (error) {
+      showError('Error uploading image');
+    } finally {
+      setIsUploadingComingSoonImage(false);
+      e.target.value = '';
+    }
   };
 
-  const handleDeleteComingSoonImage = () => {
+  const handleDeleteComingSoonImage = async () => {
+    if (prodComingSoonImage && prodComingSoonImage.includes('/storage/')) {
+      await deleteProductImage(prodComingSoonImage);
+    }
     setProdComingSoonImage('');
   };
 
