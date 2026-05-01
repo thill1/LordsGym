@@ -178,6 +178,64 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Load data from Supabase on mount (if configured)
+  // Load products immediately in a separate effect so they appear ASAP,
+  // not blocked by slower testimonials/Google reviews fetch
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const loadProducts = async () => {
+      const PRODUCTS_FETCH_TIMEOUT_MS = 8000;
+      const fetchProductsOnce = () =>
+        Promise.race<{ data: any; error: any }>([
+          supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          new Promise<{ data: null; error: { message: string } }>((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  data: null,
+                  error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
+                }),
+              PRODUCTS_FETCH_TIMEOUT_MS
+            )
+          )
+        ]);
+
+      let productsResult = await fetchProductsOnce();
+      if (productsResult.error) {
+        console.warn('Products fetch failed, retrying once:', productsResult.error);
+        productsResult = await fetchProductsOnce();
+      }
+
+      const { data: productsData, error: productsError } = productsResult;
+
+      if (productsError) {
+        console.error('Error loading products from Supabase (after retry):', productsError);
+        setProductsLoadFailed(true);
+      } else if (productsData !== null && productsData !== undefined) {
+        productsLoadedFromSupabaseRef.current = true;
+        setProductsLoadFailed(false);
+        const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          category: p.category,
+          image: (p.image as string | null) ?? '',
+          imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
+          comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
+          description: (p.description as string | null) ?? undefined,
+          inventory: (p.inventory as Record<string, number> | null) ?? undefined,
+          featured: (p.featured as boolean | null) ?? false
+        }));
+        setProducts(mapped);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   useEffect(() => {
     const loadFromSupabase = async () => {
       if (!isSupabaseConfigured()) {
@@ -196,7 +254,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Check if localStorage has popup data - if so, preserve it (user's local changes take precedence)
         const savedLocalSettings = localStorage.getItem('site_settings');
         let hasLocalPopupData = false;
-        
+
         if (savedLocalSettings) {
           try {
             const parsed = JSON.parse(savedLocalSettings) as Partial<SiteSettings>;
@@ -349,64 +407,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
 
         setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
-
-        // Load products — always use Supabase result (including empty) so admin and store stay in sync.
-        //
-        // Guarded with a timeout + single retry. Without this, a slow/hung response (paused
-        // free-tier project, mobile network, DNS hiccup) leaves `products` empty forever, which
-        // is what made the Home page render `FEATURED_PRODUCTS` constants as fake "live" data.
-        //
-        // Image data is now stored in Supabase Storage with only URLs in the products table,
-        // so the fetch is fast and reliable. The 8s timeout is standard for reliable networks.
-        const PRODUCTS_FETCH_TIMEOUT_MS = 8000;
-        const fetchProductsOnce = () =>
-          Promise.race<{ data: any; error: any }>([
-            supabase
-              .from('products')
-              .select('*')
-              .order('created_at', { ascending: false }),
-            new Promise<{ data: null; error: { message: string } }>((resolve) =>
-              setTimeout(
-                () =>
-                  resolve({
-                    data: null,
-                    error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
-                  }),
-                PRODUCTS_FETCH_TIMEOUT_MS
-              )
-            )
-          ]);
-
-        let productsResult = await fetchProductsOnce();
-        if (productsResult.error) {
-          console.warn('Products fetch failed, retrying once:', productsResult.error);
-          productsResult = await fetchProductsOnce();
-        }
-
-        const { data: productsData, error: productsError } = productsResult;
-
-        if (productsError) {
-          console.error('Error loading products from Supabase (after retry):', productsError);
-          setProductsLoadFailed(true);
-          // Do NOT setProducts here. Keep whatever localStorage-backed initial state we have
-          // so returning visitors still see their cached catalog rather than a blank grid.
-        } else if (productsData !== null && productsData !== undefined) {
-          productsLoadedFromSupabaseRef.current = true;
-          setProductsLoadFailed(false);
-          const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            category: p.category,
-            image: (p.image as string | null) ?? '',
-            imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
-            comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
-            description: (p.description as string | null) ?? undefined,
-            inventory: (p.inventory as Record<string, number> | null) ?? undefined,
-            featured: (p.featured as boolean | null) ?? false
-          }));
-          setProducts(mapped);
-        }
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
         // Fallback to localStorage on error
