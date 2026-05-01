@@ -67,7 +67,13 @@ interface StoreContextType {
   testimonials: Testimonial[];
   programs: Program[];
   products: Product[];
-  
+  // True while the initial Supabase load is in flight; consumers can render
+  // skeletons instead of stale-constants fallbacks.
+  isLoading: boolean;
+  // True if the most recent products fetch failed (timeout or error).
+  // Lets the UI show an explicit empty/error state instead of fake placeholders.
+  productsLoadFailed: boolean;
+
   // Cart Logic
   cart: CartItem[];
   isCartOpen: boolean;
@@ -102,6 +108,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [migrationRun, setMigrationRun] = useState(false);
+  const [productsLoadFailed, setProductsLoadFailed] = useState(false);
   const productsLoadedFromSupabaseRef = useRef(false);
 
   // Load from LocalStorage or use Defaults (fallback) — safe for quota/private mode
@@ -343,25 +350,57 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
 
-        // Load products — always use Supabase result (including empty) so admin and store stay in sync
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false });
+        // Load products — always use Supabase result (including empty) so admin and store stay in sync.
+        //
+        // Guarded with a timeout + single retry. Without this, a slow/hung response (paused
+        // free-tier project, mobile network, DNS hiccup) leaves `products` empty forever, which
+        // is what made the Home page render `FEATURED_PRODUCTS` constants as fake "live" data.
+        const PRODUCTS_FETCH_TIMEOUT_MS = 8000;
+        const fetchProductsOnce = () =>
+          Promise.race<{ data: any; error: any }>([
+            supabase
+              .from('products')
+              .select('*')
+              .order('created_at', { ascending: false }),
+            new Promise<{ data: null; error: { message: string } }>((resolve) =>
+              setTimeout(
+                () =>
+                  resolve({
+                    data: null,
+                    error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
+                  }),
+                PRODUCTS_FETCH_TIMEOUT_MS
+              )
+            )
+          ]);
 
-        if (productsData !== null && productsData !== undefined) {
+        let productsResult = await fetchProductsOnce();
+        if (productsResult.error) {
+          console.warn('Products fetch failed, retrying once:', productsResult.error);
+          productsResult = await fetchProductsOnce();
+        }
+
+        const { data: productsData, error: productsError } = productsResult;
+
+        if (productsError) {
+          console.error('Error loading products from Supabase (after retry):', productsError);
+          setProductsLoadFailed(true);
+          // Do NOT setProducts here. Keep whatever localStorage-backed initial state we have
+          // so returning visitors still see their cached catalog rather than a blank grid.
+        } else if (productsData !== null && productsData !== undefined) {
           productsLoadedFromSupabaseRef.current = true;
-          const mapped = productsData.map(p => ({
+          setProductsLoadFailed(false);
+          const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
             id: p.id,
             title: p.title,
             price: p.price,
             category: p.category,
-            image: p.image ?? '',
-            imageComingSoon: p.image_coming_soon ?? false,
-            comingSoonImage: (p as { coming_soon_image?: string | null }).coming_soon_image ?? undefined,
-            description: (p as { description?: string | null }).description ?? undefined,
-            inventory: (p as { inventory?: Record<string, number> | null }).inventory ?? undefined,
-            featured: (p as { featured?: boolean | null }).featured ?? false
+            image: (p.image as string | null) ?? '',
+            imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
+            comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
+            description: (p.description as string | null) ?? undefined,
+            inventory: (p.inventory as Record<string, number> | null) ?? undefined,
+            featured: (p.featured as boolean | null) ?? false
           }));
           setProducts(mapped);
         }
@@ -457,7 +496,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     safeSet('shop_products', products);
     // Only upsert to Supabase after we've loaded from Supabase. Otherwise we might push
     // wrong initial state (e.g. ALL_PRODUCTS) and re-add deleted products.
-    if (isSupabaseConfigured() && !isLoading && productsLoadedFromSupabaseRef.current) {
+    //
+    // ALSO gate on isAuthenticated: anonymous visitors don't have RLS write permission,
+    // so this effect was firing N upserts per page view that all returned 401. Writes
+    // are also performed inside addProduct/updateProduct/deleteProduct directly, so this
+    // bulk re-upsert is only needed (and only succeeds) for an admin session.
+    if (isSupabaseConfigured() && isAuthenticated && !isLoading && productsLoadedFromSupabaseRef.current) {
       products.forEach(product => {
         supabase
           .from('products')
@@ -479,7 +523,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
       });
     }
-  }, [products, isLoading]);
+  }, [products, isLoading, isAuthenticated]);
 
   useEffect(() => {
     safeSet('shop_cart', cart);
@@ -733,6 +777,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       testimonials,
       programs,
       products,
+      isLoading,
+      productsLoadFailed,
       cart,
       isCartOpen,
       openCart,
