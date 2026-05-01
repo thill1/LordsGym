@@ -5,7 +5,6 @@ import Card from '../components/Card';
 import MetaTags from '../components/MetaTags';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { useStore } from '../context/StoreContext';
-import { FEATURED_PRODUCTS } from '../constants';
 // ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx
 
 interface HomeProps {
@@ -90,56 +89,62 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(products.length > 0
-            ? (() => {
-                const featured = products.filter(p => p.featured);
-                const nonFeatured = products.filter(p => !p.featured);
-                // Show all featured products; if fewer than 4 total, fill with non-featured
-                const toShow = featured.length > 0
-                  ? featured.length >= 4
-                    ? featured.slice(0, 8)
-                    : [...featured, ...nonFeatured].slice(0, 4)
-                  : nonFeatured.slice(0, 4);
-                return toShow;
-              })()
-            : FEATURED_PRODUCTS
-          ).map((product) => (
-            <Card key={product.id} className="overflow-hidden group">
-              <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                {product.imageComingSoon || !product.image ? (
-                  product.comingSoonImage ? (
-                    <img
-                      src={product.comingSoonImage}
-                      alt="Coming soon"
-                      className="w-full h-full object-contain"
-                    />
+          {products.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="inline-block">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red mb-4"></div>
+                <p className="text-neutral-500 dark:text-neutral-400">Loading products...</p>
+              </div>
+            </div>
+          ) : (
+            (() => {
+              const featured = products.filter(p => p.featured);
+              const nonFeatured = products.filter(p => !p.featured);
+              // Show all featured products; if fewer than 4 total, fill with non-featured
+              const toShow = featured.length > 0
+                ? featured.length >= 4
+                  ? featured.slice(0, 8)
+                  : [...featured, ...nonFeatured].slice(0, 4)
+                : nonFeatured.slice(0, 4);
+              return toShow;
+            })().map((product) => (
+              <Card key={product.id} className="overflow-hidden group">
+                <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                  {product.imageComingSoon || !product.image ? (
+                    product.comingSoonImage ? (
+                      <img
+                        src={product.comingSoonImage}
+                        alt="Coming soon"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
+                        Coming soon: Lord&apos;s Gym merch
+                      </p>
+                    )
                   ) : (
-                    <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
-                      Coming soon: Lord&apos;s Gym merch
-                    </p>
-                  )
-                ) : (
-                  <img 
-                    src={product.image} 
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-1">{product.title}</h3>
-                <p className="text-brand-red font-bold text-xl mb-3">${product.price.toFixed(2)}</p>
-                <Button 
-                  variant="brand" 
-                  size="sm"
-                  onClick={() => onNavigate('/shop')}
-                  className="w-full"
-                >
-                  View Product
-                </Button>
-              </div>
-            </Card>
-          ))}
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-1">{product.title}</h3>
+                  <p className="text-brand-red font-bold text-xl mb-3">${product.price.toFixed(2)}</p>
+                  <Button
+                    variant="brand"
+                    size="sm"
+                    onClick={() => onNavigate('/shop')}
+                    className="w-full"
+                  >
+                    View Product
+                  </Button>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
         <div className="text-center mt-8">
           <Button 
