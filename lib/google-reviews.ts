@@ -3,7 +3,9 @@
  * Keeps API key server-side; returns testimonials shaped for the carousel.
  */
 
-export const DEFAULT_MAX_QUOTE_LENGTH = 100;
+import { MAX_TESTIMONIAL_QUOTE_LENGTH } from './testimonials';
+
+export const DEFAULT_MAX_QUOTE_LENGTH = MAX_TESTIMONIAL_QUOTE_LENGTH;
 
 export interface GoogleReviewTestimonial {
   id: string;
@@ -14,17 +16,27 @@ export interface GoogleReviewTestimonial {
 
 export async function fetchGoogleReviews(
   supabaseUrl: string,
-  supabaseAnonKey: string,
-  placeId: string | undefined,
+  supabaseAnonKey: string = '',
+  placeId?: string,
   maxQuoteLength: number = DEFAULT_MAX_QUOTE_LENGTH
 ): Promise<GoogleReviewTestimonial[]> {
-  if (!placeId?.trim()) return [];
+  if (!supabaseUrl?.trim()) return [];
 
   try {
-    const params = new URLSearchParams({ place_id: placeId, max_length: String(maxQuoteLength) });
+    const params = new URLSearchParams({ max_length: String(maxQuoteLength) });
+    const normalizedPlaceId = placeId?.trim();
+    if (normalizedPlaceId) {
+      params.set('place_id', normalizedPlaceId);
+    }
+
+    const headers: Record<string, string> = {};
+    if (supabaseAnonKey?.trim()) {
+      headers.Authorization = `Bearer ${supabaseAnonKey.trim()}`;
+    }
+
     const res = await fetch(
-      `${supabaseUrl}/functions/v1/google-reviews?${params}`,
-      { headers: { Authorization: `Bearer ${supabaseAnonKey}` } }
+      `${supabaseUrl.replace(/\/$/, '')}/functions/v1/google-reviews?${params}`,
+      { headers }
     );
 
     if (!res.ok) return [];

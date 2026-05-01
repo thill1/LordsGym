@@ -5,12 +5,16 @@
  * Use when direct browser->Supabase has network issues (522, timeout).
  *
  * POST /api/auth-login
- * Body: { email: string, password: string, supabaseUrl?: string, anonKey?: string }
+ * Body: { email: string, password: string }
  * Returns: { access_token, refresh_token, user } or { error: string }
  */
 export async function onRequestPost(context: any) {
+  const appOrigin = new URL(context.request.url).origin;
+  const requestOrigin = context.request.headers.get('origin');
+  const allowedOrigin = requestOrigin === appOrigin ? requestOrigin : appOrigin;
+
   const cors = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
@@ -19,7 +23,7 @@ export async function onRequestPost(context: any) {
     return new Response(null, { headers: cors });
   }
 
-  let body: { email?: string; password?: string; supabaseUrl?: string; anonKey?: string };
+  let body: { email?: string; password?: string };
   try {
     body = await context.request.json();
   } catch {
@@ -31,8 +35,8 @@ export async function onRequestPost(context: any) {
 
   const email = (body.email || '').trim().toLowerCase();
   const password = (body.password || '').trim();
-  const supabaseUrl = (body.supabaseUrl || (context.env && context.env.VITE_SUPABASE_URL) || 'https://mrptukahxloqpdqiaxkb.supabase.co').replace(/\/$/, '');
-  const anonKey = body.anonKey || (context.env && context.env.VITE_SUPABASE_ANON_KEY) || '';
+  const supabaseUrl = ((context.env && context.env.VITE_SUPABASE_URL) || 'https://ktzvzossoyyfvexkgagm.supabase.co').replace(/\/$/, '');
+  const anonKey = (context.env && context.env.VITE_SUPABASE_ANON_KEY) || '';
 
   if (!email || !password) {
     return new Response(
@@ -43,8 +47,8 @@ export async function onRequestPost(context: any) {
 
   if (!anonKey || !anonKey.startsWith('eyJ')) {
     return new Response(
-      JSON.stringify({ error: 'anonKey required (JWT from Supabase API settings)' }),
-      { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Server auth proxy is not configured.' }),
+      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } }
     );
   }
 
@@ -60,15 +64,13 @@ export async function onRequestPost(context: any) {
       signal: AbortSignal.timeout(25000),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
 
     if (!res.ok) {
+      const isCredentialError = res.status === 400 || res.status === 401 || res.status === 422;
       return new Response(
-        JSON.stringify({
-          error: data.msg || data.error_description || `Supabase returned ${res.status}`,
-          errorCode: data.error,
-        }),
-        { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: isCredentialError ? 'Invalid login credentials' : 'Auth provider temporarily unavailable' }),
+        { status: isCredentialError ? 400 : 502, headers: { ...cors, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -85,7 +87,7 @@ export async function onRequestPost(context: any) {
     const msg = err?.message || String(err);
     return new Response(
       JSON.stringify({
-        error: msg.includes('timeout') ? 'Supabase timed out from Cloudflare edge' : msg,
+        error: msg.includes('timeout') ? 'Auth provider timeout' : 'Auth provider unavailable',
       }),
       { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } }
     );

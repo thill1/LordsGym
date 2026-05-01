@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: false, error: 'Invalid Supabase anon key. Paste the correct key below (from Supabase → Settings → API).' };
         }
         if (msg.includes('invalid_grant') || msg.includes('Invalid login credentials')) {
-          return { success: false, error: 'Wrong email or password. Use lordsgymoutreach@gmail.com (not lordsjimaoutreach) and Admin2026!' };
+          return { success: false, error: 'Wrong email or password. Use the correct admin email and current password.' };
         }
         if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('load failed')) {
           return { success: false, error: 'Network error: could not reach Supabase. Check your connection, try paste anon key below, or verify VITE_SUPABASE_URL.' };

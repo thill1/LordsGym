@@ -32,21 +32,27 @@ describe('fetchGoogleReviews', () => {
   });
 
   it('returns [] when placeId is empty', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ reviews: [] }) });
     const result = await fetchGoogleReviews(SUPABASE_URL, ANON_KEY, '');
     expect(result).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).not.toContain('place_id=');
   });
 
   it('returns [] when placeId is undefined', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ reviews: [] }) });
     const result = await fetchGoogleReviews(SUPABASE_URL, ANON_KEY, undefined);
     expect(result).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).not.toContain('place_id=');
   });
 
   it('returns [] when placeId is whitespace only', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ reviews: [] }) });
     const result = await fetchGoogleReviews(SUPABASE_URL, ANON_KEY, '   ');
     expect(result).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).not.toContain('place_id=');
   });
 
   it('returns [] when response is not ok', async () => {

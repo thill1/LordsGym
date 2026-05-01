@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Testimonial } from '../types';
 import Card from './Card';
-import { DEFAULT_MAX_QUOTE_LENGTH } from '../lib/google-reviews';
+import { MAX_TESTIMONIAL_QUOTE_LENGTH, truncateTestimonialForDisplay } from '../lib/testimonials';
 
-const truncateQuote = (quote: string, maxLen: number = DEFAULT_MAX_QUOTE_LENGTH): string =>
-  quote.length > maxLen ? quote.slice(0, maxLen - 3).trim() + '...' : quote;
+const truncateQuote = (quote: string, maxLen: number = MAX_TESTIMONIAL_QUOTE_LENGTH): string =>
+  truncateTestimonialForDisplay(quote, maxLen);
 
 interface TestimonialsCarouselProps {
   testimonials: Testimonial[];

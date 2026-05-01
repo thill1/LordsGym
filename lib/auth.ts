@@ -1,5 +1,5 @@
 // Authentication utilities using Supabase Auth
-import { supabase, isSupabaseConfigured, getSupabaseUrl, getAnonKey } from './supabase';
+import { supabase, isSupabaseConfigured, getSupabaseUrl, hydrateSupabaseConfigFromServer } from './supabase';
 
 export interface AuthUser {
   id: string;
@@ -8,12 +8,9 @@ export interface AuthUser {
 }
 
 /** Dev-only passwords: work in local dev when Supabase is not configured */
-const DEV_PASSWORDS = ['dev', 'admin123', 'Admin2026!'];
+const DEV_PASSWORDS = ['dev'];
 const isDevMode = () => typeof import.meta !== 'undefined' && !!import.meta.env?.DEV;
 
-/** Admin credentials for production fallback when Supabase unreachable */
-const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
-const ADMIN_PASSWORD = 'Admin2026!';
 const isNetworkError = (msg: string) =>
   /failed to fetch|network|load failed|timeout|522|connection/i.test(msg);
 
@@ -21,14 +18,12 @@ const isNetworkError = (msg: string) =>
 async function signInViaProxy(email: string, password: string): Promise<{ user: AuthUser | null; error: Error | null }> {
   const base = typeof window !== 'undefined' ? window.location.origin : '';
   const url = `${base}/api/auth-login`;
-  const anonKey = getAnonKey();
-  const supabaseUrl = getSupabaseUrl();
-  if (!anonKey) return { user: null, error: new Error('No anon key') };
+  if (!getSupabaseUrl()) return { user: null, error: new Error('Supabase not configured') };
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, supabaseUrl, anonKey }),
+    body: JSON.stringify({ email, password }),
     signal: AbortSignal.timeout(25000),
   });
   const data = await res.json();
@@ -46,13 +41,18 @@ async function signInViaProxy(email: string, password: string): Promise<{ user: 
 
 /**
  * Sign in with email and password.
- * Tries: (1) direct Supabase, (2) proxy via Cloudflare, (3) dev/production fallback when unreachable.
+ * Tries: (1) direct Supabase, (2) proxy via Cloudflare.
  */
 export const signIn = async (email: string, password: string): Promise<{ user: AuthUser | null; error: Error | null }> => {
   const e = (email || '').trim().toLowerCase();
   const p = (password || '').trim();
-  const supabaseOk = isSupabaseConfigured();
+  let supabaseOk = isSupabaseConfigured();
   const isDev = isDevMode();
+
+  if (!supabaseOk && typeof fetch !== 'undefined') {
+    await hydrateSupabaseConfigFromServer();
+    supabaseOk = isSupabaseConfigured();
+  }
 
   // When Supabase is configured: try direct first, then proxy on network error
   if (supabaseOk) {
@@ -73,53 +73,29 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
       };
     };
 
-    const grantFallback = (id: string) => {
-      const fallbackUser: AuthUser = { id, email: e || ADMIN_EMAIL };
-      localStorage.setItem('admin_auth', 'true');
-      localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
-      if (!isDev) localStorage.setItem('admin_network_fallback', 'true');
-      return { user: fallbackUser, error: null };
-    };
-
-    const isInvalidKey = (msg: string) =>
-      /invalid.*api.*key|invalid.*anon|invalid_grant|jwt/i.test(msg.toLowerCase());
-
-    // Fast bypass: when credentials match known admin, try direct with short timeout.
-    // If Supabase unreachable, grant access immediately (~4s) so user gets to dashboard.
-    const isKnownAdmin = e === ADMIN_EMAIL && p === ADMIN_PASSWORD;
-    const devBypassOk = isDev && DEV_PASSWORDS.includes(p);
-    if (isKnownAdmin || devBypassOk) {
-      const BYPASS_TIMEOUT_MS = 4000;
-      try {
-        const result = await Promise.race([
-          tryDirect(),
-          new Promise<{ user: AuthUser | null; error: Error | null }>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), BYPASS_TIMEOUT_MS)
-          ),
-        ]);
-        if (result.user) return result;
-        // Invalid API key + known admin: grant fallback so they can reach dashboard and fix config
-        if (result.error && isKnownAdmin && isInvalidKey(result.error.message)) {
-          return grantFallback('admin-fallback');
-        }
-        if (result.error) return { user: null, error: result.error };
-      } catch (bypassErr: unknown) {
-        const msg = ((bypassErr as Error)?.message || '').toLowerCase();
-        if (msg === 'timeout' || isNetworkError(msg)) {
-          return grantFallback(isKnownAdmin ? 'admin-fallback' : 'local-admin');
-        }
-        throw bypassErr;
-      }
-    }
-
     try {
       const result = await tryDirect();
       if (result.user) return result;
-      if (result.error && isKnownAdmin && isInvalidKey(result.error.message)) {
-        return grantFallback('admin-fallback');
+      if (result.error) {
+        const message = (result.error.message || '').toLowerCase();
+        const isInvalidApiKey = message.includes('invalid api key');
+
+        if (isInvalidApiKey && typeof fetch !== 'undefined') {
+          await hydrateSupabaseConfigFromServer();
+          const retryAfterHydrate = await tryDirect();
+          if (retryAfterHydrate.user) return retryAfterHydrate;
+        }
+
+        if ((isNetworkError(message) || isInvalidApiKey) && typeof fetch !== 'undefined') {
+          try {
+            const proxyResult = await signInViaProxy(e || email, p);
+            if (proxyResult.user) return proxyResult;
+          } catch (_) { /* fall through */ }
+        }
+
+        return { user: null, error: result.error };
       }
-      if (result.error) return { user: null, error: result.error };
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       const msg = (err?.message || '').toLowerCase();
 
@@ -131,32 +107,21 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
         } catch (_) { /* fall through */ }
       }
 
-      // Dev: allow bypass when Supabase unreachable
-      if (isDev && DEV_PASSWORDS.includes(p) && isNetworkError(msg)) {
-        return grantFallback('local-admin');
-      }
-
-      // Production: allow known admin when Supabase unreachable (CRUD may fail)
-      if (!isDev && e === ADMIN_EMAIL && p === ADMIN_PASSWORD && isNetworkError(msg)) {
-        return grantFallback('admin-fallback');
-      }
-
       return { user: null, error: err };
     }
   }
 
-  // When Supabase NOT configured: dev bypass – any email + "dev" or "admin123" for local dev
+  // When Supabase NOT configured: dev bypass – any email + "dev" for local development only
   if (isDev && DEV_PASSWORDS.includes(p)) {
     const fallbackUser: AuthUser = {
       id: 'local-admin',
       email: (email && email.trim()) || 'admin@lordsgym.com'
     };
-    localStorage.setItem('admin_auth', 'true');
     localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
     return { user: fallbackUser, error: null };
   }
 
-  return { user: null, error: new Error('Invalid credentials. Supabase not configured – use "dev", "admin123", or "Admin2026!" in dev.') };
+  return { user: null, error: new Error('Supabase is not configured for authentication.') };
 }
 
 /**
@@ -164,9 +129,7 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
  */
 export const signOut = async (): Promise<{ error: Error | null }> => {
   // Always clear dev/localStorage session so logout works when using dev bypass
-  localStorage.removeItem('admin_auth');
   localStorage.removeItem('admin_user');
-  localStorage.removeItem('admin_network_fallback');
 
   if (!isSupabaseConfigured()) {
     return { error: null };
@@ -185,6 +148,10 @@ export const signOut = async (): Promise<{ error: Error | null }> => {
  */
 export const getCurrentUser = async (): Promise<AuthUser | null> => {
   // When Supabase configured: use Supabase session (required for RLS)
+  if (!isSupabaseConfigured() && typeof fetch !== 'undefined') {
+    await hydrateSupabaseConfigFromServer();
+  }
+
   if (isSupabaseConfigured()) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -195,25 +162,14 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
         needsPasswordChange: !!user.user_metadata?.needs_password_change,
       };
     } catch (error) {
-      // When Supabase times out, honor admin-fallback so user stays logged in
-      const fallback = localStorage.getItem('admin_network_fallback');
-      const userStr = localStorage.getItem('admin_user');
-      if (fallback === 'true' && userStr) {
-        try {
-          return JSON.parse(userStr) as AuthUser;
-        } catch {
-          /* invalid JSON */
-        }
-      }
       console.warn('Error getting current user (non-critical):', error);
       return null;
     }
   }
 
   // When Supabase NOT configured: dev bypass via localStorage
-  const auth = localStorage.getItem('admin_auth');
   const userStr = localStorage.getItem('admin_user');
-  if (auth === 'true' && userStr) {
+  if (userStr) {
     try {
       return JSON.parse(userStr) as AuthUser;
     } catch {
