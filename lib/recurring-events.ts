@@ -309,6 +309,11 @@ const fetchPatternWithExceptions = async (patternId: string): Promise<{
   };
 };
 
+/**
+ * Build effective pattern for sync. Pattern (from calendar_recurring_patterns) is the source of truth.
+ * Template event (first existing calendar_event) is used only as fallback when pattern lacks values.
+ * This ensures edits to the pattern via the Edit modal are reflected when syncing.
+ */
 const buildEffectivePatternDefinition = (
   pattern: RecurringPatternDefinition,
   templateEvent: RecurringTemplateEvent | null
@@ -318,14 +323,14 @@ const buildEffectivePatternDefinition = (
   const tz = pattern.timezone || 'America/Los_Angeles';
   return {
     ...pattern,
-    title: templateEvent.title || pattern.title || 'Recurring Event',
-    description: templateEvent.description ?? pattern.description ?? null,
-    class_type: templateEvent.class_type || pattern.class_type || 'community',
-    instructor_id: templateEvent.instructor_id ?? pattern.instructor_id ?? null,
-    capacity: templateEvent.capacity ?? pattern.capacity ?? null,
-    starts_on: toDateKey(new Date(templateEvent.start_time)),
-    start_time_local: getTimePartFromIsoInZone(templateEvent.start_time, tz),
-    end_time_local: getTimePartFromIsoInZone(templateEvent.end_time, tz),
+    title: (pattern.title && pattern.title.trim()) || templateEvent.title || 'Recurring Event',
+    description: pattern.description ?? templateEvent.description ?? null,
+    class_type: pattern.class_type || templateEvent.class_type || 'community',
+    instructor_id: pattern.instructor_id ?? templateEvent.instructor_id ?? null,
+    capacity: pattern.capacity ?? templateEvent.capacity ?? null,
+    starts_on: pattern.starts_on || toDateKey(new Date(templateEvent.start_time)),
+    start_time_local: pattern.start_time_local || getTimePartFromIsoInZone(templateEvent.start_time, tz),
+    end_time_local: pattern.end_time_local || getTimePartFromIsoInZone(templateEvent.end_time, tz),
   };
 };
 

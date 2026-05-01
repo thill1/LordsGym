@@ -37,7 +37,7 @@
     "fix:cloudflare-deploy": "node --env-file=.env.local scripts/fix-cloudflare-deploy-command.mjs",
     "trigger-cloudflare-deploy": "node --env-file=.env.local scripts/trigger-cloudflare-deploy.js",
     "regression": "node scripts/run-regression.mjs --continue-on-error",
-"verify-push": "node scripts/verify-push.mjs",
+    "verify-push": "node scripts/verify-push.mjs",
     "verify-push:full": "node --env-file=.env.local scripts/verify-push.mjs",
     "test:db-audit": "node --env-file=.env.local scripts/db-audit.mjs",
     "diagnose:supabase": "node --env-file=.env.local scripts/supabase-diagnose.mjs",
@@ -48,9 +48,11 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-        "@tanstack/react-query": "^5.28.0",
+    "@tanstack/react-query": "^5.28.0",
+    "browser-image-compression": "^2.0.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+    "heic2any": "^0.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

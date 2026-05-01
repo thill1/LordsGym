@@ -132,21 +132,6 @@ export const ALL_PRODUCTS: Product[] = [
     category: "Men's Apparel",
     image: getMerchImage('lords-cross-barbell-hoodie.png.jpg')
   },
-  // Women's & Accessories
-  {
-    id: 'w1',
-    title: 'Faith Over Fear Tee',
-    price: 32.00,
-    category: "Women's Apparel",
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'a1',
-    title: 'Scripture Wristbands (3-Pack)',
-    price: 10.00,
-    category: 'Accessories',
-    image: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
-  }
 ];
 
 // Featured products for home page (new arrivals)

@@ -142,30 +142,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = safeGet<Product[] | null>('shop_products', null);
-    // When Supabase is source (incognito/fresh = no localStorage): never use ALL_PRODUCTS
-    // as initial state. Use [] and let Supabase load. Otherwise mobile/failed-fetch shows
-    // stale ALL_PRODUCTS including deleted items.
-    if (isSupabaseConfigured() && (!savedProducts || !Array.isArray(savedProducts) || savedProducts.length === 0)) {
-      return [];
+    // Supabase is always the source of truth when configured.
+    // Never seed from ALL_PRODUCTS constants — that re-inserts products the admin deleted.
+    // Start with [] and let the Supabase fetch on mount populate state.
+    if (isSupabaseConfigured()) return [];
+
+    // No Supabase (local dev without env vars): use localStorage or fall back to constants.
+    const savedProducts = safeGet<Product[] | null>('shop_products_v2', null);
+    if (!savedProducts || !Array.isArray(savedProducts) || savedProducts.length === 0) {
+      return ALL_PRODUCTS;
     }
-    if (!savedProducts || !Array.isArray(savedProducts)) return ALL_PRODUCTS;
-    if (savedProducts.length === 0) return [];
-    // When Supabase is source, respect deletions: never re-add from ALL_PRODUCTS when
-    // we have fewer products (user deleted). Only merge when counts match (update images/titles).
-    if (savedProducts.length === ALL_PRODUCTS.length) {
-      const productMap = new Map(savedProducts.map((p: Product) => [p.id, p]));
-      ALL_PRODUCTS.forEach(newProduct => {
-        const existing = productMap.get(newProduct.id);
-        if (existing) {
-          productMap.set(newProduct.id, { ...existing, image: newProduct.image, title: newProduct.title });
-        } else {
-          productMap.set(newProduct.id, newProduct);
-        }
-      });
-      return Array.from(productMap.values());
-    }
-    // Fewer products = user deleted. Use savedProducts; do NOT re-add from ALL_PRODUCTS.
     return savedProducts;
   });
 
@@ -178,6 +164,64 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Load data from Supabase on mount (if configured)
+  // Load products immediately in a separate effect so they appear ASAP,
+  // not blocked by slower testimonials/Google reviews fetch
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const loadProducts = async () => {
+      const PRODUCTS_FETCH_TIMEOUT_MS = 8000;
+      const fetchProductsOnce = () =>
+        Promise.race<{ data: any; error: any }>([
+          supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          new Promise<{ data: null; error: { message: string } }>((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  data: null,
+                  error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
+                }),
+              PRODUCTS_FETCH_TIMEOUT_MS
+            )
+          )
+        ]);
+
+      let productsResult = await fetchProductsOnce();
+      if (productsResult.error) {
+        console.warn('Products fetch failed, retrying once:', productsResult.error);
+        productsResult = await fetchProductsOnce();
+      }
+
+      const { data: productsData, error: productsError } = productsResult;
+
+      if (productsError) {
+        console.error('Error loading products from Supabase (after retry):', productsError);
+        setProductsLoadFailed(true);
+      } else if (productsData !== null && productsData !== undefined) {
+        productsLoadedFromSupabaseRef.current = true;
+        setProductsLoadFailed(false);
+        const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          category: p.category,
+          image: (p.image as string | null) ?? '',
+          imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
+          comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
+          description: (p.description as string | null) ?? undefined,
+          inventory: (p.inventory as Record<string, number> | null) ?? undefined,
+          featured: (p.featured as boolean | null) ?? false
+        }));
+        setProducts(mapped);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   useEffect(() => {
     const loadFromSupabase = async () => {
       if (!isSupabaseConfigured()) {
@@ -196,7 +240,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Check if localStorage has popup data - if so, preserve it (user's local changes take precedence)
         const savedLocalSettings = localStorage.getItem('site_settings');
         let hasLocalPopupData = false;
-        
+
         if (savedLocalSettings) {
           try {
             const parsed = JSON.parse(savedLocalSettings) as Partial<SiteSettings>;
@@ -349,68 +393,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }));
 
         setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
-
-        // Load products — always use Supabase result (including empty) so admin and store stay in sync.
-        //
-        // Guarded with a timeout + single retry. Without this, a slow/hung response (paused
-        // free-tier project, mobile network, DNS hiccup) leaves `products` empty forever, which
-        // is what made the Home page render `FEATURED_PRODUCTS` constants as fake "live" data.
-        //
-        // KNOWN ISSUE (TODO): `products.image` currently contains base64-encoded image data
-        // for admin-uploaded products instead of Storage URLs. With ~16 rows the full SELECT
-        // returns ~18 MB, which takes 3–30s to download depending on the network. The 30s
-        // timeout below is generous enough to cover slow mobile connections, but the right
-        // fix is to migrate base64 image data out of the products table into Supabase Storage
-        // and store only URLs in the `image` column. Once that's done this can drop to 8s.
-        const PRODUCTS_FETCH_TIMEOUT_MS = 30000;
-        const fetchProductsOnce = () =>
-          Promise.race<{ data: any; error: any }>([
-            supabase
-              .from('products')
-              .select('*')
-              .order('created_at', { ascending: false }),
-            new Promise<{ data: null; error: { message: string } }>((resolve) =>
-              setTimeout(
-                () =>
-                  resolve({
-                    data: null,
-                    error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
-                  }),
-                PRODUCTS_FETCH_TIMEOUT_MS
-              )
-            )
-          ]);
-
-        let productsResult = await fetchProductsOnce();
-        if (productsResult.error) {
-          console.warn('Products fetch failed, retrying once:', productsResult.error);
-          productsResult = await fetchProductsOnce();
-        }
-
-        const { data: productsData, error: productsError } = productsResult;
-
-        if (productsError) {
-          console.error('Error loading products from Supabase (after retry):', productsError);
-          setProductsLoadFailed(true);
-          // Do NOT setProducts here. Keep whatever localStorage-backed initial state we have
-          // so returning visitors still see their cached catalog rather than a blank grid.
-        } else if (productsData !== null && productsData !== undefined) {
-          productsLoadedFromSupabaseRef.current = true;
-          setProductsLoadFailed(false);
-          const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            category: p.category,
-            image: (p.image as string | null) ?? '',
-            imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
-            comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
-            description: (p.description as string | null) ?? undefined,
-            inventory: (p.inventory as Record<string, number> | null) ?? undefined,
-            featured: (p.featured as boolean | null) ?? false
-          }));
-          setProducts(mapped);
-        }
       } catch (error) {
         console.error('Error loading data from Supabase:', error);
         // Fallback to localStorage on error
@@ -500,37 +482,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [testimonials]);
 
   useEffect(() => {
-    safeSet('shop_products', products);
-    // Only upsert to Supabase after we've loaded from Supabase. Otherwise we might push
-    // wrong initial state (e.g. ALL_PRODUCTS) and re-add deleted products.
-    //
-    // ALSO gate on isAuthenticated: anonymous visitors don't have RLS write permission,
-    // so this effect was firing N upserts per page view that all returned 401. Writes
-    // are also performed inside addProduct/updateProduct/deleteProduct directly, so this
-    // bulk re-upsert is only needed (and only succeeds) for an admin session.
-    if (isSupabaseConfigured() && isAuthenticated && !isLoading && productsLoadedFromSupabaseRef.current) {
-      products.forEach(product => {
-        supabase
-          .from('products')
-          .upsert({
-            id: product.id,
-            title: product.title,
-            price: product.price,
-            category: product.category,
-            image: product.image || '',
-            image_coming_soon: product.imageComingSoon ?? false,
-            coming_soon_image: product.comingSoonImage || null,
-            description: product.description || null,
-            inventory: product.inventory ?? null,
-            featured: product.featured ?? false,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'id' })
-          .then(({ error }) => {
-            if (error) console.error('Error saving product to Supabase:', error);
-          });
-      });
-    }
-  }, [products, isLoading, isAuthenticated]);
+    safeSet('shop_products_v2', products);
+    // Supabase writes are handled exclusively by addProduct/updateProduct/deleteProduct
+    // with activity logging. A bulk upsert here was silently overwriting the database
+    // from stale localStorage on every admin session — the source of inventory corruption.
+  }, [products]);
 
   useEffect(() => {
     safeSet('shop_cart', cart);
