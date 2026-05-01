@@ -5,7 +5,7 @@ import Card from '../components/Card';
 import MetaTags from '../components/MetaTags';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { useStore } from '../context/StoreContext';
-import { FEATURED_PRODUCTS, MINDBODY_MEMBERSHIP_URL } from '../constants';
+import { MINDBODY_MEMBERSHIP_URL } from '../constants';
 // ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx
 
 interface HomeProps {
@@ -13,7 +13,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
-  const { homeContent, testimonials, products } = useStore();
+  const { homeContent, testimonials, products, isLoading, productsLoadFailed } = useStore();
 
   const heroHeadline = (homeContent?.hero?.headline || "Train with Purpose. Live with Faith.").replace(/\\n|\n/g, ' ').trim();
   const heroSubheadline = homeContent?.hero?.subheadline || "Our mission is to bring strength and healing to our community through fitness, Christ and service.";
@@ -89,58 +89,91 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             Show your support with our latest gear
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(products.length > 0
-            ? (() => {
-                const featured = products.filter(p => p.featured);
-                const nonFeatured = products.filter(p => !p.featured);
-                // Show all featured products; if fewer than 4 total, fill with non-featured
-                const toShow = featured.length > 0
-                  ? featured.length >= 4
-                    ? featured.slice(0, 8)
-                    : [...featured, ...nonFeatured].slice(0, 4)
-                  : nonFeatured.slice(0, 4);
-                return toShow;
-              })()
-            : FEATURED_PRODUCTS
-          ).map((product) => (
-            <Card key={product.id} className="overflow-hidden group">
-              <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                {product.imageComingSoon || !product.image ? (
-                  product.comingSoonImage ? (
-                    <img
-                      src={product.comingSoonImage}
-                      alt="Coming soon"
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
-                      Coming soon: Lord&apos;s Gym merch
-                    </p>
-                  )
-                ) : (
-                  <img 
-                    src={product.image} 
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                )}
+        {(() => {
+          // Pick which products to feature on the home grid.
+          // IMPORTANT: never fall back to FEATURED_PRODUCTS constants here — that's what
+          // caused the "old placeholder t's" to bleed through as fake live data when the
+          // Supabase fetch was slow or failed. Show a skeleton during load, an empty
+          // state otherwise.
+          const featured = products.filter(p => p.featured);
+          const nonFeatured = products.filter(p => !p.featured);
+          const toShow = featured.length > 0
+            ? featured.length >= 4
+              ? featured.slice(0, 8)
+              : [...featured, ...nonFeatured].slice(0, 4)
+            : nonFeatured.slice(0, 4);
+
+          if (toShow.length === 0 && isLoading) {
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" aria-busy="true" aria-label="Loading new arrivals">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={`skeleton-${i}`} className="overflow-hidden">
+                    <div className="w-full h-64 bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-3/4" />
+                      <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-1/3" />
+                      <div className="h-9 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse w-full" />
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-1">{product.title}</h3>
-                <p className="text-brand-red font-bold text-xl mb-3">${product.price.toFixed(2)}</p>
-                <Button 
-                  variant="brand" 
-                  size="sm"
-                  onClick={() => onNavigate('/shop')}
-                  className="w-full"
-                >
-                  View Product
-                </Button>
+            );
+          }
+
+          if (toShow.length === 0) {
+            return (
+              <div className="text-center py-12">
+                <p className="text-lg text-neutral-600 dark:text-neutral-300 mb-4">
+                  {productsLoadFailed
+                    ? "We couldn't load our latest gear. Please refresh or check back soon."
+                    : "New gear is on the way. Check back soon!"}
+                </p>
               </div>
-            </Card>
-          ))}
-        </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {toShow.map((product) => (
+                <Card key={product.id} className="overflow-hidden group">
+                  <div className="w-full h-64 overflow-hidden bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                    {product.imageComingSoon || !product.image ? (
+                      product.comingSoonImage ? (
+                        <img
+                          src={product.comingSoonImage}
+                          alt="Coming soon"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <p className="text-neutral-500 dark:text-neutral-400 text-center font-bold px-4 text-sm">
+                          Coming soon: Lord&apos;s Gym merch
+                        </p>
+                      )
+                    ) : (
+                      <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg mb-1">{product.title}</h3>
+                    <p className="text-brand-red font-bold text-xl mb-3">${product.price.toFixed(2)}</p>
+                    <Button
+                      variant="brand"
+                      size="sm"
+                      onClick={() => onNavigate('/shop')}
+                      className="w-full"
+                    >
+                      View Product
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          );
+        })()}
         <div className="text-center mt-8">
           <Button 
             variant="outline" 
