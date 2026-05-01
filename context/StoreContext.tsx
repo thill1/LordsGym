@@ -142,39 +142,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
+    // Supabase is always the source of truth when configured.
+    // Never seed from ALL_PRODUCTS constants — that re-inserts products the admin deleted.
+    // Start with [] and let the Supabase fetch on mount populate state.
+    if (isSupabaseConfigured()) return [];
+
+    // No Supabase (local dev without env vars): use localStorage or fall back to constants.
     const savedProducts = safeGet<Product[] | null>('shop_products_v2', null);
-    // When Supabase is source (incognito/fresh = no localStorage): never use ALL_PRODUCTS
-    // as initial state. Use [] and let Supabase load. Otherwise mobile/failed-fetch shows
-    // stale ALL_PRODUCTS including deleted items.
-    if (isSupabaseConfigured() && (!savedProducts || !Array.isArray(savedProducts) || savedProducts.length === 0)) {
-      return [];
+    if (!savedProducts || !Array.isArray(savedProducts) || savedProducts.length === 0) {
+      return ALL_PRODUCTS;
     }
-    if (!savedProducts || !Array.isArray(savedProducts)) return ALL_PRODUCTS;
-    if (savedProducts.length === 0) return [];
-    // When Supabase is source, respect deletions: never re-add from ALL_PRODUCTS when
-    // we have fewer products (user deleted). Only merge when counts match (update images/titles).
-    if (savedProducts.length === ALL_PRODUCTS.length) {
-      const productMap = new Map(savedProducts.map((p: Product) => [p.id, p]));
-      ALL_PRODUCTS.forEach(newProduct => {
-        const existing = productMap.get(newProduct.id);
-        if (existing) {
-          // Special handling for w1 and a1: always use correct images from constants
-          // These had placeholder images that caused confusion; force reset on every load
-          const isSpecialProduct = newProduct.id === 'w1' || newProduct.id === 'a1';
-          productMap.set(newProduct.id, {
-            ...existing,
-            image: newProduct.image,
-            title: newProduct.title,
-            // Clear any placeholder or stale image data for these products
-            ...(isSpecialProduct && { imageComingSoon: false, comingSoonImage: undefined })
-          });
-        } else {
-          productMap.set(newProduct.id, newProduct);
-        }
-      });
-      return Array.from(productMap.values());
-    }
-    // Fewer products = user deleted. Use savedProducts; do NOT re-add from ALL_PRODUCTS.
     return savedProducts;
   });
 
