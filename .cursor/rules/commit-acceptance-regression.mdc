@@ -1,0 +1,63 @@
+---
+description: Significant commits require acceptance criteria; pass-or-rollback; weekly regression queue
+alwaysApply: true
+---
+
+# Commit Acceptance Criteria and Regression Testing
+
+**This process is mandatory for significant commits. Changes require user approval.**
+
+## 1. Acceptance Criteria on Significant Commits
+
+**Significant commits** include: new features, UI changes, database migrations, admin tools, API changes, or anything that affects user-facing or system behavior.
+
+Before committing, document **acceptance criteria** in one of:
+
+- **Commit message body** (after blank line, as bullets or checklist)
+- **PR description** (if using PRs)
+- **docs/ACCEPTANCE_*.md** linked from the commit
+
+Format:
+
+```markdown
+## Acceptance Criteria
+- [ ] Criterion 1 (testable)
+- [ ] Criterion 2 (testable)
+```
+
+Each criterion must be **testable** (functional, UI, or database test). If no automated test exists, add a manual test step and add it to the regression queue.
+
+## 2. Pass or Roll Back
+
+- **All acceptance criteria must pass** before considering the commit complete.
+- Run tests locally before push. After push, verify the deployment workflow succeeds.
+- If acceptance criteria fail **after** deployment:
+  1. **Do not** leave production broken.
+  2. **Roll back** (revert the commit or deploy previous SHA).
+  3. Fix locally, re-test, then redeploy.
+- Do not report a deploy as successful until acceptance criteria pass in production.
+
+## 3. Regression Queue
+
+All acceptance tests (unit, E2E, DB, functional) that validate significant behavior must be **persisted in the regression queue** for weekly runs.
+
+- **Queue file:** `tests/regression-queue.json`
+- **When to add:** When merging a significant commit, add each new or updated test to the queue.
+- **Weekly run:** Sunday night (see `.github/workflows/regression-weekly.yml`).
+- If the weekly run fails, treat it as a regression; investigate and fix or revert.
+
+## 4. Adding to the Regression Queue
+
+Edit `tests/regression-queue.json` to add entries:
+
+```json
+{
+  "id": "unique-id",
+  "name": "Human-readable name",
+  "type": "unit|e2e|db|functional",
+  "command": "npm run test:store",
+  "source": "Brief description of feature/commit"
+}
+```
+
+Run `npm run regression` locally to validate the queue. See `docs/ACCEPTANCE_AND_REGRESSION.md` for full process.

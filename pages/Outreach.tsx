@@ -1,31 +1,40 @@
-
 import React from 'react';
 import Section from '../components/Section';
 import Button from '../components/Button';
 import { SQUARE_DONATION_LINKS, getDonationUrl } from '../constants';
+import { useStore } from '../context/StoreContext';
 
-// Helper function to get outreach image path
+// Helper function to get outreach image path (fallback)
 const getOutreachImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
   return `${base}media/outreach/${filename}`;
 };
 
-// Helper function to get hero image path
+// Helper function to get hero image path (fallback)
 const getHeroImage = (filename: string) => {
   const base = import.meta.env.BASE_URL || '/';
   return `${base}media/hero/${filename}`;
 };
 
-const IMAGES = {
-  hero: getHeroImage('hero-background.jpg.jpg'), // Hero background
-  trailer: getOutreachImage('outreach-trailer.jpg.jpeg'), // Trailer/Distribution vibe
-  outreach: getOutreachImage('outreach-walking.jpg.JPG'), // Walking to tents
-  prayer: getOutreachImage('outreach-prayer.jpg.jpeg'), // Prayer Circle
-  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'), // Brotherhood/Support
-  community: getOutreachImage('outreach-community.jpg.jpeg') // Community photo (bottom section)
+const DEFAULT_IMAGES = {
+  hero: getHeroImage('hero-background.jpg.jpg'),
+  trailer: getOutreachImage('outreach-trailer.jpg.jpeg'),
+  outreach: getOutreachImage('outreach-walking.jpg.JPG'),
+  prayer: getOutreachImage('outreach-prayer.jpg.jpeg'),
+  hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'),
+  community: getOutreachImage('outreach-community.jpg.jpeg'),
 };
 
 const Outreach: React.FC = () => {
+  const { outreachContent } = useStore();
+  const IMAGES = {
+    hero: outreachContent?.hero || DEFAULT_IMAGES.hero,
+    trailer: outreachContent?.trailer || DEFAULT_IMAGES.trailer,
+    outreach: outreachContent?.outreach || DEFAULT_IMAGES.outreach,
+    prayer: outreachContent?.prayer || DEFAULT_IMAGES.prayer,
+    hug: outreachContent?.hug || DEFAULT_IMAGES.hug,
+    community: outreachContent?.community || DEFAULT_IMAGES.community,
+  };
   return (
     <>
       {/* Hero */}
@@ -50,35 +59,31 @@ const Outreach: React.FC = () => {
         </div>
       </Section>
 
-      {/* Photo Grid (Representing the real-world impact) */}
+      {/* Photo Grid (Representing the real-world impact) — numbered to match Admin Outreach editor */}
       <Section className="py-20 bg-neutral-100 dark:bg-neutral-900">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Photo 1: Community Outreach */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.trailer} alt="Community Outreach" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.trailer} alt="Outreach photo 2" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Community Outreach</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 2</p>
                 </div>
             </div>
-            {/* Photo 2: Cal Trans - Litter Pickup */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.outreach} alt="Cal Trans - Litter Pickup" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.outreach} alt="Outreach photo 3" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Cal Trans - Litter Pickup</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 3</p>
                 </div>
             </div>
-            {/* Photo 3: 12 Step - Self Help */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.prayer} alt="12 Step - Self Help" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.prayer} alt="Outreach photo 4" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">12 Step - Self Help</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 4</p>
                 </div>
             </div>
-             {/* Photo 4: Bible Study */}
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.hug} alt="Bible Study" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.hug} alt="Outreach photo 5" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
-                    <p className="text-white font-bold uppercase tracking-widest text-sm">Bible Study</p>
+                    <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 5</p>
                 </div>
             </div>
         </div>
@@ -146,7 +151,7 @@ const Outreach: React.FC = () => {
                </ul>
             </div>
             <div className="relative h-full min-h-[400px] rounded-lg overflow-hidden border border-white/10 shadow-2xl group">
-               <img src={IMAGES.community} alt="Community" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-60 hover:opacity-80 transition-all duration-700" />
+               <img src={IMAGES.community} alt="Outreach photo 6" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-60 hover:opacity-80 transition-all duration-700" />
                <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal to-transparent"></div>
                <div className="absolute bottom-8 left-8 right-8">
                   <p className="text-xl italic font-serif text-white mb-4">

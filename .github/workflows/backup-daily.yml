@@ -1,0 +1,122 @@
+# End-of-day backup: Supabase (schema + calendar data) → Cloudflare R2
+# Schedule: daily at 07:00 UTC (midnight US Pacific)
+# Requires: GitHub secrets (Supabase + R2); see docs/BACKUP_DAILY_CRON.md
+
+name: Daily backup (Supabase → R2)
+
+on:
+  schedule:
+    # 07:00 UTC = midnight US Pacific (end of day)
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_r2_upload:
+        description: 'Skip uploading to R2 (only run exports)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  backup:
+    name: Backup to R2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Require backup secrets
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "::error::VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required. Add them in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "Supabase secrets present."
+
+      - name: Create .env.local for backup scripts
+        run: |
+          echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env.local
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.local
+
+      - name: Export schema backup
+        run: npm run backup:schema
+
+      - name: Export calendar backup
+        run: node --env-file=.env.local scripts/export-calendar-backup.mjs
+
+      - name: Set backup date
+        id: date
+        run: echo "date=$(date -u +%Y%m%d)" >> $GITHUB_OUTPUT
+
+      - name: Require R2 secrets (for upload)
+        if: ${{ !inputs.skip_r2_upload }}
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ] || [ -z "${{ secrets.R2_BACKUP_BUCKET }}" ] || [ -z "${{ secrets.R2_ACCESS_KEY_ID }}" ] || [ -z "${{ secrets.R2_SECRET_ACCESS_KEY }}" ]; then
+            echo "::error::R2 backup requires: CLOUDFLARE_ACCOUNT_ID, R2_BACKUP_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY. See docs/BACKUP_DAILY_CRON.md"
+            exit 1
+          fi
+          echo "R2 secrets present."
+
+      - name: Configure AWS CLI for Cloudflare R2
+        if: ${{ !inputs.skip_r2_upload }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          mkdir -p ~/.aws
+          cat >> ~/.aws/config << 'EOF'
+          [default]
+          region = auto
+          EOF
+
+      - name: Upload schema backup to R2
+        if: ${{ !inputs.skip_r2_upload }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: |
+          aws s3 cp backup/ "s3://${{ secrets.R2_BACKUP_BUCKET }}/backups/${{ steps.date.outputs.date }}/schema/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --recursive \
+            --only-show-errors
+
+      - name: Upload calendar backup to R2
+        if: ${{ !inputs.skip_r2_upload }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: |
+          aws s3 cp scripts/calendar-backup/ "s3://${{ secrets.R2_BACKUP_BUCKET }}/backups/${{ steps.date.outputs.date }}/calendar/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --recursive \
+            --only-show-errors
+
+      - name: Summary
+        run: |
+          echo "## Daily backup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Path |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Date | ${{ steps.date.outputs.date }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Schema | \`backup/\` → R2 \`backups/${{ steps.date.outputs.date }}/schema/\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Calendar | \`scripts/calendar-backup/\` → R2 \`backups/${{ steps.date.outputs.date }}/calendar/\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.skip_r2_upload }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "R2 upload was skipped (workflow input)." >> $GITHUB_STEP_SUMMARY
+          fi

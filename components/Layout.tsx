@@ -4,7 +4,7 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import CartDrawer from "./CartDrawer";
 import PopupModalManager from "./PopupModalManager";
-import { NAV_ITEMS } from "../constants";
+import { NAV_ITEMS, MINDBODY_MEMBERSHIP_URL } from "../constants";
 
 interface LayoutProps {
   currentPath: string;
@@ -69,7 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                     ? 'text-brand-red'
                     : isScrolled || isMobileMenuOpen
                       ? 'text-brand-charcoal dark:text-white'
-                      : 'text-brand-charcoal dark:text-white'
+                      : 'text-white'
                 }`}
                 >
                 {item.label}
@@ -81,11 +81,11 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
           {/* Desktop Right Side Controls - only visible at xl+ via CSS */}
           <div className="desktop-header-controls hidden xl:flex items-center gap-4 flex-shrink-0">
-            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}>
+            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}>
               <ThemeToggle />
             </div>
             <button 
-                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           {/* Mobile Menu Controls - Visible below xl (1280px) */}
           <div className="xl:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
              <button 
-                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'}`}
+                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -116,7 +116,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 </span>
               )}
             </button>
-            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-brand-charcoal dark:text-white'} flex-shrink-0`}>
+            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'} flex-shrink-0`}>
               <ThemeToggle />
             </div>
              <button 
@@ -167,12 +167,15 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                   {item.label}
                 </button>
               ))}
-              <button
-                onClick={() => handleNavClick('/membership')}
+              <a
+                href={MINDBODY_MEMBERSHIP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="w-full mt-3 sm:mt-4 inline-flex items-center justify-center font-bold tracking-wider uppercase text-sm px-6 py-3.5 sm:py-4 rounded bg-brand-red text-white border border-brand-red shadow-lg hover:bg-brand-charcoal hover:border-brand-charcoal active:scale-95 touch-manipulation min-h-[48px]"
               >
                 Join Now
-              </button>
+              </a>
             </nav>
           </div>
         </div>

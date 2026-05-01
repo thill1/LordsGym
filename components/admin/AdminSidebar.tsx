@@ -18,6 +18,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'home', label: 'Home Page', icon: '🏠' },
+    { id: 'outreach', label: 'Outreach Page', icon: '🤝' },
     { id: 'pages', label: 'Page Content', icon: '📄' },
     { id: 'testimonials', label: 'Testimonials', icon: '💬' },
     { id: 'store', label: 'Store / Merch', icon: '🛍️' },
@@ -61,7 +62,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`w-full text-left p-3 rounded transition-colors flex items-center gap-3 ${
+              className={`w-full text-left p-3 rounded transition-colors flex items-center gap-3 text-white ${
                 activeTab === tab.id 
                   ? 'bg-brand-red' 
                   : 'hover:bg-white/10'

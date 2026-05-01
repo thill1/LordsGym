@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { TESTIMONIALS, PROGRAMS, APP_NAME, ALL_PRODUCTS } from '../constants';
-import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig } from '../types';
+import { Testimonial, Program, SiteSettings, HomePageContent, CartItem, Product, PopupModalConfig, OutreachPageImages } from '../types';
 import { supabase, isSupabaseConfigured, SUPABASE_URL, getAnonKey } from '../lib/supabase';
 import { fetchGoogleReviews, DEFAULT_MAX_QUOTE_LENGTH, GoogleReviewTestimonial } from '../lib/google-reviews';
 import { runMigrations } from '../lib/migration';
@@ -33,7 +33,7 @@ const getMediaImage = (filename: string) => {
 // Sanitize hero headline: remove \n (bug) so it displays on one line
 const sanitizeHeadline = (s: string): string => (s || '').replace(/\\n|\n/g, ' ').trim();
 
-const MAX_TESTIMONIAL_QUOTE_LENGTH = 200;
+const MAX_TESTIMONIAL_QUOTE_LENGTH = 300;
 const truncateQuote = (s: string): string =>
   (s || '').slice(0, MAX_TESTIMONIAL_QUOTE_LENGTH).trim();
 
@@ -57,14 +57,23 @@ const DEFAULT_HOME_CONTENT: HomePageContent = {
   }
 };
 
+const OUTREACH_STORAGE_KEY = 'outreach_content_v1';
+
 interface StoreContextType {
   // Data
   settings: SiteSettings;
   homeContent: HomePageContent;
+  outreachContent: OutreachPageImages;
   testimonials: Testimonial[];
   programs: Program[];
   products: Product[];
-  
+  // True while the initial Supabase load is in flight; consumers can render
+  // skeletons instead of stale-constants fallbacks.
+  isLoading: boolean;
+  // True if the most recent products fetch failed (timeout or error).
+  // Lets the UI show an explicit empty/error state instead of fake placeholders.
+  productsLoadFailed: boolean;
+
   // Cart Logic
   cart: CartItem[];
   isCartOpen: boolean;
@@ -80,6 +89,7 @@ interface StoreContextType {
   // Actions
   updateSettings: (settings: SiteSettings) => void;
   updateHomeContent: (content: HomePageContent) => void;
+  updateOutreachContent: (content: OutreachPageImages) => void;
   addTestimonial: (t: Testimonial) => void;
   updateTestimonial: (id: number, t: Partial<Testimonial>) => void;
   deleteTestimonial: (id: number) => void;
@@ -98,6 +108,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [migrationRun, setMigrationRun] = useState(false);
+  const [productsLoadFailed, setProductsLoadFailed] = useState(false);
   const productsLoadedFromSupabaseRef = useRef(false);
 
   // Load from LocalStorage or use Defaults (fallback) — safe for quota/private mode
@@ -108,6 +119,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...parsed,
       popupModals: Array.isArray(parsed?.popupModals) ? parsed.popupModals : []
     };
+  });
+
+  const [outreachContent, setOutreachContent] = useState<OutreachPageImages>(() => {
+    return safeGet<OutreachPageImages>(OUTREACH_STORAGE_KEY, {});
   });
 
   const [homeContent, setHomeContent] = useState<HomePageContent>(() => {
@@ -266,6 +281,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
         }
 
+        // Load outreach content
+        const { data: outreachData } = await supabase
+          .from('outreach_content')
+          .select('images')
+          .eq('id', 'default')
+          .single();
+
+        if (outreachData?.images && typeof outreachData.images === 'object') {
+          setOutreachContent(outreachData.images as OutreachPageImages);
+        }
+
         // Load testimonials - Supabase is source of truth when configured (prevents data loss across devices)
         const { data: testimonialsData, error: testimonialsErr } = await supabase
           .from('testimonials')
@@ -324,25 +350,64 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setTestimonials([...manualTestimonials, ...googleAsTestimonials]);
 
-        // Load products — always use Supabase result (including empty) so admin and store stay in sync
-        const { data: productsData } = await supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false });
+        // Load products — always use Supabase result (including empty) so admin and store stay in sync.
+        //
+        // Guarded with a timeout + single retry. Without this, a slow/hung response (paused
+        // free-tier project, mobile network, DNS hiccup) leaves `products` empty forever, which
+        // is what made the Home page render `FEATURED_PRODUCTS` constants as fake "live" data.
+        //
+        // KNOWN ISSUE (TODO): `products.image` currently contains base64-encoded image data
+        // for admin-uploaded products instead of Storage URLs. With ~16 rows the full SELECT
+        // returns ~18 MB, which takes 3–30s to download depending on the network. The 30s
+        // timeout below is generous enough to cover slow mobile connections, but the right
+        // fix is to migrate base64 image data out of the products table into Supabase Storage
+        // and store only URLs in the `image` column. Once that's done this can drop to 8s.
+        const PRODUCTS_FETCH_TIMEOUT_MS = 30000;
+        const fetchProductsOnce = () =>
+          Promise.race<{ data: any; error: any }>([
+            supabase
+              .from('products')
+              .select('*')
+              .order('created_at', { ascending: false }),
+            new Promise<{ data: null; error: { message: string } }>((resolve) =>
+              setTimeout(
+                () =>
+                  resolve({
+                    data: null,
+                    error: { message: `products fetch timed out after ${PRODUCTS_FETCH_TIMEOUT_MS}ms` }
+                  }),
+                PRODUCTS_FETCH_TIMEOUT_MS
+              )
+            )
+          ]);
 
-        if (productsData !== null && productsData !== undefined) {
+        let productsResult = await fetchProductsOnce();
+        if (productsResult.error) {
+          console.warn('Products fetch failed, retrying once:', productsResult.error);
+          productsResult = await fetchProductsOnce();
+        }
+
+        const { data: productsData, error: productsError } = productsResult;
+
+        if (productsError) {
+          console.error('Error loading products from Supabase (after retry):', productsError);
+          setProductsLoadFailed(true);
+          // Do NOT setProducts here. Keep whatever localStorage-backed initial state we have
+          // so returning visitors still see their cached catalog rather than a blank grid.
+        } else if (productsData !== null && productsData !== undefined) {
           productsLoadedFromSupabaseRef.current = true;
-          const mapped = productsData.map(p => ({
+          setProductsLoadFailed(false);
+          const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
             id: p.id,
             title: p.title,
             price: p.price,
             category: p.category,
-            image: p.image ?? '',
-            imageComingSoon: p.image_coming_soon ?? false,
-            comingSoonImage: (p as { coming_soon_image?: string | null }).coming_soon_image ?? undefined,
-            description: (p as { description?: string | null }).description ?? undefined,
-            inventory: (p as { inventory?: Record<string, number> | null }).inventory ?? undefined,
-            featured: (p as { featured?: boolean | null }).featured ?? false
+            image: (p.image as string | null) ?? '',
+            imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
+            comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
+            description: (p.description as string | null) ?? undefined,
+            inventory: (p.inventory as Record<string, number> | null) ?? undefined,
+            featured: (p.featured as boolean | null) ?? false
           }));
           setProducts(mapped);
         }
@@ -410,37 +475,40 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [homeContent, isLoading]);
 
   useEffect(() => {
+    safeSet(OUTREACH_STORAGE_KEY, outreachContent);
+
+    if (isSupabaseConfigured() && !isLoading) {
+      supabase
+        .from('outreach_content')
+        .upsert({
+          id: 'default',
+          images: outreachContent,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (error) console.error('Error saving outreach content to Supabase:', error);
+        });
+    }
+  }, [outreachContent, isLoading]);
+
+  useEffect(() => {
+    // Only persist manual testimonials (numeric IDs) to localStorage as backup.
+    // Supabase writes are handled individually in addTestimonial / updateTestimonial / deleteTestimonial.
+    // Do NOT batch-upsert here: it would silently overwrite Supabase with truncated quotes on every load.
     const manualOnly = testimonials.filter((t): t is Testimonial & { id: number } => typeof t.id === 'number');
     safeSet('site_testimonials', manualOnly);
-
-    if (isSupabaseConfigured() && !isLoading && manualOnly.length > 0) {
-      (async () => {
-        for (const t of manualOnly) {
-          const { error } = await supabase
-            .from('testimonials')
-            .upsert(
-              {
-                id: t.id,
-                name: t.name,
-                role: t.role,
-                quote: truncateQuote(t.quote),
-                updated_at: new Date().toISOString()
-              },
-              { onConflict: 'id', ignoreDuplicates: false }
-            );
-          if (error) {
-            console.error('Error syncing testimonial to Supabase:', error);
-          }
-        }
-      })();
-    }
-  }, [testimonials, isLoading]);
+  }, [testimonials]);
 
   useEffect(() => {
     safeSet('shop_products', products);
     // Only upsert to Supabase after we've loaded from Supabase. Otherwise we might push
     // wrong initial state (e.g. ALL_PRODUCTS) and re-add deleted products.
-    if (isSupabaseConfigured() && !isLoading && productsLoadedFromSupabaseRef.current) {
+    //
+    // ALSO gate on isAuthenticated: anonymous visitors don't have RLS write permission,
+    // so this effect was firing N upserts per page view that all returned 401. Writes
+    // are also performed inside addProduct/updateProduct/deleteProduct directly, so this
+    // bulk re-upsert is only needed (and only succeeds) for an admin session.
+    if (isSupabaseConfigured() && isAuthenticated && !isLoading && productsLoadedFromSupabaseRef.current) {
       products.forEach(product => {
         supabase
           .from('products')
@@ -462,7 +530,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
       });
     }
-  }, [products, isLoading]);
+  }, [products, isLoading, isAuthenticated]);
 
   useEffect(() => {
     safeSet('shop_cart', cart);
@@ -512,6 +580,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           id: 'default',
           hero: cleaned.hero,
           values: cleaned.values,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+    }
+  };
+
+  const updateOutreachContent = async (newContent: OutreachPageImages) => {
+    setOutreachContent(newContent);
+
+    if (isSupabaseConfigured()) {
+      await supabase
+        .from('outreach_content')
+        .upsert({
+          id: 'default',
+          images: newContent,
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
     }
@@ -571,7 +653,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (isSupabaseConfigured() && updatedTestimonial) {
       const quoteToSave = truncateQuote(updatedTestimonial.quote);
-      await supabase
+      const { error } = await supabase
         .from('testimonials')
         .update({
           name: updatedTestimonial.name,
@@ -580,17 +662,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           updated_at: new Date().toISOString()
         })
         .eq('id', id);
+      if (error) {
+        console.error('Error updating testimonial in Supabase:', error);
+        throw error;
+      }
     }
   };
 
   const deleteTestimonial = async (id: number) => {
     setTestimonials(prev => prev.filter(t => t.id !== id));
-    
+
     if (isSupabaseConfigured()) {
-      await supabase
+      const { error } = await supabase
         .from('testimonials')
         .delete()
         .eq('id', id);
+      if (error) {
+        console.error('Error deleting testimonial from Supabase:', error);
+        throw error;
+      }
     }
   };
   
@@ -690,9 +780,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <StoreContext.Provider value={{
       settings,
       homeContent,
+      outreachContent,
       testimonials,
       programs,
       products,
+      isLoading,
+      productsLoadFailed,
       cart,
       isCartOpen,
       openCart,
@@ -705,6 +798,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       cartCount,
       updateSettings,
       updateHomeContent,
+      updateOutreachContent,
       addTestimonial,
       updateTestimonial,
       deleteTestimonial,
@@ -716,7 +810,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       logout
     }}>
       {children}
-    </StoreContext.Provider>
+    </StoreContext.Provider
+>
   );
 };
 

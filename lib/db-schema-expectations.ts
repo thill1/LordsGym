@@ -5,6 +5,7 @@
 export const EXPECTED_TABLES = [
   'settings',
   'home_content',
+  'outreach_content',
   'products',
   'testimonials',
   'pages',
@@ -30,6 +31,7 @@ export type ExpectedTable = (typeof EXPECTED_TABLES)[number];
 export const ANON_READABLE_TABLES: ExpectedTable[] = [
   'settings',
   'home_content',
+  'outreach_content',
   'products',
   'testimonials',
   'pages',
@@ -45,6 +47,7 @@ export const ANON_READABLE_TABLES: ExpectedTable[] = [
 export const EXPECTED_COLUMNS: Partial<Record<ExpectedTable, string[]>> = {
   settings: ['id', 'site_name', 'contact_email', 'contact_phone', 'address', 'announcement_bar', 'popup_modals'],
   home_content: ['id', 'hero', 'values'],
+  outreach_content: ['id', 'images', 'created_at', 'updated_at'],
   products: ['id', 'title', 'price', 'category', 'image', 'description', 'featured', 'image_coming_soon', 'coming_soon_image'],
   testimonials: ['id', 'name', 'role', 'quote', 'source', 'external_id'],
   pages: ['id', 'slug', 'title', 'content', 'published'],

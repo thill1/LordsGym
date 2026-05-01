@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "description": "Regression tests run weekly (Sunday night). Add tests here when merging significant commits.",
+  "tests": [
+    {
+      "id": "unit-vitest",
+      "name": "Unit tests (Vitest)",
+      "type": "unit",
+      "command": "npm run test",
+      "source": "Core unit tests"
+    },
+    {
+      "id": "unit-store",
+      "name": "Store and cart logic",
+      "type": "unit",
+      "command": "npm run test:store",
+      "source": "Store products and cart operations"
+    },
+    {
+      "id": "e2e-smoke",
+      "name": "E2E smoke tests",
+      "type": "e2e",
+      "command": "npm run test:e2e",
+      "source": "Production smoke tests (home, shop, outreach, membership, calendar)"
+    },
+    {
+      "id": "db-audit",
+      "name": "Database schema audit",
+      "type": "db",
+      "command": "npm run test:db-audit",
+      "source": "Schema expectations vs Supabase",
+      "optional": true
+    },
+    {
+      "id": "e2e-admin-media-outreach",
+      "name": "Admin Media Library and Outreach E2E",
+      "type": "e2e",
+      "command": "node --env-file=.env.local scripts/run-e2e-with-env.mjs e2e/admin-media-outreach.spec.ts",
+      "source": "Media Library load/upload, Outreach editor load",
+      "optional": true
+    }
+  ]
+}

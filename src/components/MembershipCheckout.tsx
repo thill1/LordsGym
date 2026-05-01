@@ -1,7 +1,7 @@
 // Membership Checkout - Redirects to Mindbody CRM
 // Lords Gym uses Mindbody for membership management
 
-const MINDBODY_URL = 'https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1';
+import { MINDBODY_MEMBERSHIP_URL } from '../../constants';
 
 interface MembershipOption {
   id: string;
@@ -64,7 +64,7 @@ const membershipOptions: MembershipOption[] = [
 export default function MembershipCheckout() {
   const handleJoin = () => {
     // Redirect to Mindbody CRM for membership management
-    window.open(MINDBODY_URL, '_blank');
+    window.open(MINDBODY_MEMBERSHIP_URL, '_blank');
   };
 
   return (
