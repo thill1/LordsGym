@@ -116,20 +116,20 @@ function displayInstructions() {
   console.log('='.repeat(70) + '\n');
 
   console.log('1️⃣  RUN DATABASE MIGRATION');
-  console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/sql/new');
+  console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/sql/new');
   console.log('   - Copy the contents of: supabase/migrations/003_complete_schema.sql');
   console.log('   - Paste into SQL Editor');
   console.log('   - Click "Run" (or press Ctrl+Enter)\n');
 
   console.log('2️⃣  CREATE STORAGE BUCKET');
-  console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets');
+  console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets');
   console.log('   - Click "New bucket"');
   console.log('   - Name: media');
   console.log('   - Check "Public bucket"');
   console.log('   - Click "Create bucket"\n');
 
   console.log('3️⃣  CREATE ADMIN USER');
-  console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users');
+  console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users');
   console.log('   - Click "Add user" > "Create new user"');
   console.log('   - Enter email and password');
   console.log('   - Click "Advanced" and add metadata:');

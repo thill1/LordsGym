@@ -33,11 +33,11 @@ Write-Host ""
 
 Write-Host "💡 RECOMMENDED APPROACH:" -ForegroundColor Cyan
 Write-Host "   1. Get Service Role Key from Supabase dashboard:" -ForegroundColor White
-Write-Host "      https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api" -ForegroundColor Gray
+Write-Host "      https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api" -ForegroundColor Gray
 Write-Host "   2. Add to .env.local: SUPABASE_SERVICE_ROLE_KEY=..." -ForegroundColor White
 Write-Host "   3. Run: node scripts/complete-supabase-with-service-key.js" -ForegroundColor White
 Write-Host ""
 
 Write-Host "OR complete manually (5 minutes):" -ForegroundColor Cyan
-Write-Host "   1. Storage: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets" -ForegroundColor White
-Write-Host "   2. Users: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users" -ForegroundColor White
+Write-Host "   1. Storage: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets" -ForegroundColor White
+Write-Host "   2. Users: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users" -ForegroundColor White

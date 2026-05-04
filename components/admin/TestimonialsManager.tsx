@@ -16,7 +16,7 @@ const TestimonialsManager: React.FC = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
-  const [formData, setFormData] = useState({ name: '', role: '', quote: '' });
+  const [formData, setFormData] = useState({ name: '', role: '', quote: '', published: true });
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; id: number | null }>({ isOpen: false, id: null });
 
   // Import from Google
@@ -33,11 +33,12 @@ const TestimonialsManager: React.FC = () => {
       setFormData({
         name: testimonial.name,
         role: testimonial.role,
-        quote
+        quote,
+        published: testimonial.published !== false
       });
     } else {
       setEditingTestimonial(null);
-      setFormData({ name: '', role: '', quote: '' });
+      setFormData({ name: '', role: '', quote: '', published: true });
     }
     setIsModalOpen(true);
   };
@@ -45,7 +46,7 @@ const TestimonialsManager: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingTestimonial(null);
-    setFormData({ name: '', role: '', quote: '' });
+    setFormData({ name: '', role: '', quote: '', published: true });
   };
 
   const handleSave = async () => {
@@ -64,7 +65,8 @@ const TestimonialsManager: React.FC = () => {
         await updateTestimonial(editingTestimonial.id, {
           name: formData.name.trim(),
           role: formData.role.trim(),
-          quote
+          quote,
+          published: formData.published
         });
         await logTestimonialAction('update', editingTestimonial.id, formData.name);
         showSuccess('Testimonial updated successfully');
@@ -74,7 +76,8 @@ const TestimonialsManager: React.FC = () => {
           id: Date.now(),
           name: formData.name.trim(),
           role: formData.role.trim(),
-          quote
+          quote,
+          published: formData.published
         };
         await addTestimonial(newTestimonial);
         await logTestimonialAction('create', newTestimonial.id, formData.name);
@@ -155,7 +158,8 @@ const TestimonialsManager: React.FC = () => {
           role: r.role,
           quote: r.quote,
           source: 'google',
-          externalId: r.id
+          externalId: r.id,
+          published: false   // admin must explicitly publish after review
         });
         await logTestimonialAction('create', r.id, r.name);
       }
@@ -167,6 +171,15 @@ const TestimonialsManager: React.FC = () => {
       console.error('Error importing reviews:', error);
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleTogglePublish = async (id: number, currentlyPublished: boolean) => {
+    try {
+      await updateTestimonial(id, { published: !currentlyPublished });
+      showSuccess(currentlyPublished ? 'Review moved to drafts' : 'Review published to homepage');
+    } catch {
+      showError('Failed to update publish status');
     }
   };
 
@@ -183,7 +196,7 @@ const TestimonialsManager: React.FC = () => {
       <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-sm p-6 border border-neutral-200 dark:border-neutral-700">
         <h2 className="text-lg font-bold dark:text-white mb-3">Import from Google Reviews</h2>
         <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-          Fetch 5-star reviews (truncated to 300 characters) and save selected ones as permanent testimonials.
+          Fetch 5-star Google reviews and import as drafts. Edit if needed, then publish to the homepage carousel.
         </p>
         <Button
           onClick={handleFetchReviews}
@@ -279,12 +292,13 @@ const TestimonialsManager: React.FC = () => {
                   <th className="p-4 font-bold text-sm dark:text-white">Name</th>
                   <th className="p-4 font-bold text-sm dark:text-white">Role</th>
                   <th className="p-4 font-bold text-sm dark:text-white">Quote</th>
+                  <th className="p-4 font-bold text-sm dark:text-white">Status</th>
                   <th className="p-4 font-bold text-sm text-right dark:text-white">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
                 {manualTestimonials.map((testimonial) => (
-                  <tr key={testimonial.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
+                  <tr key={testimonial.id} className={`hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors ${testimonial.published === false ? 'bg-amber-50/40 dark:bg-amber-900/10' : ''}`}>
                     <td className="p-4 font-bold text-sm dark:text-white">{testimonial.name}</td>
                     <td className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
                       {testimonial.source === 'google' && (
@@ -295,7 +309,26 @@ const TestimonialsManager: React.FC = () => {
                     <td className="p-4 text-sm text-neutral-600 dark:text-neutral-300 max-w-md">
                       <p className="line-clamp-2">{testimonial.quote}</p>
                     </td>
-                    <td className="p-4 text-right space-x-3">
+                    <td className="p-4">
+                      {testimonial.published === false ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+                          Draft
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                          Live
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-right space-x-3 whitespace-nowrap">
+                      <button
+                        onClick={() => handleTogglePublish(testimonial.id as number, testimonial.published !== false)}
+                        className={`font-bold text-xs uppercase transition-colors ${testimonial.published === false ? 'text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200' : 'text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200'}`}
+                      >
+                        {testimonial.published === false ? 'Publish' : 'Unpublish'}
+                      </button>
                       <button
                         onClick={() => openModal(testimonial)}
                         className="text-brand-charcoal dark:text-white font-bold text-xs uppercase hover:text-brand-red transition-colors"
@@ -360,13 +393,27 @@ const TestimonialsManager: React.FC = () => {
                 />
                 <p className="text-xs text-neutral-500 mt-1">{formData.quote.length}/{MAX_TESTIMONIAL_QUOTE_LENGTH}</p>
               </div>
+              <div className="flex items-center gap-3 pt-2">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={formData.published}
+                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                  />
+                  <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:bg-green-500" />
+                </label>
+                <span className="text-sm font-bold dark:text-neutral-300">
+                  {formData.published ? 'Published — visible on homepage' : 'Draft — hidden from homepage'}
+                </span>
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-4 border-t dark:border-neutral-700 mt-6">
               <Button type="button" variant="outline" size="sm" onClick={closeModal}>
                 Cancel
               </Button>
               <Button type="button" size="sm" onClick={handleSave}>
-                {editingTestimonial ? 'Update' : 'Add'} Testimonial
+                {editingTestimonial ? 'Save Changes' : 'Add Testimonial'}
               </Button>
             </div>
           </div>

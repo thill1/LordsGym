@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..');
-const PRIMARY_REF = 'mrptukahxloqpdqiaxkb';
+const PRIMARY_REF = 'ktzvzossoyyfvexkgagm';
 const API_BASE = 'https://api.supabase.com/v1';
 
 function loadEnv(path) {

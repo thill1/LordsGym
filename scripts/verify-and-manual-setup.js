@@ -117,14 +117,14 @@ async function main() {
   if (!storageCheck.exists) {
     console.log('\n📋 MANUAL SETUP REQUIRED:\n');
     console.log('1. Create Storage Bucket:');
-    console.log('   → Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets');
+    console.log('   → Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets');
     console.log('   → Click "New bucket"');
     console.log('   → Name: media');
     console.log('   → Check "Public bucket"');
     console.log('   → Click "Create bucket"\n');
     
     console.log('2. Create Admin User:');
-    console.log('   → Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users');
+    console.log('   → Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users');
     console.log('   → Click "Add user" → "Create new user"');
     console.log('   → Email: admin@lordsgym.local');
     console.log('   → Password: (choose secure password)');

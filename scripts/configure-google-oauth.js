@@ -35,7 +35,7 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env };
 const isCheckOnly = process.argv.includes('--check');
 
-const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const PROJECT_REF = env.SUPABASE_PROJECT_REF || new URL(SUPABASE_URL).hostname.split('.')[0];
 
 const PROD_REDIRECT = 'https://lordsgymoutreach.com/admin';

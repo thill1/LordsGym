@@ -5,7 +5,7 @@
  * Or with password: node scripts/diagnose-admin-login.js <password>
  */
 
-const SUPABASE_URL = 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const SUPABASE_URL = 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const ADMIN_EMAIL = (process.env.VITE_BREAK_GLASS_ADMIN_EMAIL || process.env.BREAK_GLASS_ADMIN_EMAIL || 'lordsgymoutreach@gmail.com').trim();
 const PASSWORD = process.argv[2];
 
@@ -39,7 +39,7 @@ async function main() {
 
   if (!anonKey) {
     console.log('   ❌ VITE_SUPABASE_ANON_KEY not set.');
-    console.log('   Get from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
+    console.log('   Get from: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api');
     console.log('   Run: VITE_SUPABASE_ANON_KEY=your_key node scripts/diagnose-admin-login.js', PASSWORD.replace(/./g, '*'), '\n');
     return;
   }

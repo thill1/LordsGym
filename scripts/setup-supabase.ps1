@@ -34,14 +34,14 @@ Write-Host ("=" * 70)
 Write-Host ""
 
 Write-Host "1️⃣  RUN DATABASE MIGRATION" -ForegroundColor Cyan
-Write-Host "   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/sql/new"
+Write-Host "   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/sql/new"
 Write-Host "   - Copy the contents of: supabase\migrations\003_complete_schema.sql"
 Write-Host "   - Paste into SQL Editor"
 Write-Host "   - Click Run or press Ctrl+Enter"
 Write-Host ""
 
 Write-Host "2️⃣  CREATE STORAGE BUCKET" -ForegroundColor Cyan
-Write-Host "   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets"
+Write-Host "   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets"
 Write-Host "   - Click New bucket"
 Write-Host "   - Name: media"
 Write-Host "   - Check Public bucket"
@@ -49,7 +49,7 @@ Write-Host "   - Click Create bucket"
 Write-Host ""
 
 Write-Host "3️⃣  CREATE ADMIN USER" -ForegroundColor Cyan
-Write-Host "   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users"
+Write-Host "   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users"
 Write-Host "   - Click Add user then Create new user"
 Write-Host "   - Enter email and password"
 Write-Host "   - Click Advanced and add metadata:"

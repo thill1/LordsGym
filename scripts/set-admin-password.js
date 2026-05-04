@@ -29,7 +29,7 @@ function loadEnv() {
 }
 
 const env = { ...process.env, ...loadEnv() };
-const SUPABASE_URL = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
 const ADMIN_PASSWORD = 'Admin2026!';

@@ -29,7 +29,7 @@ function loadEnv() {
 }
 
 const env = { ...process.env, ...loadEnv() };
-const SUPABASE_URL = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const SUPABASE_URL = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const ADMIN_EMAIL = (env.VITE_BREAK_GLASS_ADMIN_EMAIL || env.BREAK_GLASS_ADMIN_EMAIL || 'lordsgymoutreach@gmail.com').trim();
 const REQUIRE_FULL = process.argv.includes('--require-full');
 
@@ -139,7 +139,7 @@ async function main() {
 
   if (!anonKey) {
     console.error('❌ VITE_SUPABASE_ANON_KEY required in .env.local');
-    console.error('   Get from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
+    console.error('   Get from: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api');
     console.error('   Add to .env.local and run: npm run test:admin\n');
     process.exit(1);
   }

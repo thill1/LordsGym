@@ -42,7 +42,7 @@ function generatePassword(length = 14) {
 
 const env = { ...process.env, ...loadEnv() };
 const accessToken = env.SUPABASE_ACCESS_TOKEN;
-const PROJECT_REF = 'mrptukahxloqpdqiaxkb';
+const PROJECT_REF = 'ktzvzossoyyfvexkgagm';
 const SUPABASE_URL = `https://${PROJECT_REF}.supabase.co`;
 const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
 

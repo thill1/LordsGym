@@ -9,8 +9,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
-const PROJECT_REF = 'mrptukahxloqpdqiaxkb';
-const BASE_URL = `https://mrptukahxloqpdqiaxkb.supabase.co`;
+const PROJECT_REF = 'ktzvzossoyyfvexkgagm';
+const BASE_URL = `https://ktzvzossoyyfvexkgagm.supabase.co`;
 
 function loadEnv() {
   const path = resolve(process.cwd(), '.env.local');

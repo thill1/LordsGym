@@ -4,7 +4,7 @@
  * Verifies the password works and shows the exact error if not.
  */
 
-const SUPABASE_URL = 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const SUPABASE_URL = 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const ADMIN_EMAIL = 'lordsgymoutreach@gmail.com';
 const PASSWORD = process.argv[2] || process.env.ADMIN_BREAK_GLASS_PASSWORD || '';
 
@@ -20,7 +20,7 @@ async function testLogin() {
 
   if (!ANON_KEY) {
     console.error('❌ VITE_SUPABASE_ANON_KEY is required.');
-    console.error('   Get from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
+    console.error('   Get from: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api');
     console.error('   Run: VITE_SUPABASE_ANON_KEY=your_anon_key node scripts/test-admin-login.js [password]\n');
     process.exit(1);
   }

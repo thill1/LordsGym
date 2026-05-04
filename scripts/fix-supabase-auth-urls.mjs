@@ -10,7 +10,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
-const PROJECT_REF = 'mrptukahxloqpdqiaxkb';
+const PROJECT_REF = 'ktzvzossoyyfvexkgagm';
 
 function loadEnv() {
   const path = resolve(process.cwd(), '.env.local');

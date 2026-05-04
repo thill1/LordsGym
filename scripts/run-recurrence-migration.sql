@@ -1,5 +1,5 @@
 -- Run this in Supabase Dashboard -> SQL Editor -> New query
--- Project: mrptukahxloqpdqiaxkb (Lord's Gym)
+-- Project: ktzvzossoyyfvexkgagm (Lord's Gym)
 -- Adds recurrence columns so the calendar loads in production.
 
 -- Part 1: Recurrence materialization

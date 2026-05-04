@@ -69,9 +69,9 @@ try {
 
 Write-Host ""
 Write-Host "📋 To complete setup, please:" -ForegroundColor Cyan
-Write-Host "1. Open: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets" -ForegroundColor White
+Write-Host "1. Open: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets" -ForegroundColor White
 Write-Host "2. Create bucket: media (public)" -ForegroundColor White
-Write-Host "3. Open: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users" -ForegroundColor White
+Write-Host "3. Open: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users" -ForegroundColor White
 Write-Host "4. Create admin user with metadata: {`"role`": `"admin`"}" -ForegroundColor White
 Write-Host ""
 Write-Host "Then run: node scripts/complete-supabase-setup.js" -ForegroundColor Cyan

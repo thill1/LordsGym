@@ -41,7 +41,7 @@ function generatePassword(length = 16) {
 }
 
 const env = { ...process.env, ...loadEnv() };
-const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://mrptukahxloqpdqiaxkb.supabase.co';
+const supabaseUrl = env.VITE_SUPABASE_URL || env.SUPABASE_URL || 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = env.VITE_SUPABASE_ANON_KEY;
 
@@ -59,7 +59,7 @@ async function main() {
     if (!anonKey) {
       console.error('\n❌ SUPABASE_SERVICE_ROLE_KEY is required to rotate/create the break-glass user.');
       console.error('   Add to .env.local or run: SUPABASE_SERVICE_ROLE_KEY=xxx node scripts/create-admin-user.js');
-      console.error('   Get it from: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api\n');
+      console.error('   Get it from: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api\n');
       process.exit(1);
     }
 

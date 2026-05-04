@@ -13,6 +13,8 @@ export interface Testimonial {
   source?: 'manual' | 'google';
   /** For imported Google reviews: external_id (e.g. google-0) for deduplication */
   externalId?: string;
+  /** Controls carousel visibility. true = live, false = draft pending admin review. Defaults to true for manual entries. */
+  published?: boolean;
 }
 
 export interface Program {

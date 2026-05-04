@@ -26,7 +26,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const PROJECT_REF = 'mrptukahxloqpdqiaxkb';
+const PROJECT_REF = 'ktzvzossoyyfvexkgagm';
 const API_BASE = 'https://api.supabase.com/v1';
 
 function loadEnv() {

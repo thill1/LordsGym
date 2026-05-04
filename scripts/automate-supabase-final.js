@@ -202,12 +202,12 @@ function generateFinalReport() {
   if (!results.storage.success) {
     console.log('📋 REMAINING MANUAL STEPS:\n');
     console.log('1. Create Storage Bucket:');
-    console.log('   https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets');
+    console.log('   https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets');
     console.log('   - Name: media');
     console.log('   - Public: Yes\n');
 
     console.log('2. Create Admin User:');
-    console.log('   https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users');
+    console.log('   https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users');
     console.log('   - Add metadata: {"role": "admin"}\n');
   }
 

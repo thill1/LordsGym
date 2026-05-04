@@ -217,11 +217,11 @@ async function main() {
     console.log('📋 REMAINING TASKS (Dashboard Required):\n');
     if (!verification.storage) {
       console.log('1. Create Storage Bucket:');
-      console.log('   https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets\n');
+      console.log('   https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets\n');
     }
     if (!verification.adminUser) {
       console.log('2. Create Admin User:');
-      console.log('   https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users\n');
+      console.log('   https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users\n');
     }
   } else {
     console.log('🎉 All tasks completed!\n');

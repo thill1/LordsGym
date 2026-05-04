@@ -239,19 +239,19 @@ async function generateReport(tableCheck, storageCheck, dataCheck) {
     
     if (!tableCheck.success) {
       console.log('1. Run Database Migration:');
-      console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/sql/new');
+      console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/sql/new');
       console.log('   - Copy/paste: supabase/migrations/003_complete_schema.sql');
       console.log('   - Click Run\n');
     }
 
     if (!storageCheck.exists) {
       console.log('2. Create Storage Bucket:');
-      console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/storage/buckets');
+      console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/storage/buckets');
       console.log('   - Create bucket: media (public)\n');
     }
 
     console.log('3. Create Admin User:');
-    console.log('   - Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/auth/users');
+    console.log('   - Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/auth/users');
     console.log('   - Add user with metadata: {"role": "admin"}\n');
   } else {
     console.log('✅ Setup is mostly complete! Just create an admin user.\n');

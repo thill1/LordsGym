@@ -39,7 +39,7 @@ const env = loadEnvFile();
 const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const PROJECT_ID = 'mrptukahxloqpdqiaxkb';
+const PROJECT_ID = 'ktzvzossoyyfvexkgagm';
 const MANAGEMENT_API_BASE = 'https://api.supabase.com/v1';
 
 console.log('🚀 Completing Supabase Setup via Management API\n');
@@ -49,7 +49,7 @@ console.log(`🔗 URL: ${supabaseUrl}\n`);
 if (!serviceRoleKey) {
   console.error('❌ SUPABASE_SERVICE_ROLE_KEY is required');
   console.error('\n📋 To get your service role key:');
-  console.error('   1. Go to: https://supabase.com/dashboard/project/mrptukahxloqpdqiaxkb/settings/api');
+  console.error('   1. Go to: https://supabase.com/dashboard/project/ktzvzossoyyfvexkgagm/settings/api');
   console.error('   2. Copy the "service_role" key (NOT the anon key)');
   console.error('   3. Add to .env.local: SUPABASE_SERVICE_ROLE_KEY=your_key_here\n');
   process.exit(1);

@@ -51,7 +51,7 @@ If not set, the function uses `GOOGLE_PLACE_ID` from Supabase secrets.
 ## Behavior
 
 - **5-star only**: Only reviews with a 5.0 rating are shown
-- **Character limit**: Quotes are truncated to 200 characters (configurable via `max_length` query param)
+- **Character limit**: Quotes are truncated to 300 characters (configurable via `max_length` query param)
 - **Order**: Manual testimonials first, then Google reviews
 - **Admin**: Google reviews are read-only; only manual testimonials can be edited/deleted
 
