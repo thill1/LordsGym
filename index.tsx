@@ -1,15 +1,22 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { registerServiceWorker } from './lib/service-worker';
 
-// ✅ IMPORTANT: Ensure your Tailwind build CSS is actually loaded.
-// If you already have a global CSS file, keep this import and point it to the correct file.
-// If you do NOT have one, create "styles.css" (Step 3 below) and keep this line exactly.
 import './styles.css';
 
 // Register service worker for offline support
 registerServiceWorker();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -18,6 +25,8 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </React.StrictMode>
 );
