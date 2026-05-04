@@ -1,28 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Product } from '../types';
 import Button from './Button';
-import { useStore } from '../context/StoreContext';
+import { MINDBODY_STORE_URL } from '../constants';
 
-const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
-
-// Mock component to simulate Shopify Buy Button / Storefront integration
 const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
-  const { addToCart } = useStore();
-  const isApparel = product.category?.includes('Apparel') ?? false;
-  const [selectedSize, setSelectedSize] = useState<string>(isApparel ? 'L' : 'One Size');
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleAddToCart = () => {
-    addToCart(product, isApparel ? selectedSize : 'One Size');
-  };
+  const buyUrl = product.mindbodyUrl || MINDBODY_STORE_URL;
 
   return (
-    <div 
-      className="group relative bg-white dark:bg-neutral-800 rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className="group relative bg-white dark:bg-neutral-800 rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full">
       <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-t-lg bg-neutral-200 dark:bg-neutral-700 lg:aspect-none lg:h-80 relative flex items-center justify-center">
         {product.imageComingSoon || !product.image ? (
           product.comingSoonImage ? (
@@ -37,9 +23,9 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
             </p>
           )
         ) : (
-          <img 
-            src={product.image} 
-            alt={product.title} 
+          <img
+            src={product.image}
+            alt={product.title}
             className="h-full w-full object-cover object-center lg:h-full lg:w-full group-hover:scale-105 transition-transform duration-500"
           />
         )}
@@ -47,7 +33,7 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
           NEW
         </div>
       </div>
-      
+
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-2">
           <div>
@@ -59,34 +45,16 @@ const ShopifyProduct: React.FC<{ product: Product }> = ({ product }) => {
           <p className="text-sm font-bold text-brand-red ml-2">${product.price.toFixed(2)}</p>
         </div>
 
-        {/* Size Selector & Add Button - Always visible on mobile, slide up on desktop */}
-        <div className="mt-auto space-y-3 pt-4">
-           {isApparel && (
-             <div className="flex gap-2 justify-center">
-                {SIZES.map(size => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`text-xs sm:text-[10px] w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded border transition-colors font-bold touch-manipulation ${
-                      selectedSize === size 
-                        ? 'bg-brand-charcoal text-white border-brand-charcoal dark:bg-white dark:text-brand-charcoal' 
-                        : 'bg-transparent text-neutral-500 border-neutral-200 hover:border-brand-red'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-             </div>
-           )}
-           <Button 
-             size="sm" 
-             variant="brand" 
-             fullWidth 
-             className="shadow-md"
-             onClick={handleAddToCart}
-           >
-             Add to Cart
-           </Button>
+        <div className="mt-auto pt-4">
+          <Button
+            size="sm"
+            variant="brand"
+            fullWidth
+            className="shadow-md"
+            onClick={() => window.open(buyUrl, '_blank', 'noopener,noreferrer')}
+          >
+            Buy on MindBody
+          </Button>
         </div>
       </div>
     </div>

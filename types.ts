@@ -37,6 +37,8 @@ export interface Product {
   description?: string;
   inventory?: Record<string, number>;
   variants?: Record<string, any>;
+  /** Direct MindBody product URL; falls back to MINDBODY_STORE_URL when absent */
+  mindbodyUrl?: string;
 }
 
 export interface CartItem extends Product {

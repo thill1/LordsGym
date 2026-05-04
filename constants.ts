@@ -10,7 +10,11 @@ export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456
 
 /** Mindbody shop URL for membership sign-up; all "Join Now" buttons should point here. */
 export const MINDBODY_MEMBERSHIP_URL =
-  "https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1"; 
+  "https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1";
+
+/** Mindbody retail store URL for merchandise; all product "Buy Now" buttons should point here. */
+export const MINDBODY_STORE_URL =
+  "https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&stype=1&loc=1";
 export const SQUARE_DONATION_URL = "https://checkout.square.site/merchant/MLJQEKT1SC3YW/checkout/LM65OFKUNRAUMDU4YIMON77A?src=sheet";
 
 // Square donation links for preset amounts
