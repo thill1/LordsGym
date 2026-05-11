@@ -100,6 +100,7 @@ const App: React.FC = () => {
         return <Terms />;
       case '/admin':
         return <Admin />;
+      
       default:
         return <Home onNavigate={navigate} />;
     }
@@ -110,13 +111,13 @@ const App: React.FC = () => {
      return (
        <ErrorBoundary>
          <ToastProvider>
-           <AuthProvider>
-             <StoreProvider>
-               <CalendarProvider>
-                 <div className="fade-in">{renderPage()}</div>
-               </CalendarProvider>
-             </StoreProvider>
-           </AuthProvider>
+          <AuthProvider>
+            <StoreProvider>
+              <CalendarProvider>
+                <div className="fade-in">{renderPage()}</div>
+              </CalendarProvider>
+            </StoreProvider>
+          </AuthProvider>
          </ToastProvider>
        </ErrorBoundary>
      );
