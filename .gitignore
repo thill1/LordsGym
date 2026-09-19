@@ -97,3 +97,4 @@ Thumbs.db
 backup/
 scripts/calendar-backup/
 .vercel
+.env.local
