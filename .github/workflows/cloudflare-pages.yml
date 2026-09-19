@@ -226,38 +226,57 @@ jobs:
         id: health-check
         run: |
           DEPLOY_URL="${{ steps.deploy.outputs.deployment-url }}"
+          DEPLOY_ENV="${{ github.event.inputs.environment || 'production' }}"
           echo "Checking deployment health: $DEPLOY_URL"
           if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "undefined" ]; then
             echo "❌ No deployment URL available"
             exit 1
           fi
+
+          # Preview URLs are intentionally gated by Cloudflare Access. A 302 to
+          # the expected Access host proves the deployment is present, not that
+          # it is publicly browseable. Never disable Access to make CI green.
+          if [ "$DEPLOY_ENV" = "staging" ]; then
+            HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$DEPLOY_URL")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ Staging preview is reachable"
+              exit 0
+            fi
+            if [ "$HTTP_STATUS" = "302" ] && curl -sSI "$DEPLOY_URL" | grep -iq '^location: https://lords-gym-pages.cloudflareaccess.com/'; then
+              echo "✅ Staging preview was deployed and is protected by Cloudflare Access"
+              echo "::notice::Authenticated preview browser QA requires a Cloudflare Access session."
+              exit 0
+            fi
+            echo "❌ Unexpected staging response: HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+          EXPECTED_BUNDLE=$(node -e "const h=require('fs').readFileSync('dist/index.html','utf8');const m=h.match(/assets\/index-[^\" ]+\.js/);if(!m)process.exit(1);process.stdout.write(m[0])")
+          echo "Expecting production bundle: $EXPECTED_BUNDLE"
           
           MAX_RETRIES=5
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEPLOY_URL" || echo "000")
-            
-            if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "304" ]; then
-              echo "✅ Deployment healthy (HTTP $HTTP_STATUS)"
-              echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+            LIVE_HTML=$(curl -fsS --max-time 10 https://lordsgymoutreach.com/ || true)
+            if printf '%s' "$LIVE_HTML" | grep -Fq "$EXPECTED_BUNDLE"; then
+              echo "✅ Production domain serves the expected release bundle"
               exit 0
             fi
             
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "⏳ Attempt $RETRY_COUNT/$MAX_RETRIES: HTTP $HTTP_STATUS, retrying in 10s..."
+            echo "⏳ Attempt $RETRY_COUNT/$MAX_RETRIES: waiting for the release bundle on the production domain..."
             sleep 10
           done
           
-          echo "❌ Health check did not pass after $MAX_RETRIES attempts"
-          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "❌ Production domain did not serve the expected release bundle"
           exit 1
 
   e2e:
     name: E2E Production Tests
     needs: deploy
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.event.inputs.environment != 'staging'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -269,9 +288,7 @@ jobs:
         run: npx playwright install chromium --with-deps
       - name: Run E2E smoke tests
         env:
-          PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.deployment-url }}
-          ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          PLAYWRIGHT_BASE_URL: https://lordsgymoutreach.com
           CI: true
         run: npx playwright test e2e/smoke.spec.ts e2e/store.spec.ts e2e/join-now.spec.ts
 
