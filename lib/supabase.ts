@@ -3,6 +3,8 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const DEFAULT_SUPABASE_URL = 'https://ktzvzossoyyfvexkgagm.supabase.co';
 const STORAGE_KEY = 'lordsgym_supabase_anon_key';
 const STORAGE_URL_KEY = 'lordsgym_supabase_url';
+let runtimeSupabaseUrl = '';
+let runtimeAnonKey = '';
 
 function parseJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -29,36 +31,23 @@ function keyMatchesSupabaseUrl(token: string, supabaseUrl: string): boolean {
 }
 
 export function getSupabaseUrl(): string {
-  try {
-    const fromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_URL_KEY) : null;
-    if (fromStorage && fromStorage.trim()) return fromStorage.trim();
-  } catch (_) {}
-  return import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  return runtimeSupabaseUrl || import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 }
 
-/** @deprecated Use getSupabaseUrl() for dynamic URL (respects localStorage override) */
+/** @deprecated Use getSupabaseUrl() for the active runtime URL. */
 export const SUPABASE_URL = DEFAULT_SUPABASE_URL;
 
 export function setSupabaseUrl(url: string): void {
-  if (typeof localStorage !== 'undefined') {
-    url = url.trim();
-    if (url) localStorage.setItem(STORAGE_URL_KEY, url);
-    else localStorage.removeItem(STORAGE_URL_KEY);
-    _client = null as any;
-  }
+  runtimeSupabaseUrl = url.trim();
+  // Clear retired browser overrides so a previous project cutover cannot keep
+  // one device pointed at a stale backend.
+  try { localStorage.removeItem(STORAGE_URL_KEY); } catch (_) {}
+  _client = null;
 }
 
 export function getAnonKey(): string {
   const currentUrl = getSupabaseUrl();
-  // localStorage override wins only when it matches current project URL.
-  // This avoids stale key lock-in after project cutovers.
-  try {
-    const fromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
-    if (fromStorage && typeof fromStorage === 'string' && fromStorage.trim()) {
-      const normalized = fromStorage.trim();
-      if (keyMatchesSupabaseUrl(normalized, currentUrl)) return normalized;
-    }
-  } catch (_) {}
+  if (runtimeAnonKey && keyMatchesSupabaseUrl(runtimeAnonKey, currentUrl)) return runtimeAnonKey;
   const fromEnv = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim()) {
     const normalized = fromEnv.trim();
@@ -68,16 +57,13 @@ export function getAnonKey(): string {
 }
 
 export function setSupabaseAnonKey(key: string): void {
-  if (typeof localStorage !== 'undefined') {
-    key = key.trim();
-    if (key) localStorage.setItem(STORAGE_KEY, key);
-    else localStorage.removeItem(STORAGE_KEY);
-    _client = null as any;
-  }
+  runtimeAnonKey = key.trim();
+  try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+  _client = null;
 }
 
 export function getSupabaseAnonKeyFromStorage(): string | null {
-  return typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+  return null;
 }
 
 export const isSupabaseConfigured = (): boolean => !!(getSupabaseUrl() && getAnonKey());

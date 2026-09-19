@@ -19,7 +19,7 @@ const getHeroImage = (filename: string) => {
 const DEFAULT_IMAGES = {
   hero: getHeroImage('hero-background.jpg.jpg'),
   trailer: getOutreachImage('outreach-trailer.jpg.jpeg'),
-  outreach: getOutreachImage('outreach-walking.jpg.JPG'),
+  outreach: getOutreachImage('outreach-walking.avif'),
   prayer: getOutreachImage('outreach-prayer.jpg.jpeg'),
   hug: getOutreachImage('outreach-brotherhood.jpg.jpeg'),
   community: getOutreachImage('outreach-community.jpg.jpeg'),
@@ -38,8 +38,8 @@ const Outreach: React.FC = () => {
   return (
     <>
       {/* Hero */}
-      <Section bg="image" bgImage={IMAGES.hero} className="min-h-[70vh] flex items-center justify-center text-center relative">
-        <div className="relative z-10 max-w-5xl mx-auto px-4 fade-in">
+      <Section bg="image" bgImage={IMAGES.hero} bgImageFetchPriority="high" className="min-h-[70vh] flex items-center justify-center text-center relative">
+        <div className="relative z-10 max-w-5xl mx-auto px-4">
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold mb-6 text-white uppercase tracking-tight shadow-black drop-shadow-lg">
             Restoring <span className="text-brand-red">Hope</span>
           </h1>
@@ -63,25 +63,25 @@ const Outreach: React.FC = () => {
       <Section className="py-20 bg-neutral-100 dark:bg-neutral-900">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.trailer} alt="Outreach photo 2" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.trailer} alt="Outreach photo 2" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                     <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 2</p>
                 </div>
             </div>
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.outreach} alt="Outreach photo 3" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.outreach} alt="Outreach photo 3" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                     <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 3</p>
                 </div>
             </div>
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4]">
-                <img src={IMAGES.prayer} alt="Outreach photo 4" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.prayer} alt="Outreach photo 4" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                     <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 4</p>
                 </div>
             </div>
             <div className="relative group overflow-hidden rounded-lg aspect-[4/5] md:aspect-square lg:aspect-[3/4] mt-8 lg:mt-0">
-                <img src={IMAGES.hug} alt="Outreach photo 5" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
+                <img src={IMAGES.hug} alt="Outreach photo 5" loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
                     <p className="text-white font-bold uppercase tracking-widest text-sm">Photo 5</p>
                 </div>
@@ -151,7 +151,7 @@ const Outreach: React.FC = () => {
                </ul>
             </div>
             <div className="relative h-full min-h-[400px] rounded-lg overflow-hidden border border-white/10 shadow-2xl group">
-               <img src={IMAGES.community} alt="Outreach photo 6" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-60 hover:opacity-80 transition-all duration-700" />
+               <img src={IMAGES.community} alt="Outreach photo 6" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-60 hover:opacity-80 transition-all duration-700" />
                <div className="absolute inset-0 bg-gradient-to-t from-brand-charcoal to-transparent"></div>
                <div className="absolute bottom-8 left-8 right-8">
                   <p className="text-xl italic font-serif text-white mb-4">

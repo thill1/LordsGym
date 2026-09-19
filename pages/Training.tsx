@@ -74,7 +74,19 @@ const Training: React.FC = () => {
             <div className="bg-neutral-100 dark:bg-neutral-900 p-6 rounded">
               <h4 className="font-bold mb-2">New Client Special</h4>
               <p className="text-sm text-neutral-500 mb-4">Purchase 3 sessions and get the 4th free for your first month.</p>
-              <Button variant="outline" size="sm">Claim Offer</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const query = new URLSearchParams({
+                    inquiry: '1on1 Coaching',
+                    message: "I'm interested in the new client personal training offer.",
+                  });
+                  window.location.hash = `/contact?${query.toString()}`;
+                }}
+              >
+                Ask About This Offer
+              </Button>
             </div>
           </div>
 
@@ -85,6 +97,10 @@ const Training: React.FC = () => {
                 <img 
                   src={getTrainingImage("Brad - Bradley Parker's photo.jpeg")} 
                   alt="Bradley Parker" 
+                  loading="lazy"
+                  decoding="async"
+                  width="600"
+                  height="800"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error('Failed to load Bradley Parker image:', e.currentTarget.src);
@@ -96,12 +112,16 @@ const Training: React.FC = () => {
               )}
               {selectedCoach === 'Kourtney Brothers' && (
                 <img 
-                  src={getTrainingImage("Kourtney - Kourtney Brothers' photo.JPEG")} 
+                  src={getTrainingImage('kourtney-brothers.avif')}
                   alt="Kourtney Brothers" 
+                  loading="lazy"
+                  decoding="async"
+                  width="900"
+                  height="1200"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error('Failed to load Kourtney Brothers image:', e.currentTarget.src);
-                    // Fallback: try without encoding
+                    // Fallback to the source photo if the optimized asset is unavailable.
                     const fallbackSrc = `${import.meta.env.BASE_URL || '/'}media/training/Kourtney - Kourtney Brothers' photo.JPEG`.replace(/\/\/+/g, '/');
                     e.currentTarget.src = fallbackSrc;
                   }}

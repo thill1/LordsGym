@@ -11,7 +11,7 @@ import MediaPickerModal from './MediaPickerModal';
 const IMAGE_SLOTS: { key: keyof OutreachPageImages; position: string; placeholder: string }[] = [
   { key: 'hero', position: 'Hero banner (top of page)', placeholder: '/media/hero/hero-background.jpg.jpg' },
   { key: 'trailer', position: 'Grid, position 1', placeholder: '/media/outreach/outreach-trailer.jpg.jpeg' },
-  { key: 'outreach', position: 'Grid, position 2', placeholder: '/media/outreach/outreach-walking.jpg.JPG' },
+  { key: 'outreach', position: 'Grid, position 2', placeholder: '/media/outreach/outreach-walking.avif' },
   { key: 'prayer', position: 'Grid, position 3', placeholder: '/media/outreach/outreach-prayer.jpg.jpeg' },
   { key: 'hug', position: 'Grid, position 4', placeholder: '/media/outreach/outreach-brotherhood.jpg.jpeg' },
   { key: 'community', position: 'Bottom section', placeholder: '/media/outreach/outreach-community.jpg.jpeg' },

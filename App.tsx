@@ -7,19 +7,34 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import { usePageViewTracker } from './lib/page-view-tracker';
 import Home from './pages/Home';
-import Membership from './pages/Membership';
-import Shop from './pages/Shop';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Training from './pages/Training';
-import Admin from './pages/Admin';
-import Programs from './pages/Programs';
-import Calendar from './pages/Calendar';
-import Checkout from './pages/Checkout';
-import OrderConfirmation from './pages/OrderConfirmation';
-import Outreach from './pages/Outreach';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
+const Membership = React.lazy(() => import('./pages/Membership'));
+const Shop = React.lazy(() => import('./pages/Shop'));
+const About = React.lazy(() => import('./pages/About'));
+const Contact = React.lazy(() => import('./pages/Contact'));
+const Training = React.lazy(() => import('./pages/Training'));
+const Admin = React.lazy(() => import('./pages/Admin'));
+const Programs = React.lazy(() => import('./pages/Programs'));
+const Calendar = React.lazy(() => import('./pages/Calendar'));
+const Checkout = React.lazy(() => import('./pages/Checkout'));
+const OrderConfirmation = React.lazy(() => import('./pages/OrderConfirmation'));
+const Outreach = React.lazy(() => import('./pages/Outreach'));
+const Privacy = React.lazy(() => import('./pages/Privacy'));
+const Terms = React.lazy(() => import('./pages/Terms'));
+
+const PUBLIC_PATHS = [
+  '/membership',
+  '/outreach',
+  '/calendar',
+  '/training',
+  '/programs',
+  '/shop',
+  '/checkout',
+  '/order-confirmation',
+  '/about',
+  '/contact',
+  '/privacy',
+  '/terms',
+] as const;
 
 const App: React.FC = () => {
   // Simple Hash Router Implementation
@@ -28,9 +43,12 @@ const App: React.FC = () => {
     const raw = window.location.hash.slice(1);
     const path = raw ? raw.split('?')[0] : '';
     if (path) return path;
-    // Support /admin and /LordsGym/admin (GitHub Pages base path)
-    const p = window.location.pathname;
-    if (p === '/admin' || p.endsWith('/admin') || p.endsWith('/admin/')) return '/admin';
+    // Support direct routes such as /membership as well as GitHub Pages-style
+    // /LordsGym/membership paths. Hash navigation remains the canonical client route.
+    const p = window.location.pathname.replace(/\/$/, '') || '/';
+    if (p === '/admin' || p.endsWith('/admin')) return '/admin';
+    const directPublicPath = PUBLIC_PATHS.find((candidate) => p === candidate || p.endsWith(candidate));
+    if (directPublicPath) return directPublicPath;
     return '/';
   };
   const [currentPath, setCurrentPath] = useState(getPath());
@@ -106,6 +124,12 @@ const App: React.FC = () => {
     }
   };
 
+  const page = (
+    <React.Suspense fallback={<main className="min-h-[60vh] pt-32 text-center" aria-live="polite">Loading page…</main>}>
+      {renderPage()}
+    </React.Suspense>
+  );
+
   // If Admin, don't show the standard Layout (Admin has its own sidebar)
   if (currentPath === '/admin') {
      return (
@@ -114,7 +138,7 @@ const App: React.FC = () => {
           <AuthProvider>
             <StoreProvider>
               <CalendarProvider>
-                <div className="fade-in">{renderPage()}</div>
+                <div className="fade-in">{page}</div>
               </CalendarProvider>
             </StoreProvider>
           </AuthProvider>
@@ -123,20 +147,32 @@ const App: React.FC = () => {
      );
   }
 
+  if (currentPath === '/calendar') {
+    return (
+      <ErrorBoundary>
+        <ToastProvider>
+          <AuthProvider>
+            <StoreProvider>
+              <CalendarProvider>
+                <Layout currentPath={currentPath} onNavigate={navigate}>
+                  {page}
+                </Layout>
+              </CalendarProvider>
+            </StoreProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <AuthProvider>
-          <StoreProvider>
-            <CalendarProvider>
-              <Layout currentPath={currentPath} onNavigate={navigate}>
-                <div className="fade-in">
-                  {renderPage()}
-                </div>
-              </Layout>
-            </CalendarProvider>
-          </StoreProvider>
-        </AuthProvider>
+        <StoreProvider>
+          <Layout currentPath={currentPath} onNavigate={navigate}>
+            {page}
+          </Layout>
+        </StoreProvider>
       </ToastProvider>
     </ErrorBoundary>
   );

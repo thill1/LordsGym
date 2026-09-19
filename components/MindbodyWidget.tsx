@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MINDBODY_SITE_ID } from '../constants';
+import { MINDBODY_PRICING_URL } from '../constants';
 import Button from './Button';
 
 interface MindbodyWidgetProps {
@@ -10,6 +10,9 @@ interface MindbodyWidgetProps {
 }
 
 const MindbodyWidget: React.FC<MindbodyWidgetProps> = ({ title, type = 'schedule', className = '' }) => {
+  const isSchedule = type === 'schedule';
+  const isAppointment = type === 'appointment';
+
   return (
     <div className={`w-full bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700 ${className}`}>
       <div className="flex justify-between items-center mb-6">
@@ -38,12 +41,27 @@ const MindbodyWidget: React.FC<MindbodyWidgetProps> = ({ title, type = 'schedule
           )}
         </div>
         
-        <h4 className="font-bold text-lg text-brand-charcoal dark:text-white mb-2 z-10">Online Booking Portal</h4>
+        <h4 className="font-bold text-lg text-brand-charcoal dark:text-white mb-2 z-10">
+          {isSchedule ? 'Community Calendar' : isAppointment ? 'Coaching Options' : 'Mindbody Purchase Options'}
+        </h4>
         <p className="text-sm text-neutral-500 max-w-xs mx-auto mb-8 z-10">
-          Please launch the secure booking portal to view live availability and book your session.
+          {isSchedule
+            ? 'See upcoming Lord’s Gym events and classes on our calendar.'
+            : isAppointment
+              ? 'Review online coaching plans in Mindbody. Contact us to ask about this coach’s 1-on-1 availability.'
+              : 'Review current memberships and passes in Mindbody.'}
         </p>
         
-        <Button variant="outline" className="z-10 bg-white dark:bg-transparent">Launch Booking System</Button>
+        <Button
+          variant="outline"
+          className="z-10 bg-white dark:bg-transparent"
+          onClick={() => {
+            if (isSchedule) window.location.hash = '/calendar';
+            else window.open(MINDBODY_PRICING_URL, '_blank', 'noopener,noreferrer');
+          }}
+        >
+          {isSchedule ? 'View Calendar' : isAppointment ? 'View Coaching Plans' : 'View Options in Mindbody'}
+        </Button>
 
         {/* Decorative Background Elements */}
         <div className="absolute inset-0 opacity-50 pointer-events-none overflow-hidden">

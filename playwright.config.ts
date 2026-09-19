@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://lords-gym.pages.dev';
-const useLocalServer = !!process.env.PLAYWRIGHT_BASE_URL;
+const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
+const BASE_URL = externalBaseUrl || 'http://127.0.0.1:4173';
+const useLocalServer = !externalBaseUrl;
 
 export default defineConfig({
   testDir: './e2e',
@@ -11,7 +12,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? 'github' : 'list',
   webServer: useLocalServer
-    ? { command: 'npm run preview', url: 'http://localhost:4173', reuseExistingServer: true }
+    ? { command: 'VITE_BASE_PATH=/ npm run preview -- --host 127.0.0.1', url: BASE_URL, reuseExistingServer: false }
     : undefined,
   use: {
     baseURL: BASE_URL,

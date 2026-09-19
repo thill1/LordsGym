@@ -5,7 +5,7 @@ import Card from '../components/Card';
 import MetaTags from '../components/MetaTags';
 import TestimonialsCarousel from '../components/TestimonialsCarousel';
 import { useStore } from '../context/StoreContext';
-import { MINDBODY_MEMBERSHIP_URL } from '../constants';
+import { MINDBODY_PRICING_URL } from '../constants';
 // ARCHIVED: Training Programs section removed - see pages/archived/HomeProgramsSection.tsx
 
 interface HomeProps {
@@ -23,7 +23,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   // Helper to get CTA background image
   const getCtaImage = () => {
     const base = import.meta.env.BASE_URL || '/';
-    return `${base}media/hero/cta-background.jpg.png`;
+    return `${base}media/hero/cta-background.avif`;
   };
   const ctaBgImage = getCtaImage();
 
@@ -42,7 +42,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         path="/"
       />
       {/* Hero Section */}
-      <Section bg="image" bgImage={heroBgImage} className="pt-20 pb-16 min-h-[600px] flex items-center">
+      <Section bg="image" bgImage={heroBgImage} bgImageFetchPriority="high" className="pt-20 pb-16 min-h-[600px] flex items-center">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 whitespace-pre-line">
             {heroHeadline}
@@ -53,7 +53,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           <Button 
             size="lg" 
             variant="brand" 
-            onClick={() => window.open(MINDBODY_MEMBERSHIP_URL, '_blank')}
+            onClick={() => window.open(MINDBODY_PRICING_URL, '_blank', 'noopener,noreferrer')}
             className="min-w-[200px] !bg-brand-red !text-white !border-brand-red hover:!bg-brand-charcoal hover:!border-brand-charcoal dark:!bg-brand-red dark:!text-white dark:!border-brand-red"
           >
             {heroCtaText}
@@ -142,6 +142,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                         <img
                           src={product.comingSoonImage}
                           alt="Coming soon"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain"
                         />
                       ) : (
@@ -153,6 +155,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                       <img
                         src={product.image}
                         alt={product.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     )}
@@ -199,7 +203,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       )}
 
       {/* CTA Section */}
-      <Section bg="image" bgImage={ctaBgImage} className="text-white relative">
+      <Section bg="image" bgImage={ctaBgImage} bgImageLoading="lazy" bgImageFetchPriority="low" className="text-white relative">
         <div className="text-center max-w-3xl mx-auto relative z-10">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-xl mb-8 text-red-100">
@@ -209,7 +213,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <Button 
               variant="primary" 
               size="lg"
-              onClick={() => window.open(MINDBODY_MEMBERSHIP_URL, '_blank')}
+              onClick={() => window.open(MINDBODY_PRICING_URL, '_blank', 'noopener,noreferrer')}
               className="!bg-brand-red !text-white !border-brand-red hover:!bg-brand-red hover:!text-white hover:!border-brand-red dark:!bg-brand-red dark:!text-white dark:!border-brand-red"
             >
               View Memberships
