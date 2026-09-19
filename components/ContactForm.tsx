@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from './Button';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const INQUIRY_TYPES = [
   'Gym Tour',
   '1on1 Coaching',
+  'Day Pass',
   'Membership Question',
   'Outreach/Volunteering',
   'Billing Question'
@@ -23,6 +24,23 @@ const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [usedMailto, setUsedMailto] = useState(false);
+
+  useEffect(() => {
+    const query = window.location.hash.split('?')[1];
+    if (!query) return;
+
+    const params = new URLSearchParams(query);
+    const inquiry = params.get('inquiry');
+    const message = params.get('message');
+
+    setFormData((current) => ({
+      ...current,
+      inquiryType: inquiry && INQUIRY_TYPES.includes(inquiry as (typeof INQUIRY_TYPES)[number])
+        ? inquiry
+        : current.inquiryType,
+      message: message || current.message,
+    }));
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

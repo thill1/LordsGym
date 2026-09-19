@@ -4,13 +4,28 @@ import { NavItem, Testimonial, Product, Program } from './types';
 export const APP_NAME = "Lord's Gym";
 
 // INTEGRATION KEYS
-// In production, these should be set via environment variables (e.g., .env file or Vercel config)
+// In production, these should be set via environment variables (e.g., Cloudflare Pages variables)
 export const SHOPIFY_STORE_URL = import.meta.env.VITE_SHOPIFY_STORE_URL || "https://lords-gym-auburn.myshopify.com";
-export const MINDBODY_SITE_ID = import.meta.env.VITE_MINDBODY_SITE_ID || "123456";
+// Verified Lord's Gym Mindbody site ID. Do not let a stale build variable
+// silently route customer signups to another business.
+export const MINDBODY_SITE_ID = "5743200";
 
-/** Mindbody shop URL for membership sign-up; all "Join Now" buttons should point here. */
+/**
+ * Modern Mindbody Branded Web pricing catalog.
+ *
+ * Do not replace this with a copied clients.mindbodyonline.com/main_shop.asp URL.
+ * Those legacy URLs are session-dependent and can lose their shop parameters during
+ * Mindbody's identity handoff, which previously sent Join Now visitors to retail or
+ * an error screen.
+ */
+export const MINDBODY_PRICING_URL =
+  `https://go.mindbodyonline.com/book/app/pricing/${MINDBODY_SITE_ID}`;
+
 export const MINDBODY_MEMBERSHIP_URL =
-  "https://clients.mindbodyonline.com/ASP/main_shop.asp?studioid=5743200&tg=&vt=&lvl=&stype=40&view=&trn=0&page=&catid=&prodid=&date=2%2f7%2f2026&classid=0&prodGroupId=&sSU=&optForwardingLink=&qParam=&justloggedin=&nLgIn=&pMode=0&loc=1";
+  `${MINDBODY_PRICING_URL}?category=memberships`;
+
+export const MINDBODY_PASSES_URL =
+  `${MINDBODY_PRICING_URL}?category=passesAndPacks`;
 
 /** Mindbody retail store URL for merchandise; all product "Buy Now" buttons should point here. */
 export const MINDBODY_STORE_URL =

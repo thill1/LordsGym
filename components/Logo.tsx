@@ -23,8 +23,8 @@ const Logo: React.FC<LogoProps> = ({
   const rawBase = (import.meta.env.BASE_URL ?? "/").toString();
   const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
 
-  // New logo file: lords-gym-logo.jpg (black and white design)
-  const logoPath = `${base}media/lords-gym/lords-gym-logo.jpg`;
+  // Optimized, display-sized version of the black and white logo.
+  const logoPath = `${base}media/lords-gym/lords-gym-logo-240.avif`;
 
   const effectiveVariant = variant === "full" ? "nav" : variant;
   const isIcon = effectiveVariant === "icon";

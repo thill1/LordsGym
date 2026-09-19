@@ -1,6 +1,6 @@
 // Service Worker for Lord's Gym - Offline Support
 // Increment version number when deploying to force cache invalidation
-const CACHE_VERSION = 'lords-gym-v5';
+const CACHE_VERSION = 'lords-gym-v6';
 const CACHE_NAME = CACHE_VERSION;
 // Get base path from scope (e.g., '/LordsGym/' or '/')
 const BASE_PATH = self.location.pathname.replace(/\/sw\.js$/, '') || '/';
@@ -16,7 +16,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name.startsWith('lords-gym-'))
+          .filter((name) => name.startsWith('lords-gym-') && name !== CACHE_NAME)
           .map((name) => caches.delete(name))
       );
     }).then(() => {
@@ -39,6 +39,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(event.request.url);
+  // Runtime config and auth responses must never be served from an offline cache.
+  if (url.pathname.startsWith('/api/')) return;
   const isNavigation = event.request.mode === 'navigate';
   const isHTML = event.request.headers.get('accept')?.includes('text/html');
   const isAsset = url.pathname.includes('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
@@ -59,15 +61,19 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           // If network fails, try cache as fallback
-          return caches.match(event.request).then((cachedResponse) => {
+          return caches.match(event.request).then(async (cachedResponse) => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            // If no cache, try to return index.html for navigation
+            // Direct routes may not have been cached, but the root page may be.
             if (isNavigation) {
-              return caches.match(`${BASE_PATH}index.html`).catch(() => null);
+              const fallback = await caches.match(BASE_PATH) || await caches.match(`${BASE_PATH}index.html`);
+              if (fallback) return fallback;
             }
-            return new Response('Offline', { status: 503 });
+            return new Response('Lord’s Gym is temporarily offline. Please reconnect and try again.', {
+              status: 503,
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+            });
           });
         })
     );
@@ -109,7 +115,9 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        return caches.match(event.request);
+        return caches.match(event.request).then((cachedResponse) =>
+          cachedResponse || new Response('Offline', { status: 503 })
+        );
       })
   );
 });

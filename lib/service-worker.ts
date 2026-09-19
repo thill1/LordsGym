@@ -2,9 +2,8 @@
 export const registerServiceWorker = () => {
   // Only register in production and if service workers are supported
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    // Use setTimeout to ensure this doesn't block page load
-    setTimeout(() => {
-      window.addEventListener('load', () => {
+    const register = () => {
+      setTimeout(() => {
         try {
           // Use base path for GitHub Pages
           const basePath = import.meta.env.BASE_URL || '/';
@@ -50,7 +49,12 @@ export const registerServiceWorker = () => {
           // Silently fail - service worker is optional
           console.warn('Service Worker registration error (non-critical):', error);
         }
-      });
-    }, 100);
+      }, 100);
+    };
+
+    // If the bundle executes after load, register immediately. Otherwise wait
+    // once for load. The previous nested listener could miss fast page loads.
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
   }
 };

@@ -4,7 +4,7 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import CartDrawer from "./CartDrawer";
 import PopupModalManager from "./PopupModalManager";
-import { NAV_ITEMS, MINDBODY_MEMBERSHIP_URL } from "../constants";
+import { NAV_ITEMS, MINDBODY_PRICING_URL } from "../constants";
 
 interface LayoutProps {
   currentPath: string;
@@ -168,7 +168,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 </button>
               ))}
               <a
-                href={MINDBODY_MEMBERSHIP_URL}
+                href={MINDBODY_PRICING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
