@@ -4,6 +4,7 @@ const corsHeaders = {
 };
 
 const NOTIFY_EMAIL = 'lordsgymoutreach@gmail.com';
+const FROM_EMAIL = 'orders@lordsgymoutreach.com';
 
 interface ContactPayload {
   firstName: string;
@@ -86,6 +87,7 @@ Deno.serve(async (req) => {
     }
 
     // 2. Send email notification (if Resend is configured)
+    let notificationSent = false;
     if (resendKey) {
       const subject = inquiryType.trim();
       const textBody = [
@@ -98,29 +100,35 @@ Deno.serve(async (req) => {
         message,
       ].join('\n');
 
-      const emailRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendKey}`,
-        },
-        body: JSON.stringify({
-          from: 'Lord\'s Gym Contact <onboarding@resend.dev>',
-          to: [NOTIFY_EMAIL],
-          subject: `[Lord's Gym] ${subject}`,
-          text: textBody,
-        }),
-      });
+      try {
+        const emailRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${resendKey}`,
+          },
+          body: JSON.stringify({
+            from: `Lord's Gym Contact <${FROM_EMAIL}>`,
+            to: [NOTIFY_EMAIL],
+            reply_to: email.trim(),
+            subject: `[Lord's Gym] ${subject}`,
+            text: textBody,
+          }),
+        });
 
-      if (!emailRes.ok) {
-        const errData = await emailRes.json().catch(() => ({}));
-        console.error('Resend email failed:', emailRes.status, errData);
-        // Don't fail the request - data is saved, email is best-effort
+        notificationSent = emailRes.ok;
+        if (!emailRes.ok) {
+          const errData = await emailRes.json().catch(() => ({}));
+          console.error('Resend email failed:', emailRes.status, errData);
+        }
+      } catch (err) {
+        // Keep the saved inquiry even if the notification provider is unavailable.
+        console.error('Resend email failed:', err);
       }
     }
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, notificationSent }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {

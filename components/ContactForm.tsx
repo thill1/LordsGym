@@ -24,6 +24,7 @@ const ContactForm: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [usedMailto, setUsedMailto] = useState(false);
+  const [notificationFailed, setNotificationFailed] = useState(false);
 
   useEffect(() => {
     const query = window.location.hash.split('?')[1];
@@ -91,6 +92,7 @@ const ContactForm: React.FC = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      setNotificationFailed(data?.notificationSent === false);
       setStatus('success');
       setFormData({ firstName: '', lastName: '', email: '', phone: '', inquiryType: '', message: '' });
     } catch (err) {
@@ -110,13 +112,15 @@ const ContactForm: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">Message Sent!</h4>
+          <h4 className="text-xl font-bold mb-2 text-brand-charcoal dark:text-white">{notificationFailed ? 'Message Saved' : 'Message Sent!'}</h4>
           <p className="text-neutral-500 dark:text-neutral-400 mb-6">
             {usedMailto
               ? "Your email app should open with the message. Send it to contact us. We'll respond as soon as we can."
+              : notificationFailed
+              ? <>Your message was saved, but our email alert could not be confirmed. For a prompt reply, email <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> directly.</>
               : "Your message has been sent successfully. We'll respond as soon as we can."}
           </p>
-          <Button onClick={() => { setStatus('idle'); setUsedMailto(false); }} variant="outline" size="sm">Send Another</Button>
+          <Button onClick={() => { setStatus('idle'); setUsedMailto(false); setNotificationFailed(false); }} variant="outline" size="sm">Send Another</Button>
         </div>
       ) : status === 'error' ? (
         <div className="text-center py-12 fade-in">
