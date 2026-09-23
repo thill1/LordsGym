@@ -1,3 +1,0 @@
-# Cloudflare Pages SPA routing
-# Serves index.html for all routes so React hash router can handle navigation
-/*    /index.html   200

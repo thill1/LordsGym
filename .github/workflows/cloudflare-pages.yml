@@ -140,6 +140,14 @@ jobs:
           echo "✅ Build completed successfully"
           echo "Build output size: $(du -sh dist | cut -f1)"
 
+      - name: Prepare Cloudflare Pages artifact
+        run: |
+          # A top-level 404.html disables Cloudflare Pages' automatic SPA
+          # fallback. It is kept in source for the separate GitHub Pages build.
+          mv dist/404.html "$RUNNER_TEMP/lords-gym-github-pages-404.html"
+          test ! -e dist/404.html
+          test ! -e dist/_redirects
+
       - name: Install browser for pre-deployment checks
         run: npx playwright install chromium --with-deps
 
