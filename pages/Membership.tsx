@@ -26,7 +26,6 @@ interface MembershipOption {
   image: string;
   href: string;
   cta: string;
-  featured?: boolean;
   external?: boolean;
 }
 
@@ -44,7 +43,6 @@ const MEMBERSHIP_OPTIONS: MembershipOption[] = [
     image: IMAGES.cardioArea,
     href: MINDBODY_MEMBERSHIP_URL,
     cta: 'View Membership Options',
-    featured: true,
     external: true,
   },
   {
@@ -64,7 +62,7 @@ const MEMBERSHIP_OPTIONS: MembershipOption[] = [
     name: '1 Month Only',
     price: '$59.99',
     period: '',
-    detail: 'Expires 1 month after purchase',
+    detail: '',
     features: ['Unlimited sessions', 'Expires 1 month after purchase'],
     image: IMAGES.cardioArea,
     href: MINDBODY_PASSES_URL,
@@ -76,7 +74,7 @@ const MEMBERSHIP_OPTIONS: MembershipOption[] = [
     name: '1 Year Paid In Full',
     price: '$350',
     period: '',
-    detail: 'Expires 12 months after purchase',
+    detail: '',
     features: ['Unlimited sessions', 'Expires 12 months after purchase'],
     image: IMAGES.fullFacility,
     href: MINDBODY_PASSES_URL,
@@ -88,7 +86,7 @@ const MEMBERSHIP_OPTIONS: MembershipOption[] = [
     name: 'Day Pass',
     price: '$10',
     period: '',
-    detail: 'Expires 12 months after purchase',
+    detail: '',
     features: ['Single session'],
     image: IMAGES.freeWeights,
     href: MINDBODY_PASSES_URL,
@@ -125,11 +123,6 @@ const Membership: React.FC = () => {
               key={option.id}
               className="p-0 overflow-hidden flex flex-col shadow-2xl relative transition-transform hover:-translate-y-1"
             >
-              {option.featured && (
-                <div className="absolute top-0 right-0 bg-brand-red text-white text-xs font-bold px-3 py-1 uppercase tracking-widest z-20 shadow-lg">
-                  Most Popular
-                </div>
-              )}
               <div className="h-40 relative overflow-hidden">
                 <img
                   src={option.image}
@@ -161,7 +154,9 @@ const Membership: React.FC = () => {
                   <div className="text-4xl font-bold text-brand-red">
                     {option.price}<span className="text-sm text-neutral-500">{option.period}</span>
                   </div>
-                  <div className="text-[10px] text-neutral-500 mt-1 pt-1 uppercase tracking-wider">{option.detail}</div>
+                  {option.detail && (
+                    <div className="text-[10px] text-neutral-500 mt-1 pt-1 uppercase tracking-wider">{option.detail}</div>
+                  )}
                 </div>
                 <a
                   href={option.href}

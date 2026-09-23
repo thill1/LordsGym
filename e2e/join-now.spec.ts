@@ -26,6 +26,8 @@ test.describe('Join Now and membership checkout', () => {
     await expect(page.getByRole('heading', { name: 'Online Coaching' })).toBeVisible();
     await expect(page.getByRole('heading', { name: '1 Month Only' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Student Monthly' })).toHaveCount(0);
+    await expect(page.getByText('Most Popular', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Expires 1 month after purchase', { exact: true })).toHaveCount(1);
 
     const mindbodyLinks = page.locator(`a[href*="${MODERN_MINDBODY_HOST}${PRICING_PATH}"]`);
     await expect(mindbodyLinks).toHaveCount(5);
