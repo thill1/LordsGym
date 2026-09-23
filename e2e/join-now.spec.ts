@@ -35,7 +35,8 @@ test.describe('Join Now and membership checkout', () => {
   });
 
   test('direct /membership route renders the membership page', async ({ page }) => {
-    await page.goto('/membership');
+    const response = await page.goto('/membership');
+    expect(response?.status()).toBe(200);
     await expect(page.getByRole('heading', { name: 'MEMBERSHIPS & PASSES' })).toBeVisible();
   });
 
