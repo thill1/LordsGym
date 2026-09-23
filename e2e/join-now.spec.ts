@@ -23,16 +23,38 @@ test.describe('Join Now and membership checkout', () => {
     await expect(page.getByRole('heading', { name: 'Month to Month' })).toBeVisible();
     await expect(page.getByRole('heading', { name: '1 Year Paid In Full' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Day Pass' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Online Coaching' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Online Coaching', level: 3 })).toBeVisible();
     await expect(page.getByRole('heading', { name: '1 Month Only' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Membership options' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Gym Memberships' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Flexible Gym Access' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Online Coaching' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Student Monthly' })).toHaveCount(0);
     await expect(page.getByText('Most Popular', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('1 item', { exact: true })).toHaveCount(0);
     await expect(page.getByText('Expires 1 month after purchase', { exact: true })).toHaveCount(1);
+
+    const groupHeadings = await page.locator('main section[id] > div > h2').allTextContents();
+    expect(groupHeadings).toEqual(['Gym Memberships', 'Flexible Gym Access', 'Online Coaching']);
+
+    const membershipCards = page.locator('#gym-memberships h3');
+    await expect(membershipCards).toHaveText(['Month to Month', '1 Year Paid In Full']);
+    const flexibleCards = page.locator('#flexible-access h3');
+    await expect(flexibleCards).toHaveText(['Day Pass', '1 Month Only']);
+    await expect(page.locator('#online-coaching h3')).toHaveText('Online Coaching');
+
+    await page.getByRole('button', { name: 'Flexible Gym Access' }).click();
+    await expect.poll(async () => page.locator('#flexible-access').evaluate((element) => Math.round(element.getBoundingClientRect().top)))
+      .toBeLessThan(140);
 
     const mindbodyLinks = page.locator(`a[href*="${MODERN_MINDBODY_HOST}${PRICING_PATH}"]`);
     await expect(mindbodyLinks).toHaveCount(5);
     await expect(page.locator('a[href*="clients.mindbodyonline.com"]')).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'View Membership Options' }))
+      .toHaveAttribute('href', `https://${MODERN_MINDBODY_HOST}${PRICING_PATH}?category=contract`);
+    await expect(page.locator('#gym-memberships a')).toHaveCount(2);
+    await expect(page.locator('#flexible-access a')).toHaveCount(2);
+    await expect(page.locator('#online-coaching a'))
       .toHaveAttribute('href', `https://${MODERN_MINDBODY_HOST}${PRICING_PATH}?category=contract`);
   });
 
@@ -45,7 +67,7 @@ test.describe('Join Now and membership checkout', () => {
   test('day pass opens the current Mindbody pass catalog', async ({ page }) => {
     await page.goto('/#/membership');
     const popupPromise = page.waitForEvent('popup');
-    await page.getByRole('link', { name: 'Buy a Day Pass' }).click();
+    await page.getByRole('link', { name: 'View Day Pass Options' }).click();
     const popup = await popupPromise;
     await expect.poll(() => popup.url(), { timeout: 15000 }).toContain(`${PRICING_PATH}?category=passesAndPacks`);
     await expect(popup.getByText(/Day Pass/).first()).toBeVisible({ timeout: 15000 });
