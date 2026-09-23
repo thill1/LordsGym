@@ -6,16 +6,13 @@ import { Product } from '../types';
 import { uploadProductImage, deleteProductImage } from '../lib/image-upload';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminDashboard from '../components/admin/AdminDashboard';
-import PageEditor from '../components/admin/PageEditor';
 import MediaLibrary from '../components/admin/MediaLibrary';
-import UserManagement from '../components/admin/UserManagement';
 import CalendarManager from '../components/admin/CalendarManager';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ProductBulkOperations from '../components/admin/ProductBulkOperations';
 import ActivityLogs from '../components/admin/ActivityLogs';
 import SettingsManager from '../components/admin/SettingsManager';
 import PopupModalsManager from '../components/admin/PopupModalsManager';
-import SEOManager from '../components/admin/SEOManager';
 import HomeContentEditor from '../components/admin/HomeContentEditor';
 import OutreachContentEditor from '../components/admin/OutreachContentEditor';
 import TestimonialsManager from '../components/admin/TestimonialsManager';
@@ -34,7 +31,7 @@ const Admin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'outreach' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'home' | 'outreach' | 'testimonials' | 'store' | 'calendar' | 'media' | 'popups' | 'settings' | 'analytics' | 'activity'>('dashboard');
   const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void } | null>(null);
   const { showSuccess, showError } = useToast();
 
@@ -140,9 +137,6 @@ const Admin: React.FC = () => {
   };
 
   const handleDeleteImage = async () => {
-    if (prodImage && prodImage.includes('/storage/')) {
-      await deleteProductImage(prodImage);
-    }
     setProdImage('');
   };
 
@@ -170,9 +164,6 @@ const Admin: React.FC = () => {
   };
 
   const handleDeleteComingSoonImage = async () => {
-    if (prodComingSoonImage && prodComingSoonImage.includes('/storage/')) {
-      await deleteProductImage(prodComingSoonImage);
-    }
     setProdComingSoonImage('');
   };
 
@@ -201,6 +192,12 @@ const Admin: React.FC = () => {
       const { logProductAction } = await import('../lib/activity-logger');
       if (editingProduct) {
         await updateProduct(newProduct);
+        if (editingProduct.image && editingProduct.image !== newProduct.image) {
+          await deleteProductImage(editingProduct.image);
+        }
+        if (editingProduct.comingSoonImage && editingProduct.comingSoonImage !== newProduct.comingSoonImage) {
+          await deleteProductImage(editingProduct.comingSoonImage);
+        }
         await logProductAction('update', newProduct.id, newProduct.title);
         showSuccess('Product updated successfully');
       } else {
@@ -306,16 +303,13 @@ const Admin: React.FC = () => {
         {activeTab === 'dashboard' && <AdminDashboard onTabChange={setActiveTab} />}
         {activeTab === 'home' && <HomeContentEditor />}
         {activeTab === 'outreach' && <OutreachContentEditor />}
-        {activeTab === 'pages' && <PageEditor />}
         {activeTab === 'testimonials' && <TestimonialsManager />}
         {activeTab === 'calendar' && <CalendarManager />}
         {activeTab === 'media' && <MediaLibrary />}
-        {activeTab === 'users' && <UserManagement />}
         {activeTab === 'popups' && <PopupModalsManager />}
         {activeTab === 'analytics' && <AnalyticsDashboard />}
         {activeTab === 'activity' && <ActivityLogs />}
         {activeTab === 'settings' && <SettingsManager />}
-        {activeTab === 'seo' && <SEOManager />}
 
         {activeTab === 'store' && (
           <div className="space-y-8 fade-in">
@@ -333,7 +327,13 @@ const Admin: React.FC = () => {
                 for (const id of ids) {
                   const product = products.find(p => p.id === id);
                   await deleteProduct(id);
-                  if (product) await logProductAction('delete', id, product.title);
+                  if (product) {
+                    await Promise.all([
+                      deleteProductImage(product.image),
+                      deleteProductImage(product.comingSoonImage || '')
+                    ]);
+                    await logProductAction('delete', id, product.title);
+                  }
                 }
               }}
               onBulkUpdate={async (ids: string[], updates: Partial<Product>) => {
@@ -435,6 +435,10 @@ const Admin: React.FC = () => {
                                     try {
                                       const { logProductAction } = await import('../lib/activity-logger');
                                       await deleteProduct(product.id);
+                                      await Promise.all([
+                                        deleteProductImage(product.image),
+                                        deleteProductImage(product.comingSoonImage || '')
+                                      ]);
                                       await logProductAction('delete', product.id, product.title);
                                       showSuccess('Product deleted successfully');
                                       setConfirmDialog(null);

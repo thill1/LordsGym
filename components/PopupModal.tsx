@@ -9,8 +9,6 @@ export interface PopupModalProps {
   ctaLink?: string;
   /** Called when primary CTA is clicked, with ctaLink. Parent should navigate then close. */
   onCtaNavigate?: (path: string) => void;
-  /** Called when user dismisses (Close, Maybe later, backdrop, Escape). Parent should navigate to home then close. */
-  onDismissNavigate?: () => void;
   /** Legacy: used when onCtaNavigate not provided. */
   onNavigate?: (path: string) => void;
 }
@@ -30,7 +28,6 @@ const PopupModal: React.FC<PopupModalProps> = ({
   ctaText,
   ctaLink,
   onCtaNavigate,
-  onDismissNavigate,
   onNavigate
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -38,9 +35,8 @@ const PopupModal: React.FC<PopupModalProps> = ({
   const previousActiveRef = useRef<HTMLElement | null>(null);
 
   const handleDismiss = useCallback(() => {
-    onDismissNavigate?.();
     onClose();
-  }, [onDismissNavigate, onClose]);
+  }, [onClose]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

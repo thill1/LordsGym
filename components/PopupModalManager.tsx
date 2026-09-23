@@ -97,7 +97,6 @@ const PopupModalManager: React.FC<PopupModalManagerProps> = ({ currentPath, onNa
       ctaText={active.ctaText}
       ctaLink={active.ctaLink}
       onCtaNavigate={(link) => onNavigate(normalizePopupPath(link))}
-      onDismissNavigate={() => onNavigate('/')}
     />
   );
 };

@@ -20,9 +20,12 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'supabase-vendor': ['@supabase/supabase-js'],
+          manualChunks(moduleId) {
+            if (moduleId.includes('/node_modules/react/') || moduleId.includes('/node_modules/react-dom/')) {
+              return 'react-vendor';
+            }
+            if (moduleId.includes('/node_modules/@supabase/')) return 'supabase-vendor';
+            return undefined;
           },
         },
       },

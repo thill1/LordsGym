@@ -3,6 +3,7 @@ import { useStore } from '../../context/StoreContext';
 import type { PopupModalConfig, PopupTargetPage } from '../../types';
 import { normalizePopupPath } from '../../utils/popupPaths';
 import { logActivity } from '../../lib/activity-logger';
+import { useToast } from '../../context/ToastContext';
 
 const TARGET_PAGE_OPTIONS: { value: PopupTargetPage; label: string }[] = [
   { value: 'all', label: 'All pages (site-wide)' },
@@ -36,7 +37,9 @@ function nextId(list: PopupModalConfig[]): string {
 
 const PopupModalsManager: React.FC = () => {
   const { settings, updateSettings } = useStore();
+  const { showSuccess, showError } = useToast();
   const popups = settings?.popupModals ?? [];
+  const [isSaving, setIsSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PopupModalConfig>(() => ({
     ...DEFAULT_POPUP,
@@ -56,7 +59,7 @@ const PopupModalsManager: React.FC = () => {
     setEditingId(p.id);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const list = [...popups];
     const idx = list.findIndex((x) => x.id === form.id);
     const item: PopupModalConfig = {
@@ -70,30 +73,48 @@ const PopupModalsManager: React.FC = () => {
     } else {
       list[idx] = item;
     }
-    updateSettings({ ...settings, popupModals: list });
-    logActivity({
-      action_type: isCreate ? 'create' : 'update',
-      entity_type: 'settings',
-      entity_id: item.id,
-      description: `${isCreate ? 'create' : 'update'} popup: ${item.title || '(Untitled)'}`
-    });
-    setEditingId(null);
+    setIsSaving(true);
+    try {
+      await updateSettings({ ...settings, popupModals: list });
+      await logActivity({
+        action_type: isCreate ? 'create' : 'update',
+        entity_type: 'settings',
+        entity_id: item.id,
+        description: `${isCreate ? 'create' : 'update'} popup: ${item.title || '(Untitled)'}`
+      });
+      setEditingId(null);
+      showSuccess(isCreate ? 'Popup created.' : 'Popup updated.');
+    } catch (error) {
+      console.error('Error saving popup:', error);
+      showError('Failed to save popup. The previous version is still active.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('Remove this popup? This cannot be undone.')) return;
     const popup = popups.find((p) => p.id === id);
-    updateSettings({
-      ...settings,
-      popupModals: popups.filter((p) => p.id !== id)
-    });
-    logActivity({
-      action_type: 'delete',
-      entity_type: 'settings',
-      entity_id: id,
-      description: `delete popup: ${popup?.title || id}`
-    });
-    if (editingId === id) setEditingId(null);
+    setIsSaving(true);
+    try {
+      await updateSettings({
+        ...settings,
+        popupModals: popups.filter((p) => p.id !== id)
+      });
+      await logActivity({
+        action_type: 'delete',
+        entity_type: 'settings',
+        entity_id: id,
+        description: `delete popup: ${popup?.title || id}`
+      });
+      if (editingId === id) setEditingId(null);
+      showSuccess('Popup deleted.');
+    } catch (error) {
+      console.error('Error deleting popup:', error);
+      showError('Failed to delete popup. It is still active.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => setEditingId(null);
@@ -159,7 +180,8 @@ const PopupModalsManager: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleDelete(p.id)}
+              onClick={() => void handleDelete(p.id)}
+              disabled={isSaving}
                     className="px-3 py-1.5 text-sm font-bold rounded border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   >
                     Delete
@@ -245,7 +267,7 @@ const PopupModalsManager: React.FC = () => {
                 placeholder="/membership"
               />
               <p className="text-xs text-neutral-500 mt-1">
-                In-app path (e.g. /membership, /outreach, /training, /). Leave empty for informational-only; closing then sends users to home.
+                In-app path (e.g. /membership, /outreach, /training, /). Leave empty for an informational-only popup.
               </p>
             </div>
           </div>
@@ -278,10 +300,11 @@ const PopupModalsManager: React.FC = () => {
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
+              disabled={isSaving}
               className="px-4 py-2 rounded-lg font-bold text-white bg-brand-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-brand-red focus:ring-offset-2"
             >
-              {editingId === 'new' ? 'Create' : 'Save'}
+              {isSaving ? 'Saving…' : editingId === 'new' ? 'Create' : 'Save'}
             </button>
             <button
               type="button"

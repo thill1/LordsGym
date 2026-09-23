@@ -19,4 +19,12 @@ test.describe('Store public view', () => {
     await page.getByRole('button', { name: "Men's Apparel", exact: true }).click();
     await expect(page.getByRole('button', { name: 'Buy on MindBody' }).first()).toBeVisible();
   });
+
+  test('shows an honest retry state when merchandise cannot load', async ({ page }) => {
+    await page.route('**/rest/v1/products**', route => route.fulfill({ status: 503, body: '{"message":"unavailable"}' }));
+    await page.goto('/#/shop');
+    await expect(page.getByRole('alert')).toContainText('Merchandise is temporarily unavailable');
+    await expect(page.getByRole('button', { name: 'Try Again' })).toBeVisible();
+    await expect(page.getByText('No products found in this category.')).toHaveCount(0);
+  });
 });

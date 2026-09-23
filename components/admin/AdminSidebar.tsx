@@ -19,17 +19,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'home', label: 'Home Page', icon: '🏠' },
     { id: 'outreach', label: 'Outreach Page', icon: '🤝' },
-    { id: 'pages', label: 'Page Content', icon: '📄' },
     { id: 'testimonials', label: 'Testimonials', icon: '💬' },
     { id: 'store', label: 'Store / Merch', icon: '🛍️' },
     { id: 'calendar', label: 'Calendar', icon: '📅' },
     { id: 'media', label: 'Media Library', icon: '🖼️' },
-    { id: 'users', label: 'Users', icon: '👥' },
     { id: 'popups', label: 'Popups', icon: '📣' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'activity', label: 'Activity Logs', icon: '📋' },
-    { id: 'settings', label: 'Global Settings', icon: '⚙️' },
-    { id: 'seo', label: 'SEO', icon: '🔍' }
+    { id: 'settings', label: 'Global Settings', icon: '⚙️' }
   ];
 
   return (

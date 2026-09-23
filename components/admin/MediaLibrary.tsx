@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { uploadMediaFile } from '../../lib/media-upload';
+import { removeMediaStorageObjects, uploadMediaFile } from '../../lib/media-upload';
 import { useToast } from '../../context/ToastContext';
 import { logMediaAction } from '../../lib/activity-logger';
 import { safeGet, safeSet } from '../../lib/localStorage';
@@ -130,6 +130,7 @@ const MediaLibrary: React.FC = () => {
     try {
       const { error } = await supabase.from('media').delete().eq('id', id);
       if (error) throw error;
+      if (item) await removeMediaStorageObjects([item.url]);
       if (item) await logMediaAction('delete', id, item.filename);
       await loadMedia();
       showSuccess('Media item deleted successfully!');
@@ -156,8 +157,10 @@ const MediaLibrary: React.FC = () => {
     }
     try {
       const ids = Array.from(selectedItems);
+      const selectedUrls = media.filter((item) => ids.includes(item.id)).map((item) => item.url);
       const { error } = await supabase.from('media').delete().in('id', ids);
       if (error) throw error;
+      await removeMediaStorageObjects(selectedUrls);
       await loadMedia();
       setSelectedItems(new Set());
       showSuccess(`${ids.length} media item(s) deleted successfully!`);

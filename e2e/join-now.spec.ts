@@ -16,7 +16,7 @@ test.describe('Join Now and membership checkout', () => {
     await expect(popup.getByRole('button', { name: /Online Coaching \$149/ }).first()).toBeVisible();
   });
 
-  test('membership page exposes current memberships, annual pass, coaching, and day pass', async ({ page }) => {
+  test('membership page mirrors the customer-facing Mindbody catalog', async ({ page }) => {
     await page.goto('/#/membership');
 
     await expect(page.getByRole('heading', { name: 'MEMBERSHIPS & PASSES' })).toBeVisible();
@@ -24,10 +24,14 @@ test.describe('Join Now and membership checkout', () => {
     await expect(page.getByRole('heading', { name: '1 Year Paid In Full' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Day Pass' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Online Coaching' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '1 Month Only' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Student Monthly' })).toHaveCount(0);
 
     const mindbodyLinks = page.locator(`a[href*="${MODERN_MINDBODY_HOST}${PRICING_PATH}"]`);
     await expect(mindbodyLinks).toHaveCount(5);
     await expect(page.locator('a[href*="clients.mindbodyonline.com"]')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'View Membership Options' }))
+      .toHaveAttribute('href', `https://${MODERN_MINDBODY_HOST}${PRICING_PATH}?category=contract`);
   });
 
   test('direct /membership route renders the membership page', async ({ page }) => {
@@ -53,13 +57,26 @@ test.describe('Join Now and membership checkout', () => {
     await expect(joinLink).toHaveAttribute('href', `https://${MODERN_MINDBODY_HOST}${PRICING_PATH}`);
   });
 
-  test('student rate inquiry reaches the contact form with context', async ({ page }) => {
+  test('dismissing a popup preserves the current page', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('site_settings', JSON.stringify({
+        popupModals: [{
+          id: 'e2e-popup',
+          enabled: true,
+          title: 'Test offer',
+          body: 'Test popup body',
+          targetPage: 'all',
+          showAfterDelayMs: 0,
+          showOncePerSession: true,
+        }],
+      }));
+    });
     await page.goto('/#/membership');
-    await page.getByRole('link', { name: 'Ask About Student Rate' }).click();
-    await expect(page).toHaveURL(/#\/contact\?/);
-    await expect(page.getByRole('heading', { name: 'Send a Message' })).toBeVisible();
-    await expect(page.locator('select[name="inquiryType"]')).toHaveValue('Membership Question');
-    await expect(page.locator('textarea[name="message"]')).toHaveValue(/Student Monthly/);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await dialog.getByRole('button', { name: 'Close' }).first().click();
+    await expect(page).toHaveURL(/#\/membership$/);
+    await expect(page.getByRole('heading', { name: 'MEMBERSHIPS & PASSES' })).toBeVisible();
   });
 
   test('training separates online coaching purchase from 1-on-1 inquiries', async ({ page }) => {
