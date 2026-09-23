@@ -13,7 +13,7 @@ interface RecentActivityLog {
 }
 
 interface AdminDashboardProps {
-  onTabChange?: (tab: 'dashboard' | 'home' | 'pages' | 'testimonials' | 'store' | 'calendar' | 'media' | 'users' | 'popups' | 'settings' | 'seo' | 'analytics' | 'activity') => void;
+  onTabChange?: (tab: 'dashboard' | 'home' | 'outreach' | 'testimonials' | 'store' | 'calendar' | 'media' | 'popups' | 'settings' | 'analytics' | 'activity') => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {

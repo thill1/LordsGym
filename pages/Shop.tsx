@@ -7,7 +7,7 @@ import { useStore } from '../context/StoreContext';
 const HERO_IMAGE = `${import.meta.env.BASE_URL || '/'}media/outreach/outreach-community.jpg.jpeg`.replace(/\/\/+/g, '/');
 
 const Shop: React.FC = () => {
-  const { products } = useStore();
+  const { products, areProductsLoading, productsLoadFailed } = useStore();
   const [activeCategory, setActiveCategory] = useState<string>('All Products');
 
   const categories = ['All Products', "Men's Apparel", "Women's Apparel", 'Accessories'];
@@ -50,12 +50,30 @@ const Shop: React.FC = () => {
 
           {/* Product Grid */}
           <div className="flex-grow">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredProducts.map(product => (
-                <ShopifyProduct key={product.id} product={product} />
-              ))}
-            </div>
-            {filteredProducts.length === 0 && (
+            {areProductsLoading && products.length === 0 ? (
+              <div className="text-center py-12 text-neutral-500" role="status">
+                Loading merchandise…
+              </div>
+            ) : productsLoadFailed && products.length === 0 ? (
+              <div className="text-center py-12" role="alert">
+                <p className="font-bold text-brand-charcoal dark:text-white">Merchandise is temporarily unavailable.</p>
+                <p className="mt-2 text-sm text-neutral-500">Please try again in a moment.</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-5 min-h-[44px] px-5 py-2.5 rounded bg-brand-red text-white font-bold uppercase tracking-wider"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {filteredProducts.map(product => (
+                  <ShopifyProduct key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+            {!areProductsLoading && !productsLoadFailed && filteredProducts.length === 0 && (
               <div className="text-center py-12 text-neutral-500">
                 No products found in this category.
               </div>

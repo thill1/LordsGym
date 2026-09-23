@@ -30,21 +30,17 @@ interface MembershipOption {
   external?: boolean;
 }
 
-const studentContactHref = `#/contact?${new URLSearchParams({
-  inquiry: 'Membership Question',
-  message: "I'm interested in the Student Monthly membership.",
-}).toString()}`;
-
-// Prices and online availability verified against Lord's Gym's live Mindbody
-// Branded Web catalog. Student pricing remains an in-person verification flow.
+// Keep this selector aligned with the customer-facing options currently listed
+// in Lord's Gym's live Mindbody Branded Web catalog. Internal/test products in
+// Mindbody are intentionally not advertised here.
 const MEMBERSHIP_OPTIONS: MembershipOption[] = [
   {
     id: 'monthly',
     name: 'Month to Month',
     price: '$39',
-    period: '/month',
+    period: '/mo',
     detail: 'Billed monthly',
-    features: ['24/7 gym access', 'No long-term contract'],
+    features: ['1 item', 'Month to month'],
     image: IMAGES.cardioArea,
     href: MINDBODY_MEMBERSHIP_URL,
     cta: 'View Membership Options',
@@ -52,62 +48,51 @@ const MEMBERSHIP_OPTIONS: MembershipOption[] = [
     external: true,
   },
   {
-    id: 'student',
-    name: 'Student Monthly',
-    price: '$29',
-    period: '/month',
-    detail: 'Valid student ID required',
-    features: ['High school or college students', '24/7 gym access'],
-    image: IMAGES.freeWeights,
-    href: studentContactHref,
-    cta: 'Ask About Student Rate',
-  },
-  {
-    id: 'annual',
-    name: '1 Year Paid In Full',
-    price: '$350',
-    period: '/year',
-    detail: 'Paid once in Mindbody',
-    features: ['Unlimited gym access', 'Expires 12 months after purchase'],
+    id: 'coaching',
+    name: 'Online Coaching',
+    price: '$149',
+    period: '/mo',
+    detail: 'Billed monthly',
+    features: ['1 item', 'Month to month'],
     image: IMAGES.fullFacility,
-    href: MINDBODY_PASSES_URL,
-    cta: 'View Annual Option',
+    href: MINDBODY_MEMBERSHIP_URL,
+    cta: 'View Coaching Options',
     external: true,
   },
   {
     id: 'one-month',
     name: '1 Month Only',
     price: '$59.99',
-    period: '/month',
-    detail: 'No recurring billing',
-    features: ['Unlimited gym access', 'Expires one month after purchase'],
+    period: '',
+    detail: 'Expires 1 month after purchase',
+    features: ['Unlimited sessions', 'Expires 1 month after purchase'],
     image: IMAGES.cardioArea,
     href: MINDBODY_PASSES_URL,
     cta: 'View Pass Options',
     external: true,
   },
   {
-    id: 'day-pass',
-    name: 'Day Pass',
-    price: '$10',
-    period: '/visit',
-    detail: 'Single-session pass',
-    features: ['Try the gym before joining', 'Purchase securely through Mindbody'],
-    image: IMAGES.freeWeights,
+    id: 'annual',
+    name: '1 Year Paid In Full',
+    price: '$350',
+    period: '',
+    detail: 'Expires 12 months after purchase',
+    features: ['Unlimited sessions', 'Expires 12 months after purchase'],
+    image: IMAGES.fullFacility,
     href: MINDBODY_PASSES_URL,
-    cta: 'Buy a Day Pass',
+    cta: 'View Annual Option',
     external: true,
   },
   {
-    id: 'coaching',
-    name: 'Online Coaching',
-    price: '$149',
-    period: '/month',
-    detail: 'Billed monthly',
-    features: ['Personalized coaching support', 'Managed securely through Mindbody'],
-    image: IMAGES.fullFacility,
-    href: MINDBODY_MEMBERSHIP_URL,
-    cta: 'View Coaching Options',
+    id: 'day-pass',
+    name: 'Day Pass',
+    price: '$10',
+    period: '',
+    detail: 'Expires 12 months after purchase',
+    features: ['Single session'],
+    image: IMAGES.freeWeights,
+    href: MINDBODY_PASSES_URL,
+    cta: 'Buy a Day Pass',
     external: true,
   },
 ];
@@ -205,10 +190,6 @@ const Membership: React.FC = () => {
             <div>
               <h3 className="font-bold text-lg mb-2 text-brand-charcoal dark:text-white">Where do I complete my purchase?</h3>
               <p className="text-neutral-500">Online purchases are completed on Lord&apos;s Gym&apos;s secure Mindbody pricing page. You can review the available options before checking out.</p>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-2 text-brand-charcoal dark:text-white">How do I verify my student status?</h3>
-              <p className="text-neutral-500">Contact us or bring a valid student ID from a local high school or college during staffed hours to activate the student rate.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg mb-2 text-brand-charcoal dark:text-white">How does 24/7 access work?</h3>

@@ -3,7 +3,7 @@ import { CalendarEvent, RecurringPattern } from '../lib/calendar-utils';
 import { getHolidaysForRange } from '../lib/us-holidays';
 import { safeGet, safeSet } from '../lib/localStorage';
 import { useCalendarEventsQuery } from '../lib/calendar-queries';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 interface CalendarContextType {
   events: CalendarEvent[];
@@ -26,6 +26,20 @@ const sortByStartTime = (items: CalendarEvent[]): CalendarEvent[] => {
   return [...items].sort((a, b) => {
     return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
   });
+};
+
+const toEventPayload = (event: Omit<CalendarEvent, 'id'> | Partial<CalendarEvent>) => {
+  const payload: Record<string, unknown> = {};
+  const source = event as Partial<CalendarEvent>;
+  const writableKeys: Array<Exclude<keyof CalendarEvent, 'id' | 'booked_count' | 'recurring_pattern'>> = [
+    'title', 'description', 'start_time', 'end_time', 'instructor_id',
+    'class_type', 'capacity', 'recurring_pattern_id', 'occurrence_date',
+    'is_recurring_generated', 'is_recurring_preserved', 'recurring_series_id'
+  ];
+  for (const key of writableKeys) {
+    if (source[key] !== undefined) payload[key] = source[key];
+  }
+  return payload;
 };
 
 export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,13 +100,10 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
     if (isSupabaseConfigured()) {
-      try {
-        // TODO: Implement via Supabase API - refactor to use mutations
-        throw new Error('Event creation via Supabase not yet refactored to use mutations');
-      } catch (err) {
-        console.error('Error adding event to Supabase:', err);
-        throw err;
-      }
+      const { error } = await supabase.from('calendar_events').insert(toEventPayload(event));
+      if (error) throw error;
+      await refetch();
+      return;
     }
     const newEvent: CalendarEvent = {
       ...event,
@@ -105,13 +116,13 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateEvent = async (id: string, updates: Partial<CalendarEvent>) => {
     if (isSupabaseConfigured()) {
-      try {
-        // TODO: Implement via Supabase API - refactor to use mutations
-        throw new Error('Event updates via Supabase not yet refactored to use mutations');
-      } catch (err) {
-        console.error('Error updating event in Supabase:', err);
-        throw err;
-      }
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({ ...toEventPayload(updates), updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      await refetch();
+      return;
     }
 
     const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);
@@ -124,13 +135,10 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const deleteEvent = async (id: string) => {
     if (isSupabaseConfigured()) {
-      try {
-        // TODO: Implement via Supabase API - refactor to use mutations
-        throw new Error('Event deletion via Supabase not yet refactored to use mutations');
-      } catch (err) {
-        console.error('Error deleting event from Supabase:', err);
-        throw err;
-      }
+      const { error } = await supabase.from('calendar_events').delete().eq('id', id);
+      if (error) throw error;
+      await refetch();
+      return;
     }
 
     const customEvents = safeGet<CalendarEvent[]>(STORAGE_KEY, []);

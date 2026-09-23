@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured, getSupabaseUrl, hydrateSupabaseConfigFr
 export interface AuthUser {
   id: string;
   email: string;
+  role?: string;
   needsPasswordChange?: boolean;
 }
 
@@ -32,7 +33,12 @@ async function signInViaProxy(email: string, password: string): Promise<{ user: 
   if (data.access_token && data.user) {
     await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token || '' });
     return {
-      user: { id: data.user.id, email: data.user.email || '', needsPasswordChange: !!data.user.user_metadata?.needs_password_change },
+      user: {
+        id: data.user.id,
+        email: data.user.email || '',
+        role: data.user.app_metadata?.role,
+        needsPasswordChange: !!data.user.user_metadata?.needs_password_change
+      },
       error: null,
     };
   }
@@ -67,6 +73,7 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
         user: {
           id: data.user.id,
           email: data.user.email || '',
+          role: data.user.app_metadata?.role,
           needsPasswordChange: !!data.user.user_metadata?.needs_password_change,
         },
         error: null,
@@ -115,7 +122,8 @@ export const signIn = async (email: string, password: string): Promise<{ user: A
   if (isDev && DEV_PASSWORDS.includes(p)) {
     const fallbackUser: AuthUser = {
       id: 'local-admin',
-      email: (email && email.trim()) || 'admin@lordsgym.com'
+      email: (email && email.trim()) || 'admin@lordsgym.com',
+      role: 'admin'
     };
     localStorage.setItem('admin_user', JSON.stringify(fallbackUser));
     return { user: fallbackUser, error: null };
@@ -159,6 +167,7 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       return {
         id: user.id,
         email: user.email || '',
+        role: user.app_metadata?.role,
         needsPasswordChange: !!user.user_metadata?.needs_password_change,
       };
     } catch (error) {
@@ -184,7 +193,7 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
  * Check if user is authenticated (has admin access)
  */
 export const hasAdminAccess = (user: AuthUser | null): boolean => {
-  return !!user;
+  return user?.role === 'admin';
 };
 
 /**

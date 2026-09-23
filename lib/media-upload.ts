@@ -12,6 +12,19 @@ export interface UploadResult {
   id?: string;
 }
 
+function storagePathFromPublicUrl(url: string): string | null {
+  const marker = '/storage/v1/object/public/media/';
+  const index = url.indexOf(marker);
+  return index >= 0 ? decodeURIComponent(url.slice(index + marker.length)) : null;
+}
+
+export async function removeMediaStorageObjects(urls: string[]): Promise<void> {
+  const paths = urls.map(storagePathFromPublicUrl).filter((path): path is string => !!path);
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  if (error) throw error;
+}
+
 /**
  * Upload a file to storage and register it in the media table. Returns the public URL.
  * Fails if Supabase is not configured (call isSupabaseConfigured() first if you need a fallback).
@@ -54,6 +67,7 @@ export async function uploadMediaFile(file: File): Promise<UploadResult> {
     .single();
 
   if (dbError) {
+    await supabase.storage.from(BUCKET).remove([filePath]);
     const msg = dbError.message || String(dbError);
     if (msg.includes('row-level security')) {
       throw new Error('Not authenticated or insufficient permissions for media table.');

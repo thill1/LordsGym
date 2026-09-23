@@ -27,7 +27,7 @@ test.describe('Public site smoke tests', () => {
 
   test('Membership page loads', async ({ page }) => {
     await page.goto(`${BASE_PATH}/membership`);
-    await expect(page.getByText(/Membership|Join|Regular|Student|Annual/i).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Membership|Join|Month to Month|Annual/i).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('Contact page loads', async ({ page }) => {

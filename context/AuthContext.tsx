@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser, signIn, signOut, AuthUser } from '../lib/auth';
+import { getCurrentUser, signIn, signOut, hasAdminAccess, AuthUser } from '../lib/auth';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(() => reject(new Error('Session check timed out')), TIMEOUT_MS)
         ),
       ]);
-      setUser(currentUser);
+      setUser(hasAdminAccess(currentUser) ? currentUser : null);
     } catch (error) {
       // Silently fail - expected when Supabase not configured, invalid key, or timeout
       console.warn('Error checking session (non-critical):', error);
@@ -67,6 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: false, error: msg || 'Invalid email or password' };
       }
+      if (!hasAdminAccess(authUser)) {
+        await signOut();
+        setUser(null);
+        return { success: false, error: 'This account is not authorized for the admin portal.' };
+      }
       setUser(authUser);
       return { success: true };
     } catch (error) {
@@ -96,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async (): Promise<void> => {
     const currentUser = await getCurrentUser();
-    setUser(currentUser);
+    setUser(hasAdminAccess(currentUser) ? currentUser : null);
   };
 
   return (
@@ -105,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         isLoading,
         isLoggingIn,
-        isAuthenticated: !!user,
+        isAuthenticated: hasAdminAccess(user),
         login,
         logout,
         refreshUser

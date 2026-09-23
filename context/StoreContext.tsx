@@ -68,6 +68,7 @@ interface StoreContextType {
   // True while the initial Supabase load is in flight; consumers can render
   // skeletons instead of stale-constants fallbacks.
   isLoading: boolean;
+  areProductsLoading: boolean;
   // True if the most recent products fetch failed (timeout or error).
   // Lets the UI show an explicit empty/error state instead of fake placeholders.
   productsLoadFailed: boolean;
@@ -85,15 +86,15 @@ interface StoreContextType {
   cartCount: number;
 
   // Actions
-  updateSettings: (settings: SiteSettings) => void;
-  updateHomeContent: (content: HomePageContent) => void;
-  updateOutreachContent: (content: OutreachPageImages) => void;
-  addTestimonial: (t: Testimonial) => void;
-  updateTestimonial: (id: number, t: Partial<Testimonial>) => void;
-  deleteTestimonial: (id: number) => void;
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  deleteProduct: (id: string) => void;
+  updateSettings: (settings: SiteSettings) => Promise<void>;
+  updateHomeContent: (content: HomePageContent) => Promise<void>;
+  updateOutreachContent: (content: OutreachPageImages) => Promise<void>;
+  addTestimonial: (t: Testimonial) => Promise<void>;
+  updateTestimonial: (id: number, t: Partial<Testimonial>) => Promise<void>;
+  deleteTestimonial: (id: number) => Promise<void>;
+  addProduct: (product: Product) => Promise<void>;
+  updateProduct: (product: Product) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   
   // Auth
   isAuthenticated: boolean;
@@ -105,6 +106,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [areProductsLoading, setAreProductsLoading] = useState(isSupabaseConfigured());
   const [productsLoadFailed, setProductsLoadFailed] = useState(false);
   const productsLoadedFromSupabaseRef = useRef(false);
 
@@ -188,29 +190,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           )
         ]);
 
-      const productsResult = await fetchProductsOnce();
+      try {
+        const productsResult = await fetchProductsOnce();
+        const { data: productsData, error: productsError } = productsResult;
 
-      const { data: productsData, error: productsError } = productsResult;
-
-      if (productsError) {
-        console.error('Error loading products from Supabase:', productsError);
+        if (productsError) {
+          console.error('Error loading products from Supabase:', productsError);
+          setProductsLoadFailed(true);
+        } else if (productsData !== null && productsData !== undefined) {
+          productsLoadedFromSupabaseRef.current = true;
+          setProductsLoadFailed(false);
+          const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            category: p.category,
+            image: (p.image as string | null) ?? '',
+            imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
+            comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
+            description: (p.description as string | null) ?? undefined,
+            inventory: (p.inventory as Record<string, number> | null) ?? undefined,
+            featured: (p.featured as boolean | null) ?? false
+          }));
+          setProducts(mapped);
+        }
+      } catch (error) {
+        console.error('Error loading products from Supabase:', error);
         setProductsLoadFailed(true);
-      } else if (productsData !== null && productsData !== undefined) {
-        productsLoadedFromSupabaseRef.current = true;
-        setProductsLoadFailed(false);
-        const mapped = productsData.map((p: Record<string, unknown> & { id: string; title: string; price: number; category: string }) => ({
-          id: p.id,
-          title: p.title,
-          price: p.price,
-          category: p.category,
-          image: (p.image as string | null) ?? '',
-          imageComingSoon: (p.image_coming_soon as boolean | null) ?? false,
-          comingSoonImage: (p.coming_soon_image as string | null) ?? undefined,
-          description: (p.description as string | null) ?? undefined,
-          inventory: (p.inventory as Record<string, number> | null) ?? undefined,
-          featured: (p.featured as boolean | null) ?? false
-        }));
-        setProducts(mapped);
+      } finally {
+        setAreProductsLoading(false);
       }
     };
 
@@ -352,8 +360,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Actions
   const updateSettings = async (newSettings: SiteSettings) => {
-    setSettings(newSettings);
-    
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('settings')
@@ -370,6 +376,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }, { onConflict: 'id' });
       if (error) throw error;
     }
+    setSettings(newSettings);
   };
 
   const updateHomeContent = async (newContent: HomePageContent) => {
@@ -380,8 +387,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         headline: sanitizeHeadline(newContent?.hero?.headline || '')
       }
     };
-    setHomeContent(cleaned);
-
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('home_content')
@@ -393,11 +398,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }, { onConflict: 'id' });
       if (error) throw error;
     }
+    setHomeContent(cleaned);
   };
 
   const updateOutreachContent = async (newContent: OutreachPageImages) => {
-    setOutreachContent(newContent);
-
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('outreach_content')
@@ -408,6 +412,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }, { onConflict: 'id' });
       if (error) throw error;
     }
+    setOutreachContent(newContent);
   };
 
   const addTestimonial = async (t: Testimonial) => {
@@ -504,8 +509,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
   
   const addProduct = async (p: Product) => {
-    setProducts(prev => [...prev, p]);
-    
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('products')
@@ -523,11 +526,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
       if (error) throw error;
     }
+    setProducts(prev => [...prev, p]);
   };
 
   const updateProduct = async (p: Product) => {
-    setProducts(prev => prev.map(item => item.id === p.id ? p : item));
-    
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('products')
@@ -546,6 +548,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }, { onConflict: 'id' });
       if (error) throw error;
     }
+    setProducts(prev => prev.map(item => item.id === p.id ? p : item));
   };
 
   const deleteProduct = async (id: string) => {
@@ -599,6 +602,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       programs,
       products,
       isLoading,
+      areProductsLoading,
       productsLoadFailed,
       cart,
       isCartOpen,

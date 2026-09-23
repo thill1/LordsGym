@@ -22,7 +22,7 @@ export const MINDBODY_PRICING_URL =
   `https://go.mindbodyonline.com/book/app/pricing/${MINDBODY_SITE_ID}`;
 
 export const MINDBODY_MEMBERSHIP_URL =
-  `${MINDBODY_PRICING_URL}?category=memberships`;
+  `${MINDBODY_PRICING_URL}?category=contract`;
 
 export const MINDBODY_PASSES_URL =
   `${MINDBODY_PRICING_URL}?category=passesAndPacks`;
