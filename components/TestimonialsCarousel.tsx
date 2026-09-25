@@ -142,14 +142,14 @@ const TestimonialsCarousel: React.FC<TestimonialsCarouselProps> = ({
               className="flex-shrink-0 px-4"
               style={{ width: `${widthPercentage}%` }}
             >
-              <Card className="bg-neutral-800 border-neutral-700 h-full">
+              <Card className="border border-neutral-200 dark:border-neutral-700 h-full">
                 <div className="p-6 h-full flex flex-col">
                   <div className="mb-4 flex-grow">
-                    <p className="text-neutral-200 italic text-lg leading-relaxed">"{truncateQuote(testimonial.quote)}"</p>
+                    <p className="text-neutral-700 dark:text-neutral-200 italic text-lg leading-relaxed">"{truncateQuote(testimonial.quote)}"</p>
                   </div>
-                  <div className="border-t border-neutral-700 pt-4 mt-auto">
-                    <div className="font-bold text-white text-lg">{testimonial.name}</div>
-                    <div className="text-sm text-neutral-400">{testimonial.role}</div>
+                  <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4 mt-auto">
+                    <div className="font-bold text-brand-charcoal dark:text-white text-lg">{testimonial.name}</div>
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400">{testimonial.role}</div>
                   </div>
                 </div>
               </Card>

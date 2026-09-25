@@ -12,7 +12,7 @@ const About: React.FC = () => {
 
   return (
     <>
-      <Section className="bg-brand-charcoal text-white pt-28 pb-20">
+      <Section bg="dark" className="pt-28 pb-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl md:text-6xl font-display font-bold uppercase tracking-tight">
             About Lord’s Gym

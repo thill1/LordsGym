@@ -168,7 +168,7 @@ const CalendarEventModal: React.FC<CalendarEventModalProps> = ({
                       ? `${remaining} of ${displayEvent.capacity} spots remaining`
                       : isFull ? 'Class is full' : `${displayEvent.capacity} spots`}
                   </p>
-                  <span className="text-xs text-neutral-400">{displayEvent.booked_count ?? 0}/{displayEvent.capacity}</span>
+                  <span className="text-xs text-neutral-600 dark:text-neutral-400">{displayEvent.booked_count ?? 0}/{displayEvent.capacity}</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
                   <div

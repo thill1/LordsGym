@@ -13,6 +13,24 @@ test.describe('Public site smoke tests', () => {
     await expect(page.getByRole('heading', { name: /New Arrivals/i })).toBeVisible({ timeout: 5000 });
   });
 
+  test('light mode keeps the header, testimonials, and About page readable', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('theme', 'light'));
+    await page.goto(`${BASE_PATH}/`);
+
+    const membershipNav = page.locator('header nav').getByRole('button', { name: 'Membership', exact: true });
+    await expect(membershipNav).toBeVisible();
+    await expect(membershipNav).toHaveCSS('color', 'rgb(26, 26, 26)');
+
+    const testimonial = page.locator('section').filter({ hasText: 'What Our Community Says' }).locator('.italic').first();
+    await expect(testimonial).toBeVisible();
+    await expect(testimonial).toHaveCSS('color', 'rgb(64, 64, 64)');
+
+    await page.goto(`${BASE_PATH}/about`);
+    const aboutSection = page.locator('section').first();
+    await expect(aboutSection).toHaveCSS('background-color', 'rgb(26, 26, 26)');
+    await expect(page.getByRole('heading', { name: /About Lord.s Gym/i })).toBeVisible();
+  });
+
   test('Shop page loads with live merchandise', async ({ page }) => {
     await page.goto(`${BASE_PATH}/shop`);
     await expect(page.getByRole('heading', { name: /Lord's Gym Store|Store/i })).toBeVisible({ timeout: 10000 });

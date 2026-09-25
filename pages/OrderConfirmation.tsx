@@ -100,25 +100,25 @@ const OrderConfirmation: React.FC = () => {
         {order ? (
           <div className="bg-neutral-50 dark:bg-neutral-900 p-6 rounded-lg mb-8 text-left space-y-3">
             <div className="flex justify-between border-b border-neutral-200 dark:border-neutral-700 pb-3">
-              <span className="text-xs font-bold uppercase text-neutral-400">Order ID</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Order ID</span>
               <span className="font-mono text-sm font-bold">{order.id.slice(0, 8).toUpperCase()}</span>
             </div>
 
             {order.customer_name && (
               <div className="flex justify-between">
-                <span className="text-xs font-bold uppercase text-neutral-400">Name</span>
+                <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Name</span>
                 <span className="font-bold text-sm">{order.customer_name}</span>
               </div>
             )}
 
             <div className="flex justify-between">
-              <span className="text-xs font-bold uppercase text-neutral-400">Email</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Email</span>
               <span className="text-sm">{order.customer_email}</span>
             </div>
 
             {order.items?.length > 0 && (
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3">
-                <p className="text-xs font-bold uppercase text-neutral-400 mb-2">Items</p>
+                <p className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400 mb-2">Items</p>
                 {order.items.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-1">
                     <span>{item.title} ({item.size}) ×{item.quantity}</span>
@@ -129,19 +129,19 @@ const OrderConfirmation: React.FC = () => {
             )}
 
             <div className="flex justify-between border-t border-neutral-200 dark:border-neutral-700 pt-3">
-              <span className="text-xs font-bold uppercase text-neutral-400">Total Paid</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Total Paid</span>
               <span className="font-bold text-lg">{formatOrderTotal(order.total_cents)}</span>
             </div>
 
             {order.shipping_address && (
               <div className="flex justify-between">
-                <span className="text-xs font-bold uppercase text-neutral-400">Ship To</span>
+                <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Ship To</span>
                 <span className="text-sm text-right max-w-[60%]">{formatShippingAddress(order.shipping_address)}</span>
               </div>
             )}
 
             <div className="flex justify-between">
-              <span className="text-xs font-bold uppercase text-neutral-400">Est. Delivery</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Est. Delivery</span>
               <span className="font-bold text-sm">3–5 Business Days</span>
             </div>
           </div>
@@ -149,17 +149,17 @@ const OrderConfirmation: React.FC = () => {
           // Order not in DB yet (webhook delay or no Supabase) — show generic confirmation
           <div className="bg-neutral-50 dark:bg-neutral-900 p-6 rounded-lg mb-8 text-left">
             <div className="flex justify-between border-b border-neutral-200 dark:border-neutral-700 pb-2 mb-2">
-              <span className="text-xs font-bold uppercase text-neutral-400">Status</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Status</span>
               <span className="font-bold text-green-600">Payment received</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-xs font-bold uppercase text-neutral-400">Est. Delivery</span>
+              <span className="text-xs font-bold uppercase text-neutral-600 dark:text-neutral-400">Est. Delivery</span>
               <span className="font-bold">3–5 Business Days</span>
             </div>
           </div>
         )}
 
-        <p className="text-sm text-neutral-400 mb-8">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-8">
           A confirmation email has been sent to {order?.customer_email || 'your email address'}.
         </p>
 

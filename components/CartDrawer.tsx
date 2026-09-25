@@ -99,7 +99,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ onCheckout }) => {
               <span className="text-neutral-500 uppercase text-sm font-bold">Subtotal</span>
               <span className="text-xl font-bold dark:text-white">${cartTotal.toFixed(2)}</span>
             </div>
-            <p className="text-xs text-neutral-400 mb-6 text-center">Shipping & taxes calculated at checkout.</p>
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-6 text-center">Shipping & taxes calculated at checkout.</p>
             <Button fullWidth onClick={onCheckout}>Checkout Now</Button>
           </div>
         )}

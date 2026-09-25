@@ -30,10 +30,9 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Determine header text color based on scroll state
-  const headerTextColor = isScrolled || isMobileMenuOpen 
-    ? 'text-brand-charcoal dark:text-white' 
-    : 'text-white';
+  // The header sits above the page content rather than on top of the hero image.
+  // Keep its controls dark in light mode and white in dark mode at every scroll position.
+  const headerTextColor = 'text-brand-charcoal dark:text-white';
 
   const handleNavClick = (path: string) => {
     setIsMobileMenuOpen(false);
@@ -50,7 +49,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
         className={`fixed w-full z-50 top-0 transition-all duration-300 ${
           isScrolled || isMobileMenuOpen
             ? 'bg-white/70 dark:bg-neutral-900/70 shadow-lg py-3 backdrop-blur-xl border-b border-neutral-200/30 dark:border-neutral-800/30' 
-            : 'bg-transparent dark:bg-transparent py-3 sm:py-4 lg:py-6'
+            : 'bg-white/95 dark:bg-transparent shadow-sm dark:shadow-none py-3 sm:py-4 lg:py-6 backdrop-blur-xl dark:backdrop-blur-none border-b border-neutral-200/70 dark:border-transparent'
         } ${headerTextColor}`}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 flex items-center justify-between h-full gap-2 sm:gap-4 overflow-hidden min-w-0">
@@ -67,9 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 className={`text-base font-graffiti tracking-wide hover:text-brand-red transition-colors relative group py-0 ${
                   currentPath === item.path
                     ? 'text-brand-red'
-                    : isScrolled || isMobileMenuOpen
-                      ? 'text-brand-charcoal dark:text-white'
-                      : 'text-white'
+                    : 'text-brand-charcoal dark:text-white'
                 }`}
                 >
                 {item.label}
@@ -81,11 +78,11 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
 
           {/* Desktop Right Side Controls - only visible at xl+ via CSS */}
           <div className="desktop-header-controls hidden xl:flex items-center gap-4 flex-shrink-0">
-            <div className={isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}>
+            <div className="text-brand-charcoal dark:text-white">
               <ThemeToggle />
             </div>
             <button 
-                className={`relative p-2 hover:text-brand-red transition-colors ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
+                className="relative p-2 text-brand-charcoal dark:text-white hover:text-brand-red transition-colors"
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -103,7 +100,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
           {/* Mobile Menu Controls - Visible below xl (1280px) */}
           <div className="xl:hidden flex items-center gap-2 sm:gap-3 relative z-50 flex-shrink-0 ml-auto">
              <button 
-                className={`relative p-1.5 sm:p-2 hover:text-brand-red transition-colors touch-manipulation ${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'}`}
+                className="relative p-1.5 sm:p-2 text-brand-charcoal dark:text-white hover:text-brand-red transition-colors touch-manipulation"
                 aria-label="Cart" 
                 onClick={openCart}
             >
@@ -116,7 +113,7 @@ const Layout: React.FC<LayoutProps> = ({ currentPath, onNavigate, children }) =>
                 </span>
               )}
             </button>
-            <div className={`${isScrolled || isMobileMenuOpen ? 'text-brand-charcoal dark:text-white' : 'text-white'} flex-shrink-0`}>
+            <div className="text-brand-charcoal dark:text-white flex-shrink-0">
               <ThemeToggle />
             </div>
              <button 
