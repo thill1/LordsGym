@@ -444,14 +444,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     </p>
                   </div>
                   {dayEvents.length > 0 && (
-                    <span className="text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+                    <span className="text-xs text-neutral-600 dark:text-neutral-400 tabular-nums">
                       {dayEvents.length} {dayEvents.length === 1 ? 'event' : 'events'}
                     </span>
                   )}
                 </div>
                 <div className="space-y-2 ml-[52px] sm:ml-[56px]">
                   {dayEvents.length === 0 ? (
-                    <p className="text-sm text-neutral-300 dark:text-neutral-600 italic">No events</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 italic">No events</p>
                   ) : (
                     dayEvents.map(event => (
                       <EventCard key={event.id} event={event} compact onClick={() => onEventClick?.(event.id)} />
