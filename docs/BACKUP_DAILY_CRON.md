@@ -85,7 +85,8 @@ R2 does not auto-delete objects. To avoid unbounded growth:
 | Issue | Check |
 |-------|--------|
 | Workflow fails: "Supabase secrets required" | Ensure `VITE_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set and valid. |
-| Workflow fails: "R2 backup requires..." | Add all four R2-related secrets; re-run. |
+| Workflow fails: "R2 backup requires..." / `Missing GitHub Actions secret: R2_*` | Repo is missing `R2_BACKUP_BUCKET`, `R2_ACCESS_KEY_ID`, and/or `R2_SECRET_ACCESS_KEY` (deploy secrets `CLOUDFLARE_*` alone are not enough). Add R2 values to `.env.local`, then run `node scripts/setup-r2-backup.mjs` to push them. |
+| Calendar export: `Invalid API key` on every table | Rotate `SUPABASE_SERVICE_ROLE_KEY` in GitHub from Supabase → Settings → API (**service_role**, not anon). Re-run backup. |
 | Upload fails: 403 / Access Denied | Token must have **Object Read and Write** and be scoped to the bucket (or account). |
 | Upload fails: endpoint / connection | Confirm `CLOUDFLARE_ACCOUNT_ID` is correct; endpoint is `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. |
 | Calendar export empty or errors | Service role key must be for the same project as `VITE_SUPABASE_URL`; check Supabase project is not paused. |

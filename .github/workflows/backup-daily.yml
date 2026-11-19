@@ -41,16 +41,51 @@ jobs:
 
       - name: Require backup secrets
         run: |
-          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
-            echo "::error::VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required. Add them in Settings → Secrets and variables → Actions."
+          missing=0
+          for name in VITE_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
+            case "$name" in
+              VITE_SUPABASE_URL) val="${{ secrets.VITE_SUPABASE_URL }}" ;;
+              SUPABASE_SERVICE_ROLE_KEY) val="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ;;
+            esac
+            if [ -z "$val" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
             exit 1
           fi
           echo "Supabase secrets present."
+
+      - name: Require R2 secrets (before export)
+        if: ${{ !inputs.skip_r2_upload }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_ACCOUNT_ID R2_BACKUP_BUCKET R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY; do
+            case "$name" in
+              CLOUDFLARE_ACCOUNT_ID) val="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ;;
+              R2_BACKUP_BUCKET) val="${{ secrets.R2_BACKUP_BUCKET }}" ;;
+              R2_ACCESS_KEY_ID) val="${{ secrets.R2_ACCESS_KEY_ID }}" ;;
+              R2_SECRET_ACCESS_KEY) val="${{ secrets.R2_SECRET_ACCESS_KEY }}" ;;
+            esac
+            if [ -z "$val" ]; then
+              echo "::error::Missing GitHub Actions secret: $name (see docs/BACKUP_DAILY_CRON.md)"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::Push R2 secrets with: node scripts/setup-r2-backup.mjs (after adding R2_* to .env.local)"
+            exit 1
+          fi
+          echo "R2 secrets present."
 
       - name: Create .env.local for backup scripts
         run: |
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env.local
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.local
+
+      - name: Verify Supabase service role key
+        run: node --env-file=.env.local scripts/verify-supabase-service-role.mjs
 
       - name: Export schema backup
         run: npm run backup:schema
@@ -61,15 +96,6 @@ jobs:
       - name: Set backup date
         id: date
         run: echo "date=$(date -u +%Y%m%d)" >> $GITHUB_OUTPUT
-
-      - name: Require R2 secrets (for upload)
-        if: ${{ !inputs.skip_r2_upload }}
-        run: |
-          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ] || [ -z "${{ secrets.R2_BACKUP_BUCKET }}" ] || [ -z "${{ secrets.R2_ACCESS_KEY_ID }}" ] || [ -z "${{ secrets.R2_SECRET_ACCESS_KEY }}" ]; then
-            echo "::error::R2 backup requires: CLOUDFLARE_ACCOUNT_ID, R2_BACKUP_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY. See docs/BACKUP_DAILY_CRON.md"
-            exit 1
-          fi
-          echo "R2 secrets present."
 
       - name: Configure AWS CLI for Cloudflare R2
         if: ${{ !inputs.skip_r2_upload }}

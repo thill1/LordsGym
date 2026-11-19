@@ -51,6 +51,10 @@ const breakGlassEmail = process.env.VITE_BREAK_GLASS_ADMIN_EMAIL;
 const oauthRedirectUrl = process.env.VITE_ADMIN_OAUTH_REDIRECT_URL;
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r2BackupBucket = process.env.R2_BACKUP_BUCKET;
+const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID;
+const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 
 // Help debug: show what was loaded (not values)
 const found = fs.existsSync(envPath);
@@ -146,6 +150,16 @@ async function main() {
   if (oauthRedirectUrl) await setSecret('VITE_ADMIN_OAUTH_REDIRECT_URL', oauthRedirectUrl);
   if (supabaseUrl) await setSecret('VITE_SUPABASE_URL', supabaseUrl);
   if (supabaseAnonKey) await setSecret('VITE_SUPABASE_ANON_KEY', supabaseAnonKey);
+  if (supabaseServiceRoleKey) await setSecret('SUPABASE_SERVICE_ROLE_KEY', supabaseServiceRoleKey);
+  if (r2BackupBucket) await setSecret('R2_BACKUP_BUCKET', r2BackupBucket);
+  if (r2AccessKeyId) await setSecret('R2_ACCESS_KEY_ID', r2AccessKeyId);
+  if (r2SecretAccessKey) await setSecret('R2_SECRET_ACCESS_KEY', r2SecretAccessKey);
+
+  if (!r2BackupBucket || !r2AccessKeyId || !r2SecretAccessKey) {
+    console.warn(
+      '\nWarning: R2_BACKUP_BUCKET, R2_ACCESS_KEY_ID, and/or R2_SECRET_ACCESS_KEY missing from .env.local — daily backup upload will fail until set (see docs/BACKUP_DAILY_CRON.md).'
+    );
+  }
 
   console.log('Done. Re-run the failed workflow or push to trigger deploy.');
 }

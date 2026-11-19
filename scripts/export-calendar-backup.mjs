@@ -50,6 +50,8 @@ const supabase = createClient(url, serviceKey, { auth: { persistSession: false }
 async function main() {
   console.log('Exporting calendar data from', url, '...\n');
 
+  let failures = 0;
+
   for (const table of CALENDAR_TABLES) {
     try {
       const { data, error } = await supabase.from(table).select('*');
@@ -59,11 +61,16 @@ async function main() {
       writeFileSync(outPath, JSON.stringify(data ?? [], null, 2), 'utf8');
       console.log('  ✅', table, '→', count, 'rows →', outPath);
     } catch (e) {
+      failures += 1;
       console.error('  ❌', table, ':', e.message);
     }
   }
 
   console.log('\nDone. Backup files are in scripts/calendar-backup/');
+  if (failures > 0) {
+    console.error(`\nCalendar export failed for ${failures} table(s).`);
+    process.exit(1);
+  }
 }
 
 main();
